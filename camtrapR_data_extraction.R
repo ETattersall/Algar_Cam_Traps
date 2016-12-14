@@ -1,5 +1,6 @@
 ###### Image data extraction
 
+
 ###1. recordTable --> need it to run a number of different functions
 ### generates a dataframe of events
 
@@ -10,32 +11,42 @@ grepl(exiftool_dir, Sys.getenv("PATH"))
 
 ##If you want to add other metadata to record table, 
 ##you can view metadata with exifTagNames, choose what to include
-
-exifTagNames(inDir = Renamed_Dir,
+species_wd <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images"
+exifTagNames(inDir = species_wd, whichSubDir = 1,
              returnMetadata = TRUE)
 
 
 
-rec.test <- recordTable(inDir                  = Renamed_Dir,
+
+rec.spec <- recordTable(inDir                  = species_wd,
                         IDfrom                 = "directory",
-                        minDeltaTime           = 40,
+                        minDeltaTime           = 30,
                         deltaTimeComparedTo    = "lastRecord",
-                        writecsv               = FALSE,
-                        additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
-View(rec.test)
+                        timeZone               = "Canada/Mountain",
+                        metadataSpeciesTag     = "TriggerMode")
+                        
+View(rec.spec)
 
 #delta.time indicates time since last occurrance of that species at that site
 
-###2. recordTableIndividual--> record table for one species
+###2. recordTableIndividual--> record table for one species (both getSpeciesImages and recordTableIndividual only take one species at a time)
 
-rec.test.Ind <- recordTableIndividual(inDir = "Test images/Renamed_Test/Site 3/Black Bear",
-                                      hasStationFolders = FALSE,
-                                      IDfrom = "directory",
-                                      camerasIndependent = TRUE,
-                                      minDeltaTime = 20,
-                                      deltaTimeComparedTo = "lastRecord",
-                                      writecsv = FALSE,
-                                      additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
 
-###Notes: For Algar data, may want writecsv = TRUE
-### Will have all species images across stations in a folder, so hasStationFolders = TRUE
+####Folder of images organized by species
+
+specImagecopy <- getSpeciesImages(species                 = "A_alces",
+                                  recordTable             = rec.spec,
+                                  speciesCol              = "Species",
+                                  stationCol              = "Station",
+                                  outDir                  = "Species_org",
+                                  createStationSubfolders = TRUE)
+
+caribou.tab <- recordTableIndividual(inDir = "Species_org/R_tarandus",
+                                     hasStationFolders = TRUE,
+                                     IDfrom = "directory",
+                                     minDeltaTime = 30,
+                                     deltaTimeComparedTo = "lastRecord",
+                                     timeZone = "Canada/Mountain",
+                                     writecsv = FALSE,
+                                     additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
+
