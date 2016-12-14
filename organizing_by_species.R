@@ -284,3 +284,15 @@ for (sp in species) {
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
 
+
+
+
+
+## getSpeciesImages --> Use after creating record table to copy ALL species images across stations?
+##### Not yet tested
+
+specImagecopy <- getSpeciesImages(species                 = species_to_copy,
+                                  inDir                   = wd_images_ID,
+                                  outDir                  = wd_images_ID_copy,
+                                  createStationSubfolders = FALSE,
+                                  IDfrom                  = "directory")
