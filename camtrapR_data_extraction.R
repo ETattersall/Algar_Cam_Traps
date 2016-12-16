@@ -41,7 +41,7 @@ specImagecopy <- getSpeciesImages(species                 = "A_alces",
                                   outDir                  = "Species_org",
                                   createStationSubfolders = TRUE)
 
-caribou.tab <- recordTableIndividual(inDir = "Species_org/R_tarandus",
+bear.tab <- recordTableIndividual(inDir = "Species_org/U_americanus",
                                      hasStationFolders = TRUE,
                                      IDfrom = "directory",
                                      minDeltaTime = 30,
