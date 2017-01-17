@@ -19,3 +19,5 @@ pred_list <- c("C_lupus", "C_latrans","U_americanus","L_canadensis")
 pred_csv <- spec_col %>% 
             filter(Species == pred_list) %>% 
             select(File, Folder, Species,Species_count)
+
+### Number of events on Control lines vs Treatment lines? ##
