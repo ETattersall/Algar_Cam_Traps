@@ -25,9 +25,15 @@ rec.spec <- recordTable(inDir                  = species_wd,
                         timeZone               = "Canada/Mountain",
                         metadataSpeciesTag     = "TriggerMode")
                         
+
 View(rec.spec)
 
+
+
 #delta.time indicates time since last occurrance of that species at that site
+
+### NOTE: recordTable extracts 1 file from each independent event. This means that 
+### it is used for getSpeciesImages, only 1 file is extracted from each event (1st ### file). Only a problem when multiple individuals are in one event (wolf pack)
 
 ###2. recordTableIndividual--> record table for one species (both getSpeciesImages and recordTableIndividual only take one species at a time)
 
@@ -40,6 +46,8 @@ specImagecopy <- getSpeciesImages(species                 = "A_alces",
                                   stationCol              = "Station",
                                   outDir                  = "Species_org",
                                   createStationSubfolders = TRUE)
+
+
 
 bear.tab <- recordTableIndividual(inDir = "Species_org/U_americanus",
                                      hasStationFolders = TRUE,

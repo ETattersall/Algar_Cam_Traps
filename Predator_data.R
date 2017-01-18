@@ -1,23 +1,58 @@
-#### Target predator data extraction and exploration #####
-#### Created 16 January, 2017 by Erin Tattersall
+#### Target predator data exploration #####
+#### Created 17 January, 2017 by Erin Tattersall
 
-###Isolating predator events into one csv ###
+
 
 library(camtrapR)
 library(dplyr)
 library(tidyr)
 
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps")
+### Uses rec.spec (record table of all species)
+### SEE NOTE from camtrapR_data_extraction.R re:recordTable
 
-spec_col <- read.csv("Master_csv_specified.csv")
 
-species_list <- unique(spec_col$Species)
+##Activity histograms
+Wolf_hist <- activityHistogram (recordTable = rec.spec,
+                                species = "C_lupus",
+                                allSpecies = FALSE,
+                                speciesCol = "Species",
+                                recordDateTimeCol = "DateTimeOriginal",
+                                recordDateTimeFormat = "%Y-%m-%d %H:%M:%S",
+                                plotR = TRUE,
+                                writePNG = FALSE)
 
-## Pick out predators of interest: C_lupus, C_latrans, U_americanus, L_canadensis
-pred_list <- c("C_lupus", "C_latrans","U_americanus","L_canadensis")
+Lynx_hist <- activityHistogram (recordTable = rec.spec,
+                                species = "L_canadensis",
+                                allSpecies = FALSE,
+                                speciesCol = "Species",
+                                recordDateTimeCol = "DateTimeOriginal",
+                                recordDateTimeFormat = "%Y-%m-%d %H:%M:%S",
+                                plotR = TRUE,
+                                writePNG = FALSE)
 
-pred_csv <- spec_col %>% 
-            filter(Species == pred_list) %>% 
-            select(File, Folder, Species,Species_count)
+Caribou_hist <- activityHistogram (recordTable = rec.spec,
+                                   species = "R_tarandus",
+                                   allSpecies = FALSE,
+                                   speciesCol = "Species",
+                                   recordDateTimeCol = "DateTimeOriginal",
+                                   recordDateTimeFormat = "%Y-%m-%d %H:%M:%S",
+                                   plotR = TRUE,
+                                   writePNG = FALSE)
+### activityDensity over 24 hr period --> not super useful?
 
-### Number of events on Control lines vs Treatment lines? ##
+caribou.dens <- activityDensity(rec.spec, 
+                                "R_tarandus",
+                                allSpecies = FALSE,
+                                speciesCol = "Species",
+                                recordDateTimeCol = "DateTimeOriginal",
+                                recordDateTimeFormat = "%Y-%m-%d %H:%M:%S",
+                                plotR = TRUE, 
+                                writePNG = FALSE, 
+                                plotDirectory, 
+                                createDir = FALSE, 
+                                pngMaxPix = 1000,
+                                add.rug = TRUE)
+
+
+##### Differences between Control (Algar 1-12) and Treatment (Algar 13-24)???
+
