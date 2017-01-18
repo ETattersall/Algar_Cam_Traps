@@ -55,4 +55,24 @@ caribou.dens <- activityDensity(rec.spec,
 
 
 ##### Differences between Control (Algar 1-12) and Treatment (Algar 13-24)???
+#### Remember that event =/= individual!! For wolves and bears esp.
 
+## No. of wolf events
+## Control lines = 34
+## Treat lines   = 74
+
+## No. of bear events
+## Control lines = 58
+## Treat lines   = 92
+
+## No. of lynx events
+## Control lines = 13
+## Treat lines   = 18
+
+## No. of coyote events
+## Control lines = 10
+## Treat lines   = 30
+
+## No. of Caribou events
+## Control lines = 8
+## Treat lines   = 37
