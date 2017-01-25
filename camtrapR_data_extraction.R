@@ -24,9 +24,20 @@ rec.spec <- recordTable(inDir                  = species_wd,
                         deltaTimeComparedTo    = "lastRecord",
                         timeZone               = "Canada/Mountain",
                         metadataSpeciesTag     = "TriggerMode")
+
+### Each event = 30 minutes after last record. MAKE recordTable with 
+## deltaTimeComparedTo = lastIndependentRecord (30 minutes after last record of same species)
+
+rec.spec.ind <- recordTable(inDir                  = species_wd,
+                        IDfrom                 = "directory",
+                        minDeltaTime           = 30,
+                        deltaTimeComparedTo    = "lastIndependentRecord",
+                        timeZone               = "Canada/Mountain",
+                        metadataSpeciesTag     = "TriggerMode")
                         
 
-View(rec.spec)
+### Difference between rec.spec and rec.spec.ind MIGHT be due to an event being interrupted by a timelapse image triggered at noon rather than actually depicting individual events
+### Would be good to filter out timelapse images before building record tables?
 
 
 
@@ -47,9 +58,9 @@ specImagecopy <- getSpeciesImages(species                 = "A_alces",
                                   outDir                  = "Species_org",
                                   createStationSubfolders = TRUE)
 
+setwd(images_wd)
 
-
-bear.tab <- recordTableIndividual(inDir = "Species_org/U_americanus",
+bear.tab <- recordTableIndividual(inDir = "Species_org_rec.spec.ind/U_americanus",
                                      hasStationFolders = TRUE,
                                      IDfrom = "directory",
                                      minDeltaTime = 30,
@@ -58,3 +69,56 @@ bear.tab <- recordTableIndividual(inDir = "Species_org/U_americanus",
                                      writecsv = FALSE,
                                      additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
 
+wolf.tab <- recordTableIndividual(inDir = "Species_org_rec.spec.ind/C_lupus",
+                                  hasStationFolders = TRUE,
+                                  IDfrom = "directory",
+                                  minDeltaTime = 30,
+                                  deltaTimeComparedTo = "lastRecord",
+                                  timeZone = "Canada/Mountain",
+                                  writecsv = FALSE,
+                                  additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
+
+coyote.tab <- recordTableIndividual(inDir = "Species_org_rec.spec.ind/C_latrans",
+                                  hasStationFolders = TRUE,
+                                  IDfrom = "directory",
+                                  minDeltaTime = 30,
+                                  deltaTimeComparedTo = "lastRecord",
+                                  timeZone = "Canada/Mountain",
+                                  writecsv = FALSE,
+                                  additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
+
+lynx.tab <- recordTableIndividual(inDir = "Species_org_rec.spec.ind/L_canadensis",
+                                    hasStationFolders = TRUE,
+                                    IDfrom = "directory",
+                                    minDeltaTime = 30,
+                                    deltaTimeComparedTo = "lastRecord",
+                                    timeZone = "Canada/Mountain",
+                                    writecsv = FALSE,
+                                    additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
+
+caribou.tab <- recordTableIndividual(inDir = "Species_org_rec.spec.ind/R_tarandus",
+                                    hasStationFolders = TRUE,
+                                    IDfrom = "directory",
+                                    minDeltaTime = 30,
+                                    deltaTimeComparedTo = "lastRecord",
+                                    timeZone = "Canada/Mountain",
+                                    writecsv = FALSE,
+                                    additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
+
+WTdeer.tab <- recordTableIndividual(inDir = "Species_org_rec.spec.ind/O_virginianus",
+                                    hasStationFolders = TRUE,
+                                    IDfrom = "directory",
+                                    minDeltaTime = 30,
+                                    deltaTimeComparedTo = "lastRecord",
+                                    timeZone = "Canada/Mountain",
+                                    writecsv = FALSE,
+                                    additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
+
+moose.tab <- recordTableIndividual(inDir = "Species_org_rec.spec.ind/A_alces",
+                                    hasStationFolders = TRUE,
+                                    IDfrom = "directory",
+                                    minDeltaTime = 30,
+                                    deltaTimeComparedTo = "lastRecord",
+                                    timeZone = "Canada/Mountain",
+                                    writecsv = FALSE,
+                                    additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))

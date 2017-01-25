@@ -7,12 +7,13 @@ library(camtrapR)
 library(dplyr)
 library(tidyr)
 
-### Uses rec.spec (record table of all species)
+### Uses rec.spec.ind
 ### SEE NOTE from camtrapR_data_extraction.R re:recordTable
 
 
+
 ##Activity histograms
-Wolf_hist <- activityHistogram (recordTable = rec.spec,
+Wolf_hist <- activityHistogram (recordTable = rec.spec.ind,
                                 species = "C_lupus",
                                 allSpecies = FALSE,
                                 speciesCol = "Species",
@@ -21,7 +22,7 @@ Wolf_hist <- activityHistogram (recordTable = rec.spec,
                                 plotR = TRUE,
                                 writePNG = FALSE)
 
-Lynx_hist <- activityHistogram (recordTable = rec.spec,
+Lynx_hist <- activityHistogram (recordTable = rec.spec.ind,
                                 species = "L_canadensis",
                                 allSpecies = FALSE,
                                 speciesCol = "Species",
@@ -30,7 +31,7 @@ Lynx_hist <- activityHistogram (recordTable = rec.spec,
                                 plotR = TRUE,
                                 writePNG = FALSE)
 
-Caribou_hist <- activityHistogram (recordTable = rec.spec,
+Caribou_hist <- activityHistogram (recordTable = rec.spec.ind,
                                    species = "R_tarandus",
                                    allSpecies = FALSE,
                                    speciesCol = "Species",
@@ -40,7 +41,7 @@ Caribou_hist <- activityHistogram (recordTable = rec.spec,
                                    writePNG = FALSE)
 ### activityDensity over 24 hr period --> not super useful?
 
-caribou.dens <- activityDensity(rec.spec, 
+caribou.dens <- activityDensity(rec.spec.ind, 
                                 "R_tarandus",
                                 allSpecies = FALSE,
                                 speciesCol = "Species",

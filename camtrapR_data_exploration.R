@@ -6,7 +6,7 @@ library(camtrapR)
 ###Need record tables created in camtrapR_data_extraction
 
 ##Activity histograms
-Wolf_hist <- activityHistogram (recordTable = rec.spec,
+Wolf_hist <- activityHistogram (recordTable = rec.spec.ind,
                    species = "C_lupus",
                    allSpecies = FALSE,
                    speciesCol = "Species",
@@ -15,7 +15,7 @@ Wolf_hist <- activityHistogram (recordTable = rec.spec,
                    plotR = TRUE,
                    writePNG = FALSE)
 
-Lynx_hist <- activityHistogram (recordTable = rec.spec,
+Lynx_hist <- activityHistogram (recordTable = rec.spec.ind,
                                 species = "L_canadensis",
                                 allSpecies = FALSE,
                                 speciesCol = "Species",
@@ -24,7 +24,7 @@ Lynx_hist <- activityHistogram (recordTable = rec.spec,
                                 plotR = TRUE,
                                 writePNG = FALSE)
 
-Caribou_hist <- activityHistogram (recordTable = rec.spec,
+Caribou_hist <- activityHistogram (recordTable = rec.spec.ind,
                                 species = "R_tarandus",
                                 allSpecies = FALSE,
                                 speciesCol = "Species",
@@ -34,7 +34,7 @@ Caribou_hist <- activityHistogram (recordTable = rec.spec,
                                 writePNG = FALSE)
 ### activityDensity over 24 hr period --> not super useful?
 
-caribou.dens <- activityDensity(rec.spec, 
+caribou.dens <- activityDensity(rec.spec.ind, 
                 "R_tarandus",
                 allSpecies = FALSE,
                 speciesCol = "Species",

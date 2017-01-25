@@ -291,9 +291,23 @@ for (sp in species) {
 ## getSpeciesImages --> Use after creating record table to copy ALL species images across stations?
 ##### Only fetches one species at a time
 
-specImagecopy <- getSpeciesImages(species                 = "R_tarandus",
-                                  recordTable             = rec.spec,
+specImagecopy <- getSpeciesImages(species                 = "U_americanus",
+                                  recordTable             = rec.spec.ind,
                                   speciesCol              = "Species",
                                   stationCol              = "Station",
-                                  outDir                  = "Species_org",
+                                  outDir                  = "Species_org_01",
                                   createStationSubfolders = TRUE)
+
+## Turning getSpeciesImages into a loop
+
+image_identify <- unique(rec.spec.ind$Species)
+
+for (id in image_identify) {
+  getSpeciesImages(species                 = id,
+                 recordTable             = rec.spec.ind,
+                 speciesCol              = "Species",
+                 stationCol              = "Station",
+                 outDir                  = "Species_org_01",
+                 createStationSubfolders = TRUE)
+}
+
