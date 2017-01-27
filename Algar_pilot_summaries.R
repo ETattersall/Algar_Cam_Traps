@@ -47,3 +47,9 @@ S$Richness <- apply(S[,1:17],1,function(x) sum(ifelse(x>0,1,0)))
 ## Edit to Cole's code: S$Richness included total in Richness count. Adding [,1:17] to specify counting only species 
 ## columns
 
+# add coordinates and treatment to dataframe
+S$utmE <- cams2015$utmE[match(row.names(S),cams2015$CamStation)]
+S$utmN <- cams2015$utmN[match(row.names(S),cams2015$CamStation)]
+
+S$Treatment <- cams2015$Treatment[match(row.names(S),cams2015$CamStation)]
+
