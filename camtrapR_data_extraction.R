@@ -39,6 +39,13 @@ rec.spec.ind <- recordTable(inDir                  = species_wd,
 ### Difference between rec.spec and rec.spec.ind MIGHT be due to an event being interrupted by a timelapse image triggered at noon rather than actually depicting individual events
 ### Would be good to filter out timelapse images before building record tables?
 
+rec.noTimelapse <- recordTable(inDir                  = species_wd,
+                               IDfrom                 = "directory",
+                               minDeltaTime           = 30,
+                               deltaTimeComparedTo    = "lastIndependentRecord",
+                               timeZone               = "Canada/Mountain",
+                               metadataSpeciesTag     = "TriggerMode")
+
 
 
 #delta.time indicates time since last occurrance of that species at that site
