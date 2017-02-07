@@ -126,6 +126,40 @@ summary(A2$count) # all zeros now gone
 
 A2[which(A2$count==0),]
 
+# create variable with species name
+for(i in 1:nrow(A2)) {
+  A2$Species[i] <- names(which.max(A2[i,14:31]))
+}
 
+# some summaries
+nrow(A2)
 
+table(A2$Species)
 
+# check the Other class
+A2$Other_specify[which(A2$Species=="Other")]
+A2[which(A2$Species=="Other"),]
+A2[which(A2$Species=="Other"),c(32,39)]
+## 2 cougar events, 2 ermine, 1 unknown weasel species
+
+table(A2$Folder)
+# Add Treatment to detections 
+
+A2$Treatment <- cams2015$Treatment[match(A2$Folder,cams2015$CamStation)]
+
+table(A2$Treatment)
+###--- DETECTION RATE INDEX
+
+# I will start with a liberal index of allowing 1 photo per minute (rather than hour)
+# to set up, follow code used for Boreal Deer dataset (e.g. from SpatialCountDensity.R)
+
+# specify date formats 
+A2$Date.Time <- paste(A2$Date,A2$Time,sep = " ")
+A2$Date.Time <- as.POSIXct(strptime(A2$Date.Time, "%d-%b-%Y %H:%M:%S", tz="MST"))
+
+# calculate a unique day for each day of study
+# taking straight difference will include partial days, so is really 24-hour periods from time first camera set
+# using "floor" so it doesn't round up to next day
+A2$StudyDay <- floor(as.numeric(difftime(max(A2$Date.Time),min(A2$Date.Time),units="days")))
+
+### THERE ARE INCONSISTENCIES IN HOW YEAR IS SPECIFIED IN THESE DATES -- NEED TO FIX
