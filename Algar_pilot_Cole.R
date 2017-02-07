@@ -173,7 +173,7 @@ summary(A2$count) # all zeros now gone
 
 # create variable with species name
 for(i in 1:nrow(A2)) {
-  A2$Species[i] <- names(which.max(A2[i,13:30]))
+  A2$Species[i] <- names(which.max(A2[i,14:31]))
 }
 
 # some summaries
