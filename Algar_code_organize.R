@@ -6,7 +6,11 @@
 
 ## Station Folders created (createStationFolders), Images already renamed (see camtrapR_imageRename.R)
 library(camtrapR)
+library(tidyr)
+library(dplyr)
 
+
+####### Cole's code
 ### Load camera station data for the 24 cameras set in November 2015, checked in November 2016
 setwd(images_wd)
 cams2015 <- read.csv("Algar2015StationData.csv")
@@ -54,6 +58,74 @@ cams2015$trapdays <- rowSums(camEff,na.rm=T)
 # subtract days from total images for estimate of motion triggers [not needed, see image data below]
 cams2015$EstTrig <- cams2015$img.cnt - cams2015$trapdays
 
-# quick-and-dirty plot of number of motion triggers by treatment
+# quick-and-dirty plot of number of motion triggers by treatment 
 boxplot(cams2015$EstTrig ~ cams2015$Treatment,col=c("orange","purple"),ylab="Number of Motion Triggers",
         cex.lab=1.5,cex.axis=1.5)
+##Above plots each image
+
+################################
+
+##### Erin's code
+### Merging csvs
+library(plyr)
+setwd("ColeTimelapseExports12Dec2016")
+
+### rbind.fill (in plyr) merges csvs and fills missing columns with NA
+filenames <- list.files()
+Alg_master <- do.call("rbind.fill", lapply(filenames, read.csv, header = TRUE))
+
+### rbind.fill (in plyr) merges csvs and fills missing columns with NA
+
+
+write.csv(Alg_master, "Master_csv_Cole.csv")
+
+#### Cole's code
+# check for NA's in counts (shouldn't be any)
+apply(apply(Alg_master[,14:31],2,is.na),2,sum)
+
+# need to fix NA values in species counts ... [missing values in csv files]
+
+# how many photos are of animals 
+table(Alg_master$Animal)
+table(Alg_master$Trigger_Mode) 
+
+
+# subset data to only animal photos that are not classified as unknown
+## Problem: only subsets for images with Animal == TRUE and not Animal == "true" So lots of images are lost
+## Make all lowercase letters uppercase
+
+Alg_master <- data.frame(lapply(Alg_master, function(v) {
+  if (is.character(v)) return(toupper(v))
+  else return(v)
+})) 
+
+
+A2 <- subset(Alg_master, Animal == TRUE & Unknown == FALSE)
+
+# make a count variable for each detection
+A2$count <- apply(A2[,14:31],1,max, na.rm=T)
+
+# there are still a few zero counts to fix (should go back in csv files eventually ...)
+A2[which(A2$count==0),]
+
+# add missing counts of snowshoe hare for others (Algar16__2016-09-25__21-40-28(1).JPG and subsequent)
+A2[which(A2$count==0)[c(1:8)],"L_americanus"] <- 1
+
+# add missing counts for 2 bird photos (Algar4__2016-09-06__19-46-06(1).JPG and Algar4__2016-09-18__08-52-16(2).JPG 
+A2[which(A2$count==0)[c(9,10)],"Other_birds"] <- 1
+
+# drop an image that didn't have an animal (checked, Algar6__2016-01-22__08-13-15(5).JPG)
+A2 <- A2[-which(A2$count==0)[1],] 
+
+### when changing count data use row number returned by A2[which(A2$count==0),] (ex. 1,2,3 not 2323, 6345, 9224)
+
+# update the count variable
+A2$count <- apply(A2[,14:31],1,max, na.rm=T)
+
+summary(A2$count) # all zeros now gone
+
+A2[which(A2$count==0),]
+
+
+
+
