@@ -1,5 +1,5 @@
 #### Species organization
-### Adding setwd to loop
+### Adding setwd to loop --> Did this ever work? seems to be an issue with folder and species vecotrs not being same length...
 
 folder <- unique(master_csv$Folder)
 species <- c("O_virginianus","R_tarandus", "C_elavus", "A_alces", "C_lupus", "C_latrans", "U_americanus", "C_canadensis", "G_gulo", "M_americana", "M_pennanti", "V_vulpes", "T_hudsonicus", "L_americanus", "H_sapiens", "G_canadensis", "Other_birds", "Other")
