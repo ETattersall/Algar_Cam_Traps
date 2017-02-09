@@ -186,7 +186,7 @@ species <- c("O_virginianus","R_tarandus", "C_elavus", "A_alces", "C_lupus", "C_
 
 
 ### Duplicate Raw_images folder and rename it "Species_images" (Did this manually...)
-
+### In future, probably makes sense to remain in Raw_images and have backup raw images elsewhere
 
 
 setwd(images_wd)
