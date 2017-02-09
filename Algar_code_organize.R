@@ -200,7 +200,7 @@ SpecFolderCreate1 <- createSpeciesFolders (inDir               = "Species_images
 
 
 
-###Code works for looping all species in one folder, for now just repeat this 24 times
+###Code works for looping all species in one folder, for now just repeat this 24 times (Can select all and run at once)
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar1")
 for (sp in species) {
   sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar1") %>% 
