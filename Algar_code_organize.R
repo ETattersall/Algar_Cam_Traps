@@ -531,6 +531,13 @@ S$utmN <- cams2015$utmN[match(row.names(S),cams2015$CamStation)]
 
 S$Treatment <- cams2015$Treatment[match(row.names(S),cams2015$CamStation)]
 
+# plot spatial variation by station [note: need to specify species columns now that other variables added]
+with(S, symbols(x=utmE, y=utmN, circles=Total, inches=2/3, bg="royalblue3", fg="darkblue", 
+                main = "Total animal detections by camera station"))
+
+with(S, symbols(x=utmE, y=utmN, circles=Richness, inches=1/3, bg="royalblue3", fg="darkblue", 
+                main = "Species richness by camera station"))
+
 # look at detections relative to treatment [quick-and-dirty for exploration, not really appropriate tests]
 # total detections
 boxplot(S$Total~S$Treatment,cex.axis=1.3,ylab="Total detections",cex.lab=1.6,col=c("orange","purple"),boxwex=0.6)
@@ -581,3 +588,32 @@ tapply(S$A_alces,S$Treatment,mean)
 tapply(S$A_alces,S$Treatment,sd)
 tapply(S$A_alces,S$Treatment,median)
 t.test(S$A_alces~S$Treatment)
+
+
+### Quick spatial variation by station in species
+par(mfrow = c(1,2))## Multiple plots on same page (1 row, 2 columns)
+par(mfrow = c(1,1))
+# Caribou
+with(S, symbols(x=utmE, y=utmN, circles=R_tarandus, inches=2/3, bg="royalblue3", fg="darkblue", 
+                main = "Total caribou detections by camera station"))
+# Wolves
+with(S, symbols(x=utmE, y=utmN, circles=C_lupus, inches=1/3, bg="royalblue3", fg="darkblue", 
+                main = "Total wolf detections by camera station"))
+
+# Black bears
+with(S, symbols(x=utmE, y=utmN, circles=U_americanus, inches=2/3, bg="royalblue3", fg="darkblue", 
+                main = "Total black bear detections by camera station"))
+
+# Coyote
+with(S, symbols(x=utmE, y=utmN, circles=C_latrans, inches=1/3, bg="royalblue3", fg="darkblue", 
+                main = "Total coyote detections by camera station"))
+# Lynx
+with(S, symbols(x=utmE, y=utmN, circles=L_canadensis, inches=1/3, bg="royalblue3", fg="darkblue", 
+                main = "Total lynx detections by camera station"))
+# Moose
+with(S, symbols(x=utmE, y=utmN, circles=A_alces, inches=1/3, bg="royalblue3", fg="darkblue", 
+                main = "Total moose detections by camera station"))
+
+# WT deer
+with(S, symbols(x=utmE, y=utmN, circles=O_virginianus, inches=1/3, bg="royalblue3", fg="darkblue", 
+                main = "Total WT deer detections by camera station"))
