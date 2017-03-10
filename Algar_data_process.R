@@ -1,7 +1,7 @@
 ###########################
 # .RData Workspace in Algar_git
 # Started by Erin T., Feb 7, 2017
-# Code organization for Algar Camera Trap Data
+# Code for Algar Camera Trap Data Processing
 ############################
 
 ## Station Folders created (createStationFolders), Images already renamed (see camtrapR_imageRename.R)
