@@ -402,6 +402,7 @@ rec.spec <- recordTable(inDir                  = species_wd,
                             timeZone               = "Canada/Mountain",
                             metadataSpeciesTag     = "TriggerMode")
 
+write.csv(rec.spec, "sp_detect_recordTable.csv")
 
 ### Each event = 30 minutes after last record. MAKE recordTable with 
 ## deltaTimeComparedTo = lastIndependentRecord (30 minutes after last record of same species)
@@ -410,6 +411,7 @@ rec.spec <- recordTable(inDir                  = species_wd,
 
 ### NOTE: recordTable extracts 1 file from each independent event. This means that 
 ### it is used for getSpeciesImages, only 1 file is extracted from each event (1st ### file). Only a problem when multiple individuals are in one event (wolf pack)
+
 
 ###2. recordTableIndividual--> record table for one species (both getSpeciesImages and recordTableIndividual only take one species at a time)
 
@@ -532,6 +534,8 @@ S$utmE <- cams2015$utmE[match(row.names(S),cams2015$CamStation)]
 S$utmN <- cams2015$utmN[match(row.names(S),cams2015$CamStation)]
 
 S$Treatment <- cams2015$Treatment[match(row.names(S),cams2015$CamStation)]
+
+write.csv(S, "detectionCount_Station.csv")
 
 # plot spatial variation by station [note: need to specify species columns now that other variables added]
 with(S, symbols(x=utmE, y=utmN, circles=Total, inches=2/3, bg="royalblue3", fg="darkblue", 
