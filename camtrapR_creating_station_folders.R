@@ -75,6 +75,12 @@ TreatmentFoldercreate_Xtra<-createStationFolders("Xtra Timelapse Files/Treatment
 vignette("camtrapR")
 vignette
 
+### Creating station folders for shared Sync folder
+sync_2015.01_wd <- setwd("C:/Users/ETattersall/My Documents/Sync/Algar/2015.01")
+cams2015.01 <- cams2015$CamStation
+createStationFolders("Timelapse_files", 
+                     as.character(factor(cams2015.01)),
+                     createinDir=TRUE)
 
 
 
