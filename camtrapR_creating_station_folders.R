@@ -76,11 +76,13 @@ vignette("camtrapR")
 vignette
 
 ### Creating station folders for shared Sync folder
-sync_2015.01_wd <- setwd("C:/Users/ETattersall/My Documents/Sync/Algar/2015.01")
-cams2015.01 <- cams2015$CamStation
-createStationFolders("Timelapse_files", 
-                     as.character(factor(cams2015.01)),
-                     createinDir=TRUE)
+setwd(images_wd)
+cams2016 <- read.csv("AlgarCameraStations_Nov2016.csv", header = T)
+setwd("C:/Users/ETattersall/My Documents/Sync/Algar")
+cams2016.01 <- cams2016$CamStation
+createStationFolders(inDir       = "2016.01", 
+                     stations    = as.character(cams2016.01),
+                     createinDir = FALSE)
 
 
 
