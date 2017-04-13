@@ -70,11 +70,28 @@ tapply(S$Total,S$Treatment,mean)
 tapply(S$Total,S$Treatment,sd)
 t.test(S$Total~S$Treatment)
 
+## t = -0.99928, df = 19.572, p-value = 0.3299
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -44.55328  15.71994
+## sample estimates:
+## mean in group Control mean in group Site Prep Plant 
+## 37.16667                      51.58333 
+
 # richness
 boxplot(S$Richness~S$Treatment,cex.axis=1.3,ylab="Species Richness",cex.lab=1.6,col=c("orange","purple"),boxwex=0.6)
 tapply(S$Richness,S$Treatment,mean)
 tapply(S$Richness,S$Treatment,sd)
 t.test(S$Richness~S$Treatment)
+
+## data:  S$Richness by S$Treatment
+## t = -2.2385, df = 22, p-value = 0.03563
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -4.1740103 -0.1593231
+## sample estimates:
+##  mean in group Control mean in group Site Prep Plant 
+##   6.000000                      8.166667 
 
 # treatment effects by species
 
