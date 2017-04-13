@@ -4,6 +4,7 @@
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(camtrapR)
 
 ##Read in station data
 setwd(images_wd)
