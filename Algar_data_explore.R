@@ -17,3 +17,9 @@ ggplot(naive.plot, aes(x=Species)) + geom_bar()
 
 ### Can't get graphs to work yet. Gave up and did it in Excel :P
 
+### Photographic event rate = # detection events/ sampling effort (Sampling effort = Camera days)
+### Camera days = 8911
+## Event rate gives detections per camera day
+ev.rate <- sp.plot/8911
+ev.rate.plot <- data.frame(rev(sort(ev.rate)))
+sum(sp.plot) ## 1065
