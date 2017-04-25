@@ -26,7 +26,7 @@ rec.spec <- recordTable(inDir                  = species_wd,
                         metadataSpeciesTag     = "TriggerMode")
 
 ### Each event = 30 minutes after last record. MAKE recordTable with 
-## deltaTimeComparedTo = lastIndependentRecord (30 minutes after last record of same species)
+## deltaTimeComparedTo = lastIndependentRecord (30 minutes after last record of same individual)
 
 rec.spec.ind <- recordTable(inDir                  = species_wd,
                         IDfrom                 = "directory",
@@ -129,3 +129,13 @@ moose.tab <- recordTableIndividual(inDir = "Species_org_rec.spec.ind/A_alces",
                                     timeZone = "Canada/Mountain",
                                     writecsv = FALSE,
                                     additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
+
+
+#### Re-organizing individual record tables by date
+bear.date <- bear.tab[order(bear.tab$Date),]
+wolf.date <- wolf.tab[order(wolf.tab$Date),]
+coyote.date <- coyote.tab[order(coyote.tab$Date),]
+lynx.date <- lynx.tab[order(lynx.tab$Date),]
+caribou.date <- caribou.tab[order(caribou.tab$Date),]
+WTdeer.date <- WTdeer.tab[order(WTdeer.tab$Date),]
+moose.date <- moose.tab[order(moose.tab$Date),]
