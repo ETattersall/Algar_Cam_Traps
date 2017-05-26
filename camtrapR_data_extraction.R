@@ -1,4 +1,13 @@
-###### Image data extraction
+###### Image data extraction: recordTables and recordTableIndividual
+## Modified by Erin T. May 26, 2017
+
+## Number of total images
+length(list.files("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2015.01/Raw_images", pattern = "JPG", recursive = TRUE)) 
+## [1] 18036
+
+species_wd <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2015.01/Species_images"
+## Number of total species images 
+length(list.files(species_wd, pattern = "JPG", recursive = TRUE)) ## [1] 5662
 
 
 ###1. recordTable --> need it to run a number of different functions
@@ -11,12 +20,12 @@ grepl(exiftool_dir, Sys.getenv("PATH"))
 
 ##If you want to add other metadata to record table, 
 ##you can view metadata with exifTagNames, choose what to include
-species_wd <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images"
+
 exifTagNames(inDir = species_wd, whichSubDir = 1,
              returnMetadata = TRUE)
 
 
-
+### Each event = 30 minutes after last record ended.
 
 rec.spec <- recordTable(inDir                  = species_wd,
                         IDfrom                 = "directory",
@@ -25,8 +34,11 @@ rec.spec <- recordTable(inDir                  = species_wd,
                         timeZone               = "Canada/Mountain",
                         metadataSpeciesTag     = "TriggerMode")
 
-### Each event = 30 minutes after last record. MAKE recordTable with 
-## deltaTimeComparedTo = lastIndependentRecord (30 minutes after last record of same individual)
+## rec.spec = 2113 obs. of 11 variables
+
+## MAKE recordTable with 
+## deltaTimeComparedTo = lastIndependentRecord (first detection 30 min after last on began?)
+
 
 rec.spec.ind <- recordTable(inDir                  = species_wd,
                         IDfrom                 = "directory",
@@ -34,24 +46,31 @@ rec.spec.ind <- recordTable(inDir                  = species_wd,
                         deltaTimeComparedTo    = "lastIndependentRecord",
                         timeZone               = "Canada/Mountain",
                         metadataSpeciesTag     = "TriggerMode")
+## rec.spec.ind = 2121 obs. of 11 variables
                         
+### Compare to deltaTime of 60 minutes
 
-### Difference between rec.spec and rec.spec.ind MIGHT be due to an event being interrupted by a timelapse image triggered at noon rather than actually depicting individual events
-### Would be good to filter out timelapse images before building record tables?
+rec.spec60 <- recordTable(inDir                  = species_wd,
+                        IDfrom                 = "directory",
+                        minDeltaTime           = 60,
+                        deltaTimeComparedTo    = "lastRecord",
+                        timeZone               = "Canada/Mountain",
+                        metadataSpeciesTag     = "TriggerMode")
+## rec.spec60 = 2056 obs. of 11 variables (57 fewer detections than 30 minutes)
 
-rec.noTimelapse <- recordTable(inDir                  = species_wd,
-                               IDfrom                 = "directory",
-                               minDeltaTime           = 30,
-                               deltaTimeComparedTo    = "lastIndependentRecord",
-                               timeZone               = "Canada/Mountain",
-                               metadataSpeciesTag     = "TriggerMode")
+rec.spec.ind60 <- recordTable(inDir                  = species_wd,
+                            IDfrom                 = "directory",
+                            minDeltaTime           = 60,
+                            deltaTimeComparedTo    = "lastIndependentRecord",
+                            timeZone               = "Canada/Mountain",
+                            metadataSpeciesTag     = "TriggerMode")
+## rec.spec.ind60 = 2061 obs. of 11 variables
+
 
 
 
 #delta.time indicates time since last occurrance of that species at that site
 
-### NOTE: recordTable extracts 1 file from each independent event. This means that 
-### it is used for getSpeciesImages, only 1 file is extracted from each event (1st ### file). Only a problem when multiple individuals are in one event (wolf pack)
 
 ###2. recordTableIndividual--> record table for one species (both getSpeciesImages and recordTableIndividual only take one species at a time)
 
