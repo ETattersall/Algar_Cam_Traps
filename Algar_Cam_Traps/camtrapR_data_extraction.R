@@ -75,6 +75,7 @@ rec.spec.ind60 <- recordTable(inDir                = species_wd,
                             metadataSpeciesTag     = "TriggerMode")
 ## rec.spec.ind60 = 1035 obs. of 11 variables
 
+
 #### Moving forward use 30 minute intervals (consistent with our previous projects) and "lastRecord" for conservative detection count
 
 
