@@ -24,27 +24,58 @@ rec.spec <- recordTable(inDir                  = species_wd,
                         deltaTimeComparedTo    = "lastRecord",
                         timeZone               = "Canada/Mountain",
                         metadataSpeciesTag     = "TriggerMode")
+## rec.spec = 1057 obs. of 11 variables
 
-### Each event = 30 minutes after last record. MAKE recordTable with 
-## deltaTimeComparedTo = lastIndependentRecord (30 minutes after last record of same species)
+## Compare to 20 minutes
+rec.spec20 <- recordTable(inDir                  = species_wd,
+                        IDfrom                 = "directory",
+                        minDeltaTime           = 20,
+                        deltaTimeComparedTo    = "lastRecord",
+                        timeZone               = "Canada/Mountain",
+                        metadataSpeciesTag     = "TriggerMode")
+## rec.spec20 = 1071 obs. of 11 variables
 
-rec.spec.ind <- recordTable(inDir                  = species_wd,
+## Compare to 60 minutes 
+rec.spec60 <- recordTable(inDir                  = species_wd,
+                          IDfrom                 = "directory",
+                          minDeltaTime           = 60,
+                          deltaTimeComparedTo    = "lastRecord",
+                          timeZone               = "Canada/Mountain",
+                          metadataSpeciesTag     = "TriggerMode")
+## rec.spec60 = 1032 obs. of 11 variables
+
+
+### Each event = 30 minutes after last record. 
+## MAKE recordTable with deltaTimeComparedTo = lastIndependentRecord (30 minutes after first image in last detection)
+
+rec.spec.ind <- recordTable(inDir              = species_wd,
                         IDfrom                 = "directory",
                         minDeltaTime           = 30,
                         deltaTimeComparedTo    = "lastIndependentRecord",
                         timeZone               = "Canada/Mountain",
                         metadataSpeciesTag     = "TriggerMode")
+## rec.spec.ind = 1065 obs. of 11 variables
                         
+## Compare to 20 minutes
+rec.spec.ind20 <- recordTable(inDir                = species_wd,
+                            IDfrom                 = "directory",
+                            minDeltaTime           = 20,
+                            deltaTimeComparedTo    = "lastIndependentRecord",
+                            timeZone               = "Canada/Mountain",
+                            metadataSpeciesTag     = "TriggerMode")
+## rec.spec.ind20 = 1075 obs. of 11  variables
 
-### Difference between rec.spec and rec.spec.ind MIGHT be due to an event being interrupted by a timelapse image triggered at noon rather than actually depicting individual events
-### Would be good to filter out timelapse images before building record tables?
 
-rec.noTimelapse <- recordTable(inDir                  = species_wd,
-                               IDfrom                 = "directory",
-                               minDeltaTime           = 30,
-                               deltaTimeComparedTo    = "lastIndependentRecord",
-                               timeZone               = "Canada/Mountain",
-                               metadataSpeciesTag     = "TriggerMode")
+## Compare to 60 minutes
+rec.spec.ind60 <- recordTable(inDir                = species_wd,
+                            IDfrom                 = "directory",
+                            minDeltaTime           = 60,
+                            deltaTimeComparedTo    = "lastIndependentRecord",
+                            timeZone               = "Canada/Mountain",
+                            metadataSpeciesTag     = "TriggerMode")
+## rec.spec.ind60 = 1035 obs. of 11 variables
+
+#### Moving forward use 30 minute intervals (consistent with our previous projects) and "lastRecord" for conservative detection count
 
 
 
