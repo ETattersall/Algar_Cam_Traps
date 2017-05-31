@@ -44,3 +44,15 @@ Alg57_Rev <- csv_toReview %>%
 Rev_list <- rbind(Alg03_Rev, Alg10_Rev, Alg16_Rev, Alg20_Rev, Alg25_Rev, Alg27_Rev, Alg28_Rev, Alg34_Rev, Alg36_Rev, Alg37_Rev, Alg42_Rev, Alg45_Rev, Alg46_Rev, Alg47_Rev, Alg51_Rev, Alg57_Rev)
 
 write.csv(Rev_list, "Algar_ReviewFiles.csv")
+
+###########################################################################################################
+
+### Gathering all CSVs and merging into master CSV for 2016.01
+## Modifying from 'file_rename_csvs.R'
+## Started May 30, 2017 by Erin T.
+
+setwd("C:/Users/ETattersall/Documents/Sync/Algar")
+## I want to write a loop that will move the most updated csv (i.e. NOT those in the back up folders) into one CSV folder
+
+
+file.copy(from = , overwrite = FALSE, recursive = TRUE, copy.mode = TRUE, copy.date = TRUE)
