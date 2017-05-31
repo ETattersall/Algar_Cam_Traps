@@ -33,6 +33,7 @@ SpecFolderCreate1 <- createSpeciesFolders (inDir               = "Raw_images",
                                            removeFolders       = FALSE)
 
 ## Loop for organizing photos into species folders (1 station only)
+## After copying images into species folders, could try file.remove(pattern = "JPG", recursive = FALSE) to erase duplicates
 
 ## Algar 001
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Raw_images/Algar_001")
