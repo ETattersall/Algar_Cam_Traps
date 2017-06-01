@@ -1,6 +1,25 @@
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps")
+### Gathering all CSVs and merging into master CSV for 2016.01
+## Started May 30, 2017 by Erin T.
 
-file.rename("Algar_001.csv", "Algar_001_9Dec_2016.csv")
+setwd("C:/Users/ETattersall/Documents/Sync/Algar/2016.01")
+
+## Creating objects for csv original and destination folders
+csvs_2016.01 <- paste(cams2016.01, "csv", sep = ".")
+from_csvs <- paste(cams2016.01, csvs_2016.01, sep = "/")
+to_csvs <- paste("CSVs_2016.01", csvs_2016.01, sep = "/")
+
+### Copying csvs into one folder
+file.copy(from = from_csvs, to = to_csvs, overwrite = FALSE, recursive = TRUE, copy.mode = TRUE, copy.date = TRUE)
+## Removing csvs from original folder
+file.remove(from_csvs)
+
+############ Original Algar code (Dec. 9, 2016), modified for 2016.01 deployment (June 1, 2017)
+## Renaming CSVs with date
+setwd("C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01")
+n.name <- paste(cams2016.01,"01June_2017", sep = "_")
+name.csv <- paste(n.name, "csv", sep = ".")
+
+file.rename(csvs_2016.01,name.csv)
 
 
 ##############
@@ -47,12 +66,3 @@ write.csv(Rev_list, "Algar_ReviewFiles.csv")
 
 ###########################################################################################################
 
-### Gathering all CSVs and merging into master CSV for 2016.01
-## Modifying from 'file_rename_csvs.R'
-## Started May 30, 2017 by Erin T.
-
-setwd("C:/Users/ETattersall/Documents/Sync/Algar")
-## I want to write a loop that will move the most updated csv (i.e. NOT those in the back up folders) into one CSV folder
-
-
-file.copy(from = , overwrite = FALSE, recursive = TRUE, copy.mode = TRUE, copy.date = TRUE)
