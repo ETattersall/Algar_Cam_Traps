@@ -22,10 +22,10 @@ name.csv <- paste(n.name, "csv", sep = ".")
 file.rename(csvs_2016.01,name.csv)
 
 
-##############
+##OR do it this way
 
-
-startingDir<-"CSVs_12Dec_2016"
+getwd()
+startingDir<-"CSVs_2016.01"
 filez<-list.files(startingDir, full.names=TRUE)
 head(filez)
 
@@ -39,7 +39,8 @@ sapply(filez,FUN=function(eachPath){
 
 ##### Merging csvs ####
 library(plyr)
-setwd("CSVs_12Dec_2016")
+library(dplyr)
+setwd("CSVs_2016.01")
 
 ### rbind.fill (in plyr) merges csvs and fills missing columns with NA
 filenames <- list.files()
