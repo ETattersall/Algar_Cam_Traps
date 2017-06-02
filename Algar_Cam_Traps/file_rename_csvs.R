@@ -40,16 +40,16 @@ sapply(filez,FUN=function(eachPath){
 ##### Merging csvs ####
 library(plyr)
 library(dplyr)
-setwd("CSVs_2016.01")
+setwd("C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01")
 
 ### rbind.fill (in plyr) merges csvs and fills missing columns with NA
 filenames <- list.files()
-Alg_master <- do.call("rbind.fill", lapply(filenames, read.csv, header = TRUE))
+master.csv.2016.01 <- do.call("rbind.fill", lapply(filenames, read.csv, header = TRUE))
 
 ### rbind.fill (in plyr) merges csvs and fills missing columns with NA
 
 
-write.csv(Alg_master, "Algar_master_12Dec_2016.csv")
+write.csv(master.csv.2016.01, "2016.01CSVs_02June_2017.csv")
 
 
 ###checking csv's for files to review
