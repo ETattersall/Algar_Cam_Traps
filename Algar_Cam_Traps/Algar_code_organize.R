@@ -1,6 +1,6 @@
 ###########################
 # .RData Workspace in Algar_git
-# Started by Erin T., Feb 7, 2017
+# Started by Erin T., Feb 7, 2017...June 2, 2017 modified for 2016.01 deployment
 # Code organization for Algar Camera Trap Data
 ############################
 
@@ -12,20 +12,21 @@ library(dplyr)
 
 ####### Cole's code
 ### Load camera station data for the 24 cameras set in November 2015, checked in November 2016
+images_wd <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps"
 setwd(images_wd)
-cams2015 <- read.csv("Algar2015StationData.csv")
-with(cams2015,plot(utmE,utmN))
+cams2016 <- read.csv("Algar_stationdata.2016.01.csv")
+with(cams2016,plot(utmE,utmN))
 
 # specify folder with renamed images
-imgDir <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Raw_images" 
+imgDir <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Renamed_Images" 
 
 # check number of JPG images [this stuff isn't needed now that we have tagged images]
-length(list.files(imgDir, pattern = "JPG", recursive = TRUE)) # [1] 18036
+length(list.files(imgDir, pattern = "JPG", recursive = TRUE)) # [1] 30632 --> includes stations with misfiring cameras
 
 # try this for each station (Image count per Station)
-stations <- as.character(cams2015$CamStation)
-stationDir <- rep(NA,length(stations))
-stationDir <- paste("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Raw_images",stations,sep="/")
+stations <- as.character(cams2016$CamStation)
+
+stationDir <- paste("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Renamed_Images",stations,sep="/")
 
 stn.img <- rep(NA,length(stations))
 for (i in 1:length(stations)) {
@@ -34,11 +35,12 @@ for (i in 1:length(stations)) {
 sum(stn.img)
 
 # add to camera station table
-cams2015$img.cnt <- stn.img
+cams2016$img.cnt <- stn.img
 
 # tally survey effort
+### cams2016 is not updated CSV with retrieval info.
 
-camEff <- cameraOperation(cams2015, 
+camEff <- cameraOperation(cams2016, 
                           stationCol = "CamStation", 
                           setupCol = "DeployDate", 
                           retrievalCol = "CheckDate1", 
