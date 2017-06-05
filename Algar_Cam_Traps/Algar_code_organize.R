@@ -38,27 +38,40 @@ sum(stn.img)
 cams2016$img.cnt <- stn.img
 
 # tally survey effort
-### cams2016 is not updated CSV with retrieval info.
+### cams2016 is not updated CSV with retrieval info: RESOLVED (June 2), continued June 5
 
 camEff <- cameraOperation(cams2016, 
                           stationCol = "CamStation", 
-                          setupCol = "DeployDate", 
-                          retrievalCol = "CheckDate1", 
+                          setupCol = "CheckDate1", 
+                          retrievalCol = "CheckDate2",
                           hasProblems = FALSE,
                           dateFormat = "%d/%m/%Y", 
                           writecsv = FALSE)
 
 # total camera days
-sum(camEff,na.rm=T) # 8911
+sum(camEff,na.rm=T) #9612 --> Inaccurate because of malfunctioning cameras. Need to add "Problems" to CTtable to account for issues with 4 cameras
+
+## Added columns "Problem1_from" and "Problem1_to" to CTtable ('Algar_stationdata.2016.01.csv')
+
+camEff <- cameraOperation(cams2016, 
+                          stationCol = "CamStation", 
+                          setupCol = "CheckDate1", 
+                          retrievalCol = "CheckDate2",
+                          hasProblems = TRUE,
+                          dateFormat = "%d/%m/%Y", 
+                          writecsv = FALSE)
+
+sum(camEff,na.rm=T) ## 9025
 
 # days per station
-summary(rowSums(camEff,na.rm=T)) # median = 371, range = 370-373
+summary(rowSums(camEff,na.rm=T)) # median = 160, range = 4-162
 
 # add to camera station table
-cams2015$trapdays <- rowSums(camEff,na.rm=T)
+cams2016$trapdays <- rowSums(camEff,na.rm=T)
 
 # subtract days from total images for estimate of motion triggers [not needed, see image data below]
-cams2015$EstTrig <- cams2015$img.cnt - cams2015$trapdays
+## Not done for 2016.01 deployment
+cams2016$EstTrig <- cams2016$img.cnt - cams2016$trapdays
 
 # quick-and-dirty plot of number of motion triggers by treatment 
 boxplot(cams2015$EstTrig ~ cams2015$Treatment,col=c("orange","purple"),ylab="Number of Motion Triggers",
