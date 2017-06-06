@@ -81,49 +81,83 @@ boxplot(cams2015$EstTrig ~ cams2015$Treatment,col=c("orange","purple"),ylab="Num
 ################################
 
 ##### Erin's code
-### Merging csvs
+### Merging csvs (copied from script 'file_rename_csvs.R')
+
+setwd("C:/Users/ETattersall/Documents/Sync/Algar/2016.01")
+
+## Creating objects for csv original and destination folders
+csvs_2016.01 <- paste(cams2016.01, "csv", sep = ".")
+from_csvs <- paste(cams2016.01, csvs_2016.01, sep = "/")
+to_csvs <- paste("CSVs_2016.01", csvs_2016.01, sep = "/")
+
+### Copying csvs into one folder
+file.copy(from = from_csvs, to = to_csvs, overwrite = FALSE, recursive = TRUE, copy.mode = TRUE, copy.date = TRUE)
+## Removing csvs from original folder
+file.remove(from_csvs)
+
+############ Original Algar code (Dec. 9, 2016), modified for 2016.01 deployment (June 1, 2017)
+## Renaming CSVs with date
+setwd("C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01")
+n.name <- paste(cams2016.01,"01June_2017", sep = "_")
+name.csv <- paste(n.name, "csv", sep = ".")
+
+file.rename(csvs_2016.01,name.csv)
+
 library(plyr)
-setwd("ColeTimelapseExports12Dec2016")
+library(dplyr)
+setwd("C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01")
 
 ### rbind.fill (in plyr) merges csvs and fills missing columns with NA
 filenames <- list.files()
-Alg_master <- do.call("rbind.fill", lapply(filenames, read.csv, header = TRUE))
+master.csv.2016.01 <- do.call("rbind.fill", lapply(filenames, read.csv, header = TRUE))
 
 ### rbind.fill (in plyr) merges csvs and fills missing columns with NA
 
 
-write.csv(Alg_master, "Master_csv_Cole.csv")
+write.csv(master.csv.2016.01, "2016.01CSVs_02June_2017.csv") ### Needs to be edited to delete Algar49 wolf detection on 28/03/2017 (during malfunction period -- how?)
+
 
 #### Cole's code
 # check for NA's in counts (shouldn't be any)
-apply(apply(Alg_master[,14:31],2,is.na),2,sum)
+apply(apply(master.csv.2016.01[,"SpeciesCount", drop = F],2,is.na),2,sum) ## 3
+
 
 # need to fix NA values in species counts ... [missing values in csv files]
+## Searching for NA's
+master.csv.2016.01 %>% filter(is.na(SpeciesCount)) %>% select(File, Animal, Unknown, Species, SpeciesCount) 
 
-# how many photos are of animals 
-table(Alg_master$Animal)
-table(Alg_master$Trigger_Mode) 
+### Examine and edit where necessary
+fix(master.csv.2016.01, file = "2016.01CSVs_02June_2017.csv")
 
 
-# subset data to only animal photos that are not classified as unknown
-## Problem: only subsets for images with Animal == TRUE and not Animal == "true" So lots of images are lost
 ## Make all lowercase letters uppercase
 
-Alg_master <- data.frame(lapply(Alg_master, function(v) {
+master.csv.2016.01 <- data.frame(lapply(master.csv.2016.01, function(v) {
   if (is.character(v)) return(toupper(v))
   else return(v)
 })) 
 
+# how many photos are of animals 
+table(master.csv.2016.01$Animal) ##3041 animal images
+table(master.csv.2016.01$TriggerMode) ##5064
 
-A2 <- subset(Alg_master, Animal == TRUE & Unknown == FALSE)
+
+# subset data to only animal photos that are not classified as unknown
+
+
+A2 <- subset(master.csv.2016.01, Animal == TRUE & Unknown == FALSE)
 A2$X <- NULL
 
-# make a count variable for each detection
-A2$count <- apply(A2[,14:31],1,max, na.rm=T)
 
-# there are still a few zero counts to fix (should go back in csv files eventually ...)
-A2[which(A2$count==0),]
+# Checking for 0's in SpeciesCount
+A2.0counts <- A2[which(A2$SpeciesCount==0),] ## 3 passes and keeps coming up with new images. Shouldn't matter for recordTables but does to fix original data--> continue until A2.0counts = 0 obs.
 
+fix(master.csv.2016.01, file = "C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01/2016.01CSVs_02June_2017.csv")
+
+##Write fixed "SpeciesCount" data to new csv
+write.csv(master.csv.2016.01, "C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01/2016.01CSVs_05June_2017.csv")
+
+#############For old Algar Timelapse template #### Probably faster to use fix()
 # add missing counts of snowshoe hare for others (Algar16__2016-09-25__21-40-28(1).JPG and subsequent)
 A2[which(A2$count==0)[c(1:8)],"L_americanus"] <- 1
 
@@ -157,13 +191,15 @@ for(i in 1:nrow(A2)) {
   A2$Species[i] <- names(which.max(A2[i,14:31]))
 }
 
+################################# Old Timelapse Template dataframe stuff above
+
 # some summaries
-nrow(A2)
+nrow(A2) ### 3007 Animal images (including humans)
 
 table(A2$Species)
 
 # check the Other class
-A2$Other_specify[which(A2$Species=="Other")]
+A2$OtherSpecify[which(A2$Species=="Other")]
 A2[which(A2$Species=="Other"),]
 A2[which(A2$Species=="Other"),c(32,39)]
 ## 2 cougar events, 2 ermine, 1 unknown weasel species
