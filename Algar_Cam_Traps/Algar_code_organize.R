@@ -221,7 +221,9 @@ A2$OtherSpecify[which(A2$Species=="OTHER_BIRDS")] ## Grouse, greyjays, great gre
 table(A2$Folder)
 # Add Treatment to detections 
 
-A2$Treatment <- cams2016$TreatmentType[match(A2$Folder,cams2016$CamStation)]
+A2$Treatment <- cams2016$TreatmentType[match(A2$Folder,cams2016$CamStation)] ##Isn't working because Folders are upper case...
+##Try
+cams2016$CamStation <- toupper(cams2016$CamStation) ## Works now
 
 table(A2$Treatment)
 ###--- DETECTION RATE INDEX
