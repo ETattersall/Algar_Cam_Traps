@@ -935,11 +935,11 @@ write.csv(rec.spec, "2016.01_recordTable.csv")
 
 ####Folder of images organized by species
 setwd(species_wd)
-image_identify <- unique(rec.spec$Species)
+image_identify <- unique(rec.2016.01$Species)
 
 for (id in image_identify) {
   getSpeciesImages(species                 = id,
-                   recordTable             = rec.spec,
+                   recordTable             = rec.2016.01,
                    speciesCol              = "Species",
                    stationCol              = "Station",
                    outDir                  = "Species_org",
@@ -1017,8 +1017,39 @@ moose.tab <- recordTableIndividual(inDir = "Species_org/A_alces",
 ### mostly Cole's code
 
 ## No. of detections by species and station
-sp_detect <- rec.spec$Species
-st_detect <- rec.spec$Station
+sp_detect <- rec.2016.01$Species
+st_detect <- rec.2016.01$Station
+
+### Frequency histograms
+
+par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
+
+sp.plot <- rev(sort(table(sp_detect))) 
+xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,100))
+text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
+
+## Remove humans, mustelid spp and other birds (in the most roundabout way ever...)
+no.hum <- rec.2016.01[!rec.2016.01$Species == "H_sapiens", ]
+no.oth <- no.hum[!no.hum$Species == "Mustelid spp", ]
+ani.rec <- no.mus[!no.mus$Species == "Other_birds", ]
+
+sp_detect <- ani.rec$Species
+st_detect <- ani.rec$Station
+
+### Frequency histograms
+
+par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
+
+sp.plot <- rev(sort(table(sp_detect))) 
+xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,100))
+text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
+
+###########Do same for 2015.01 deployment, i.e. removing humans and other birds
+no.hum <- rec.spec[!rec.spec$Species == "H_sapiens", ]
+ani.2015 <- no.hum[!no.hum$Species == "Other_birds", ]
+
+sp_detect <- ani.2015$Species
+st_detect <- ani.2015$Station
 
 ### Frequency histograms
 
@@ -1027,6 +1058,7 @@ par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
 sp.plot <- rev(sort(table(sp_detect))) 
 xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,250))
 text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
+
 
 # create Site x Species matrix
 S <- as.data.frame.matrix(table(st_detect,sp_detect))
