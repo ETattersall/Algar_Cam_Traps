@@ -1099,13 +1099,13 @@ with(S, symbols(x=utmE, y=utmN, circles=Richness, inches=1/3, bg="royalblue3", f
 
 # look at detections relative to treatment [quick-and-dirty for exploration, not really appropriate tests]
 # total detections
-boxplot(S$Total~S$Treatment,cex.axis=1.3,ylab="Total detections",cex.lab=1.6,col=c("orange","purple"),boxwex=0.6)
+boxplot(S$Total~S$Treatment,cex.axis=1.3,ylab="Total detections",cex.lab=1.6,col=c("royalblue","orange","green", "red"),boxwex=0.6)
 tapply(S$Total,S$Treatment,mean)
 tapply(S$Total,S$Treatment,sd)
 t.test(S$Total~S$Treatment)
 
 # richness
-boxplot(S$Richness~S$Treatment,cex.axis=1.3,ylab="Species Richness",cex.lab=1.6,col=c("orange","purple"),boxwex=0.6)
+boxplot(S$Richness~S$Treatment,cex.axis=1.3,ylab="Species Richness",cex.lab=1.6,col=c("royalblue","orange","green", "red"),boxwex=0.6)
 tapply(S$Richness,S$Treatment,mean)
 tapply(S$Richness,S$Treatment,sd)
 t.test(S$Richness~S$Treatment)
