@@ -902,24 +902,27 @@ grepl(exiftool_dir, Sys.getenv("PATH"))
 
 ##If you want to add other metadata to record table, 
 ##you can view metadata with exifTagNames, choose what to include
-species_wd <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images"
+species_wd <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images"
 exifTagNames(inDir = species_wd, whichSubDir = 1,
              returnMetadata = TRUE)
 
 
 
 
-rec.spec <- recordTable(inDir                  = species_wd,
+rec.2016.01 <- recordTable(inDir                  = species_wd,
                             IDfrom                 = "directory",
                             minDeltaTime           = 30,
-                            deltaTimeComparedTo    = "lastIndependentRecord",
+                            deltaTimeComparedTo    = "lastRecord",
                             timeZone               = "Canada/Mountain",
                             metadataSpeciesTag     = "TriggerMode")
 
-write.csv(rec.spec, "sp_detect_recordTable.csv")
+
+
+
+write.csv(rec.spec, "2016.01_recordTable.csv")
 
 ### Each event = 30 minutes after last record. MAKE recordTable with 
-## deltaTimeComparedTo = lastIndependentRecord (30 minutes after last event began)
+## deltaTimeComparedTo = lastRecord (30 minutes after last event ended)
 
 #delta.time indicates time since last occurrance of that species at that site
 
