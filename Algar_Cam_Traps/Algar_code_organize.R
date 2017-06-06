@@ -121,6 +121,7 @@ write.csv(x2016.01, "2016.01CSVs_06June_2017.csv") ### Needs to be edited to del
 class(x2016.01$File)
 class(x2016.01$Animal)
 ### Coerce File names to factors (to prevent it from being affected by turning all characters upper case later)
+### Need Folders to be factors too!!!
 x2016.01$File <- as.factor(x2016.01$File)
 class(x2016.01$File)
 
@@ -1044,7 +1045,7 @@ sp.plot <- rev(sort(table(sp_detect)))
 xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,100))
 text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
 
-###########Do same for 2015.01 deployment, i.e. removing humans and other birds
+###########Do same for 2015.01 deployment, i.e. removing humans and other birds#######################
 no.hum <- rec.spec[!rec.spec$Species == "H_sapiens", ]
 ani.2015 <- no.hum[!no.hum$Species == "Other_birds", ]
 
@@ -1058,9 +1059,12 @@ par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
 sp.plot <- rev(sort(table(sp_detect))) 
 xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,250))
 text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
-
+###################################################################################
 
 # create Site x Species matrix
+sp_detect <- ani.rec$Species
+ani.rec$Station <- toupper(ani.rec$Station) ### Need to do to match CamStations in cam2016
+st_detect <- ani.rec$Station
 S <- as.data.frame.matrix(table(st_detect,sp_detect))
 
 # species totals to compare with table(sp_detect)
@@ -1068,23 +1072,23 @@ apply(S,2,sum)
 # number of sites per species
 sp.sites <- apply(S,2,function(x) sum(ifelse(x>0,1,0)))
 sp.plot2 <- rev(sort(sp.sites)) 
-xvals <- barplot(sp.plot2,names.arg = NA,col="royalblue4",ylab = "Number of sites",cex.lab=1.5)
+xvals <- barplot(sp.plot2,names.arg = NA,col="royalblue4",ylab = "Number of sites",cex.lab=1.5, ylim=c(0,30))
 text(xvals,par("usr")[3]-0.25,srt=45,adj=1,labels=names(sp.plot2),xpd=TRUE)
 
 # add total count and total species (richness) for each site
 S$Total <- apply(S,1,sum)
 
-S$Richness <- apply(S[,1:17],1,function(x) sum(ifelse(x>0,1,0)))
+S$Richness <- apply(S[,1:14],1,function(x) sum(ifelse(x>0,1,0)))
 ## Edit to Cole's code: S$Richness included total in Richness count. Adding [,1:17] to specify counting only species 
 ## columns
 
 # add coordinates and treatment to dataframe
-S$utmE <- cams2015$utmE[match(row.names(S),cams2015$CamStation)]
-S$utmN <- cams2015$utmN[match(row.names(S),cams2015$CamStation)]
+S$utmE <- cams2016$utmE[match(row.names(S),cams2016$CamStation)]
+S$utmN <- cams2016$utmN[match(row.names(S),cams2016$CamStation)]
 
-S$Treatment <- cams2015$Treatment[match(row.names(S),cams2015$CamStation)]
-
-write.csv(S, "detectionCount_Station.csv")
+S$Treatment <- cams2016$TreatmentType[match(row.names(S),cams2016$CamStation)]
+setwd(images_wd)
+write.csv(S, "2016.01/detectionsByStation.csv")
 
 # plot spatial variation by station [note: need to specify species columns now that other variables added]
 with(S, symbols(x=utmE, y=utmN, circles=Total, inches=2/3, bg="royalblue3", fg="darkblue", 
