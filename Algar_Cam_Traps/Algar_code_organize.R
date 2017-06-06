@@ -154,6 +154,8 @@ table(x2016.01$Animal) ##3044 animal images
 table(x2016.01$TriggerMode) ##5064
 
 
+
+
 # subset data to only animal photos that are not classified as unknown
 
 
@@ -215,6 +217,9 @@ A2$OtherSpecify[which(A2$Species=="OTHER")]
 A2 %>% filter(Species == "OTHER") %>% select(File,Species,Unknown, Review,OtherSpecify,SpeciesCount, Comments) ##Reviewed wolf
 #fix
 fix(x2016.01, file = "C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01/2016.01CSVs_06June_2017.csv")
+
+##Done working with x2016.01. Write to csv
+write.csv(x2016.01,"2016.01CSVs_06June_2017.csv")
 
 A2$OtherSpecify[which(A2$Species=="OTHER_BIRDS")] ## Grouse, greyjays, great grey owl
 
