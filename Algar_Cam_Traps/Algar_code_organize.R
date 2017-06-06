@@ -14,7 +14,7 @@ library(dplyr)
 ### Load camera station data for the 24 cameras set in November 2015, checked in November 2016
 images_wd <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps"
 setwd(images_wd)
-cams2016 <- read.csv("Algar_stationdata.2016.01.csv")
+cams2016 <- read.csv("ALGAR_stationdata.2016.01.csv")
 with(cams2016,plot(utmE,utmN))
 
 # specify folder with renamed images
@@ -106,7 +106,7 @@ file.rename(csvs_2016.01,name.csv)
 library(plyr)
 library(dplyr)
 setwd("C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01")
-Algar08_2016.01 <- read.csv("Algar08_01June_2017.csv")
+Algar08_2016.01 <- read.csv("ALGAR08_01June_2017.csv")
 
 ### rbind.fill (in plyr) merges csvs and fills missing columns with NA
 filenames <- list.files()
@@ -253,8 +253,9 @@ A2$StudyDay <- floor(as.numeric(difftime(max(A2$Date.Time),min(A2$Date.Time),uni
 ## Starting with A2, which has a count column and Species column
 
 #### Vectors of all species to input into loop
+unique(A2$Species)
 
-species <- c("O_virginianus","R_tarandus", "C_elavus", "A_alces", "C_lupus", "C_latrans", "U_americanus", "L_canadensis", "G_gulo", "M_americana", "M_pennanti", "V_vulpes", "T_hudsonicus", "L_americanus", "H_sapiens", "G_canadensis", "Other_birds", "Other")
+species <- as.character(unique(A2$Species))
 
 
 ### Duplicate Raw_images folder and rename it "Species_images" (Did this manually...)
@@ -265,182 +266,623 @@ setwd(images_wd)
 
 ### Create species folders in duplicated folder
 
-SpecFolderCreate1 <- createSpeciesFolders (inDir               = "Species_images",
+SpecFolderCreate1 <- createSpeciesFolders (inDir               = "2016.01/Species_Images",
                                            species             = species,
-                                           hasCameraFolders = FALSE,
+                                           hasCameraFolders    = FALSE,
                                            removeFolders       = FALSE)
 
 
 
 ###Code works for looping all species in one folder, for now just repeat this 24 times (Can select all and run at once)
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar1")
+## Loop for organizing photos into species folders (1 station only)
+##Still have to remove other images from each folder manually...ALSO removed wolf photo from Algar49 during misfiring period
+
+
+## Algar 01
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar01")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar1") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR01" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+} 
+
+## Algar 02
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar02")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR02" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar2")
+
+## Algar 03
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar03")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar2") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR03" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar3")
+
+## Algar 04
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar04")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar3") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR04" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar4")
+############################################### RUN 12:42PM JUNE 6, 2017
+## Algar 05
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar05")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar4") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR05" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar5")
+
+## Algar 06
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar06")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar5") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR06" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar6")
+
+## Algar 07
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar07")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar6") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR07" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar7")
+
+## Algar 08
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar08")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar7") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR08" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar8")
+
+## Algar 09
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar09")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar8") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR09" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar9")
+
+## Algar 10
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar10")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar9") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR10" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar10")
+
+## Algar 11
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar11")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar10") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR11" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar11")
+
+## Algar 12
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar12")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar11") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR12" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar12")
+
+## Algar 13
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar13")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar12") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR13" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar13")
+
+## Algar 14
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar14")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar13") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR14" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar14")
+
+## Algar 15
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar15")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar14") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR15" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar15")
+
+## Algar 16
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar16")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar15") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR16" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar16")
+
+## Algar 17
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar17")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar16") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR17" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar17")
+
+## Algar 18
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar18")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar17") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR18" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar18")
+
+## Algar 19
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar19")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar18") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR19" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar19")
+
+## Algar 20
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar20")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar19") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR20" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar20")
+
+## Algar 21
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar21")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar20") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR21" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar21")
+
+## Algar 22
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar22")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar21") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR22" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar22")
+
+## Algar 23
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar23")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar22") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR23" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar23")
+
+## Algar 24
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar24")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar23") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR24" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Species_images/Algar24")
+
+## Algar 25
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar25")
 for (sp in species) {
-  sp_x_fol <- A2 %>% filter(Species == sp & Folder == "Algar24") %>% 
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR25" & Species == sp) %>% 
     select(File)
-  vec_sp_fol <- unlist(sp_x_fol)
+  vec_sp_fol <- unlist(f_sp_fol)
   copySpeciesFiles <- file.copy(vec_sp_fol, sp)
 }
+
+## Algar 26
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar26")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR26" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 27
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar27")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR27" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 28
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar28")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR28" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 29
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar29")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR29" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 30
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar30")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR30" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 31
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar31")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR31" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 32
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar32")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR32" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 33
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar33")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR33" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 34
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar34")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR34" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 35
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar35")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR35" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 36
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar36")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR36" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 37
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar37")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR37" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 38
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar38")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR38" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 39
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar39")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR39" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 40
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar40")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR40" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+
+## Algar 41
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar41")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR41" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 42
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar42")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR42" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 43
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar43")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR43" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 44
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar44")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR44" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 45
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar45")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR45" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 46
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar46")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR46" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 47
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar47")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR47" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 48
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar48")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR48" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 49
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar49")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR49" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 50
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar50")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR50" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 51
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar51")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR51" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 52
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar52")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR52" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 53
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar53")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR53" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 54
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar54")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR54" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 55
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar55")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR55" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+
+## Algar 56
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar56")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR56" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 57
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar57")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR57" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 58
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar58")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR58" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 59
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar59")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR59" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+## Algar 60
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Species_Images/Algar60")
+for (sp in species) {
+  f_sp_fol <- A2 %>%
+    filter(Folder == "ALGAR60" & Species == sp) %>% 
+    select(File)
+  vec_sp_fol <- unlist(f_sp_fol)
+  copySpeciesFiles <- file.copy(vec_sp_fol, sp)
+}
+
+
+
+
 
 setwd(images_wd)
 
