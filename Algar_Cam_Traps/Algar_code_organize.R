@@ -106,56 +106,67 @@ file.rename(csvs_2016.01,name.csv)
 library(plyr)
 library(dplyr)
 setwd("C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01")
+Algar08_2016.01 <- read.csv("Algar08_01June_2017.csv")
 
 ### rbind.fill (in plyr) merges csvs and fills missing columns with NA
 filenames <- list.files()
-master.csv.2016.01 <- do.call("rbind.fill", lapply(filenames, read.csv, header = TRUE))
+x2016.01 <- do.call("rbind.fill", lapply(filenames, read.csv, header = TRUE, stringsAsFactors = FALSE)) #### stringsAsFactors req. to prevent comments (character class) from turning into integer class
 
 ### rbind.fill (in plyr) merges csvs and fills missing columns with NA
 
 
-write.csv(master.csv.2016.01, "2016.01CSVs_02June_2017.csv") ### Needs to be edited to delete Algar49 wolf detection on 28/03/2017 (during malfunction period -- how?)
+write.csv(x2016.01, "2016.01CSVs_06June_2017.csv") ### Needs to be edited to delete Algar49 wolf detection on 28/03/2017 (during malfunction period -- how?)
 
+## Checking data classes
+class(x2016.01$File)
+class(x2016.01$Animal)
+### Coerce File names to factors (to prevent it from being affected by turning all characters upper case later)
+x2016.01$File <- as.factor(x2016.01$File)
+class(x2016.01$File)
 
 #### Cole's code
-# check for NA's in counts (shouldn't be any)
-apply(apply(master.csv.2016.01[,"SpeciesCount", drop = F],2,is.na),2,sum) ## 3
 
-
-# need to fix NA values in species counts ... [missing values in csv files]
-## Searching for NA's
-master.csv.2016.01 %>% filter(is.na(SpeciesCount)) %>% select(File, Animal, Unknown, Species, SpeciesCount) 
-
-### Examine and edit where necessary
-fix(master.csv.2016.01, file = "2016.01CSVs_02June_2017.csv")
-
-
-## Make all lowercase letters uppercase
-
-master.csv.2016.01 <- data.frame(lapply(master.csv.2016.01, function(v) {
+## Make all lowercase letters uppercase for true/false data only!!!
+## THIS function makes all characters Upper case
+x2016.01 <- data.frame(lapply(x2016.01, function(v) {
   if (is.character(v)) return(toupper(v))
   else return(v)
 })) 
 
+
+
+
+# check for NA's in counts (shouldn't be any)
+apply(apply(x2016.01[,"SpeciesCount", drop = F],2,is.na),2,sum) ## 3
+
+
+# need to fix NA values in species counts ... [missing values in csv files]
+## Searching for NA's
+x2016.01 %>% filter(is.na(SpeciesCount)) %>% select(File, Animal, Unknown, Species, SpeciesCount) 
+
+### Examine and edit where necessary
+fix(x2016.01, file = "2016.01CSVs_06June_2017.csv")
+
+
+
 # how many photos are of animals 
-table(master.csv.2016.01$Animal) ##3041 animal images
-table(master.csv.2016.01$TriggerMode) ##5064
+table(x2016.01$Animal) ##3044 animal images
+table(x2016.01$TriggerMode) ##5064
 
 
 # subset data to only animal photos that are not classified as unknown
 
 
-A2 <- subset(master.csv.2016.01, Animal == TRUE & Unknown == FALSE)
+A2 <- subset(x2016.01, Animal == TRUE & Unknown == FALSE)
 A2$X <- NULL
 
 
 # Checking for 0's in SpeciesCount
-A2.0counts <- A2[which(A2$SpeciesCount==0),] ## 3 passes and keeps coming up with new images. Shouldn't matter for recordTables but does to fix original data--> continue until A2.0counts = 0 obs.
+A2.0counts <- A2[which(A2$SpeciesCount==0),] ## 40 Counts. Fix manually
 
-fix(master.csv.2016.01, file = "C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01/2016.01CSVs_02June_2017.csv")
+fix(x2016.01, file = "C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01/2016.01CSVs_06June_2017.csv")
 
-##Write fixed "SpeciesCount" data to new csv
-write.csv(master.csv.2016.01, "C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01/2016.01CSVs_05June_2017.csv")
+
 
 #############For old Algar Timelapse template #### Probably faster to use fix()
 # add missing counts of snowshoe hare for others (Algar16__2016-09-25__21-40-28(1).JPG and subsequent)
@@ -199,15 +210,18 @@ nrow(A2) ### 3007 Animal images (including humans)
 table(A2$Species)
 
 # check the Other class
-A2$OtherSpecify[which(A2$Species=="Other")]
-A2[which(A2$Species=="Other"),]
-A2[which(A2$Species=="Other"),c(32,39)]
-## 2 cougar events, 2 ermine, 1 unknown weasel species
+A2$OtherSpecify[which(A2$Species=="OTHER")] 
+
+A2 %>% filter(Species == "OTHER") %>% select(File,Species,Unknown, Review,OtherSpecify,SpeciesCount, Comments) ##Reviewed wolf
+#fix
+fix(x2016.01, file = "C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01/2016.01CSVs_06June_2017.csv")
+
+A2$OtherSpecify[which(A2$Species=="OTHER_BIRDS")] ## Grouse, greyjays, great grey owl
 
 table(A2$Folder)
 # Add Treatment to detections 
 
-A2$Treatment <- cams2015$Treatment[match(A2$Folder,cams2015$CamStation)]
+A2$Treatment <- cams2016$TreatmentType[match(A2$Folder,cams2016$CamStation)]
 
 table(A2$Treatment)
 ###--- DETECTION RATE INDEX
