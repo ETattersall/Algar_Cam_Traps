@@ -1113,14 +1113,14 @@ t.test(S$Richness~S$Treatment)
 # treatment effects by species
 
 # caribou
-boxplot(S$R_tarandus~S$Treatment,cex.axis=1.3,ylab="Caribou detections",cex.lab=1.6,col=c("orange","purple"),boxwex=0.6)
+boxplot(S$R_tarandus~S$Treatment,cex.axis=1.3,ylab="Caribou detections",cex.lab=1.6,col=c("royalblue","orange","green", "red"),boxwex=0.6)
 tapply(S$R_tarandus,S$Treatment,mean)
 tapply(S$R_tarandus,S$Treatment,sd)
 tapply(S$R_tarandus,S$Treatment,median)
 t.test(S$R_tarandus~S$Treatment)
 
 # wolf
-boxplot(S$C_lupus~S$Treatment,cex.axis=1.3,ylab="Wolf detections",cex.lab=1.6,col=c("orange","purple"),boxwex=0.6)
+boxplot(S$C_lupus~S$Treatment,cex.axis=1.3,ylab="Wolf detections",cex.lab=1.6,col=c("royalblue","orange","green", "red"),boxwex=0.6)
 tapply(S$C_lupus,S$Treatment,mean)
 tapply(S$C_lupus,S$Treatment,sd)
 t.test(S$C_lupus~S$Treatment)
@@ -1135,14 +1135,14 @@ t.test(S$U_americanus~S$Treatment)
 
 # deer
 boxplot(S$O_virginianus~S$Treatment,cex.axis=1.3,ylab="White-tailed deer detections",cex.lab=1.6,
-        col=c("orange","purple"),boxwex=0.6)
+        col=c("royalblue","orange","green", "red"),boxwex=0.6)
 tapply(S$O_virginianus,S$Treatment,mean)
 tapply(S$O_virginianus,S$Treatment,sd)
 tapply(S$O_virginianus,S$Treatment,median)
 t.test(S$O_virginianus~S$Treatment)
 
 # moose
-boxplot(S$A_alces~S$Treatment,cex.axis=1.3,ylab="Moose detections",cex.lab=1.6,col=c("orange","purple"),boxwex=0.6)
+boxplot(S$A_alces~S$Treatment,cex.axis=1.3,ylab="Moose detections",cex.lab=1.6,col=c("royalblue","orange","green", "red"),boxwex=0.6)
 tapply(S$A_alces,S$Treatment,mean)
 tapply(S$A_alces,S$Treatment,sd)
 tapply(S$A_alces,S$Treatment,median)
@@ -1176,3 +1176,12 @@ with(S, symbols(x=utmE, y=utmN, circles=A_alces, inches=1/3, bg="royalblue3", fg
 # WT deer
 with(S, symbols(x=utmE, y=utmN, circles=O_virginianus, inches=1/3, bg="royalblue3", fg="darkblue", 
                 main = "Total WT deer detections by camera station"))
+
+
+
+
+
+################## Basic summary stat comparisons
+summary(ani.rec$Species)
+table(ani.rec$Species)
+table(ani.2015$Species)
