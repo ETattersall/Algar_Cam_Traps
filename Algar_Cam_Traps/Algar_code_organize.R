@@ -14,7 +14,7 @@ library(dplyr)
 ### Load camera station data for the 24 cameras set in November 2015, checked in November 2016
 images_wd <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps"
 setwd(images_wd)
-cams2016 <- read.csv("ALGAR_stationdata.2016.01.csv")
+cams2016 <- read.csv("Algar_stationdata.2016.01.csv")
 with(cams2016,plot(utmE,utmN))
 
 # specify folder with renamed images
