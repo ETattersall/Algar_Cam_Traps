@@ -132,13 +132,13 @@ camEff <- cameraOperation(cams2015,
 # total camera days
 sum(camEff,na.rm=T) ## 4009 in winter
 
-(sum(win2015$R_tarandus)/4009)*1000 ## 2.43 caribou detections per 1000 trap days
-(sum(win2015$C_lupus)/4009)*1000 ## 10.19 wolves
-(sum(win2015$U_americanus)/4009)*1000 ## 0.33 black bears
-(sum(win2015$O_virginianus)/4009)*1000 ## 10.97 white-tailed deer
-(sum(win2015$A_alces)/4009)*1000 ## 4.99 moose
-(sum(win2015$C_latrans)/4009)*1000 ## 5.21 coyote
-(sum(win2015$L_canadensis)/4009)*1000 ## 2.99 lynx
+(sum(win2015$R_tarandus)/4009)*1000 ## 1.75 caribou detections per 1000 trap days
+(sum(win2015$C_lupus)/4009)*1000 ## 8.23 wolves
+(sum(win2015$U_americanus)/4009)*1000 ## 0.25 black bears
+(sum(win2015$O_virginianus)/4009)*1000 ## 19.21 white-tailed deer
+(sum(win2015$A_alces)/4009)*1000 ## 3.24 moose
+(sum(win2015$C_latrans)/4009)*1000 ## 5.49 coyote
+(sum(win2015$L_canadensis)/4009)*1000 ## 3.74 lynx
 
 
 ### Separate summer data
@@ -167,12 +167,44 @@ camEff <- cameraOperation(cams2015,
 # total camera days
 sum(camEff,na.rm=T) ## 4926 in summer
 
-(sum(summer2016$R_tarandus)/4926)*1000 ## 2.43 caribou detections per 1000 trap days
-(sum(summer2016$C_lupus)/4926)*1000 ## 10.19 wolves
-(sum(summer2016$U_americanus)/4926)*1000 ## 0.33 black bears
-(sum(summer2016$O_virginianus)/4926)*1000 ## 10.97 white-tailed deer
-(sum(summer2016$A_alces)/4926)*1000 ## 4.99 moose
-(sum(summer2016$C_latrans)/4926)*1000 ## 5.21 coyote
-(sum(summer2016$L_canadensis)/4926)*1000 ## 2.99 lynx
+(sum(summer2016$R_tarandus)/4926)*1000 ## 7.51 caribou detections per 1000 trap days
+(sum(summer2016$C_lupus)/4926)*1000 ## 13.40 wolves
+(sum(summer2016$U_americanus)/4926)*1000 ## 29.84 black bears
+(sum(summer2016$O_virginianus)/4926)*1000 ## 33.90 white-tailed deer
+(sum(summer2016$A_alces)/4926)*1000 ## 3.86 moose
+(sum(summer2016$C_latrans)/4926)*1000 ## 5.89 coyote
+(sum(summer2016$L_canadensis)/4926)*1000 ## 3.25 lynx
 
+########## Detections at first 24 cameras in 2016.01
+f24Stat <- cams2016[1:24,]
+camEff <- cameraOperation(f24Stat, 
+                          stationCol = "CamStation", 
+                          setupCol = "CheckDate1", 
+                          retrievalCol = "CheckDate2",
+                          hasProblems = TRUE,
+                          dateFormat = "%d/%m/%Y", 
+                          writecsv = FALSE)
+
+sum(camEff,na.rm=T) ## 3559
+
+f24 <- f24Stat$CamStation
+win2016.f24 <- ani.rec[1:167,] ## For some reason it subsetted a few extra rows of Algar25....
+win2016.f24 <- win2016[!win2016$Station == "ALGAR25", ]
+win2016.f24 <- win2016.f24[order(win2016.f24$Date),]
+
+sp_detect <- win2016.f24$Species
+st_detect <- win2016.f24$Station
+f24.2016.01 <- as.data.frame.matrix(table(st_detect,sp_detect)) 
+
+f24.2016.01$Total <- apply(f24.2016.01,1,sum)
+
+f24.2016.01$Richness <- apply(f24.2016.01[,1:12],1,function(x) sum(ifelse(x>0,1,0)))
+
+(sum(f24.2016.01$R_tarandus)/3559)*1000 ## 1.97 caribou detections per 1000 trap days
+(sum(f24.2016.01$C_lupus)/3559)*1000 ## 8.71 wolves
+(sum(f24.2016.01$U_americanus)/3559)*1000 ## 0.56 black bears
+(sum(f24.2016.01$O_virginianus)/3559)*1000 ## 13.49 white-tailed deer
+(sum(f24.2016.01$A_alces)/3559)*1000 ## 2.25 moose
+(sum(f24.2016.01$C_latrans)/3559)*1000 ## 6.74 coyote
+(sum(f24.2016.01$L_canadensis)/3559)*1000 ## 3.09 lynx
 
