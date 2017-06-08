@@ -934,20 +934,22 @@ write.csv(rec.spec, "2016.01_recordTable.csv")
 ###2. recordTableIndividual--> record table for one species (both getSpeciesImages and recordTableIndividual only take one species at a time)
 
 
-####Folder of images organized by species
-setwd(species_wd)
-image_identify <- unique(rec.2016.01$Species)
+####Folder of images organized by species (still 2015.01 deployment)
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2015.01")
+image_identify <- unique(rec.spec$Species)
 
 for (id in image_identify) {
   getSpeciesImages(species                 = id,
-                   recordTable             = rec.2016.01,
+                   recordTable             = rec.spec,
                    speciesCol              = "Species",
                    stationCol              = "Station",
                    outDir                  = "Species_org",
                    createStationSubfolders = TRUE)
 }
 
-
+exiftool_dir<-"C:/Users/ETattersall/Desktop"
+exiftoolPath(exiftoolDir = exiftool_dir) 
+grepl(exiftool_dir, Sys.getenv("PATH"))
 
 bear.tab <- recordTableIndividual(inDir = "Species_org/U_americanus",
                                   hasStationFolders = TRUE,
