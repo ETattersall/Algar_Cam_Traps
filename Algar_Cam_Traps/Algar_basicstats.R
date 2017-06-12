@@ -208,3 +208,27 @@ f24.2016.01$Richness <- apply(f24.2016.01[,1:12],1,function(x) sum(ifelse(x>0,1,
 (sum(f24.2016.01$C_latrans)/3559)*1000 ## 6.74 coyote
 (sum(f24.2016.01$L_canadensis)/3559)*1000 ## 3.09 lynx
 
+######## Counting Animal images in 2015.01 (again) ####
+### Discrepancies in  case for True/False
+class(x2015.01$File)
+class(x2015.01$Folder)
+class(x2015.01$Animal)
+class(x2015.01$Unknown)
+
+
+### all factors
+### Coerce True/Falses into characters (just Animal and Unknown for now)
+x2015.01$Animal <- as.character(x2015.01$Animal)
+x2015.01$Unknown <- as.character(x2015.01$Unknown)
+
+x2015.01 <- data.frame(lapply(x2015.01, function(v) {
+  if (is.character(v)) return(toupper(v))
+  else return(v)
+})) 
+table(x2015.01$Animal)
+table(x2015.01$Unknown)
+apply(apply(x2015.01[,15:32],2,is.na),2,sum) ## 3
+
+
+A1 <- subset(x2015.01, Animal == TRUE & Unknown == FALSE)
+A1$X <- NULL
