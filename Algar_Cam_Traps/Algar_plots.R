@@ -48,3 +48,39 @@ sp.1 <- ani.2015.cougar$Species
 sp.plot1 <- rev(sort(table(sp.1)))
 sp.plot1 <- as.data.frame(sp.plot1)
 ggplot(data = sp.plot1, aes(x = sp.1, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) 
+
+### Naive occupancy (# sites species observed at/total sites)
+
+##For each species, make object occ.species (to be gathered into table later)
+## 2016
+
+### Naive occupancy loop
+sp7 <- c("R_tarandus","C_lupus", "U_americanus", "O_virginianus", "A_alces", "C_latrans", "L_canadensis")
+naiv.occ <- NULL
+
+for (sp in sp7) {
+  spat <- as.data.frame(table(ani.rec[ani.rec$Species == sp, "Station"]))
+  stp <- spat %>% filter(Freq > 0)
+  naiv.occ[sp] <- nrow(stp)/60
+}
+naiv.occ <- as.data.frame(naiv.occ)
+
+## Relative abundance loop (# detections/1000TD)
+rel.ab <- NULL
+for (sp in sp7) {
+  spat <- as.data.frame(table(ani.rec[ani.rec$Species == sp, "Station"]))
+  stp <- spat %>% filter(Freq > 0)
+  rel.ab[sp] <- (sum(stp$Freq)/9025)*1000
+  }
+rel.ab <- as.data.frame(rel.ab)
+
+## Data frame of naive occupancy and relative abundance
+desc2016 <- cbind(naiv.occ, rel.ab, deparse.level = 1)
+desc2016$Species <- row.names(desc2016)
+
+## Naive occupancy
+ggplot(desc2016, aes(x = Species, y = naiv.occ))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("C_lupus","O_virginianus", "A_alces", "L_canadensis",  "C_latrans", "R_tarandus", "U_americanus"))
+
+## Relative abundance
+ggplot(desc2016, aes(x = Species, y = rel.ab))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("O_virginianus","C_lupus", "C_latrans", "A_alces", "L_canadensis", "R_tarandus","U_americanus"))
+
