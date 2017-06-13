@@ -59,28 +59,28 @@ sp7 <- c("R_tarandus","C_lupus", "U_americanus", "O_virginianus", "A_alces", "C_
 naiv.occ <- NULL
 
 for (sp in sp7) {
-  spat <- as.data.frame(table(ani.rec[ani.rec$Species == sp, "Station"]))
+  spat <- as.data.frame(table(win2016.f24[win2016.f24$Species == sp, "Station"]))
   stp <- spat %>% filter(Freq > 0)
-  naiv.occ[sp] <- nrow(stp)/60
+  naiv.occ[sp] <- nrow(stp)/24
 }
 naiv.occ <- as.data.frame(naiv.occ)
 
 ## Relative abundance loop (# detections/1000TD)
 rel.ab <- NULL
 for (sp in sp7) {
-  spat <- as.data.frame(table(ani.rec[ani.rec$Species == sp, "Station"]))
+  spat <- as.data.frame(table(win2016.f24[win2016.f24$Species == sp, "Station"]))
   stp <- spat %>% filter(Freq > 0)
-  rel.ab[sp] <- (sum(stp$Freq)/9025)*1000
+  rel.ab[sp] <- (sum(stp$Freq)/3559)*1000
   }
 rel.ab <- as.data.frame(rel.ab)
 
 ## Data frame of naive occupancy and relative abundance
-desc2016 <- cbind(naiv.occ, rel.ab, deparse.level = 1)
-desc2016$Species <- row.names(desc2016)
+desc2016w <- cbind(naiv.occ, rel.ab, deparse.level = 1)
+desc2016w$Species <- row.names(desc2016w)
 
 ## Naive occupancy
-ggplot(desc2016, aes(x = Species, y = naiv.occ))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("C_lupus","O_virginianus", "A_alces", "L_canadensis",  "C_latrans", "R_tarandus", "U_americanus"))
+ggplot(desc2016w, aes(x = Species, y = naiv.occ))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("C_lupus","O_virginianus", "L_canadensis", "C_latrans", "A_alces", "R_tarandus", "U_americanus"))
 
 ## Relative abundance
-ggplot(desc2016, aes(x = Species, y = rel.ab))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("O_virginianus","C_lupus", "C_latrans", "A_alces", "L_canadensis", "R_tarandus","U_americanus"))
+ggplot(desc2016w, aes(x = Species, y = rel.ab))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("O_virginianus", "C_lupus",  "C_latrans", "L_canadensis", "A_alces", "R_tarandus", "U_americanus"))
 
