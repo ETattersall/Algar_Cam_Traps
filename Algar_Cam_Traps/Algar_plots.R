@@ -3,6 +3,7 @@
 
 library(ggplot2)
 library(dplyr)
+library(tidyr)
 
 ### Need to edit dataframes to make treatment names consistent (Control = Research Line, Treatment = SP+P)
 fix(S2015.01)
@@ -84,3 +85,30 @@ ggplot(desc2016w, aes(x = Species, y = naiv.occ))  + geom_bar(stat = "identity",
 ## Relative abundance
 ggplot(desc2016w, aes(x = Species, y = rel.ab))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("O_virginianus", "C_lupus",  "C_latrans", "L_canadensis", "A_alces", "R_tarandus", "U_americanus"))
 
+
+
+## Box plots for 2015 winter, 2016 summer, 2016 winter(24) for 7 target species
+## Research and SP+P only
+## 2015 winter (win2015), summer2016 (summer2016), winter(24)
+species <- unique(ani.rec$Species)
+f24 <- S2016.01[1:23, ]
+
+
+f24.1 <- gather(f24, Species, Sp.detect, 1:14) %>% filter(Species == sp7)
+f24.1 <- f24.1[!f24.1$Species == "U_americanus", ]
+ggplot(data = f24.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("light blue", "purple")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
+
+
+win2015 <- win2015[-25, ]
+win2015.1 <- gather(win2015, Species, Sp.detect, 1:14) %>% filter(Species == sp7)
+win2015.1 <- win2015.1[!win2015.1$Species == "U_americanus", ]
+ggplot(data = win2015.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("purple", "light blue")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
+
+summer2016.1 <- gather(summer2016, Species, Sp.detect, 1:14) %>% filter(Species == sp7)
+ggplot(data = summer2016.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("light blue", "purple")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
+
+### Box plots for 7 target species at all 60 sites
+S2.2016.01 <- gather(S2016.01, Species, Sp.detect, 1:14) %>% filter(Species == sp7)
+S2.2016.01 <- S2.2016.01[!S2.2016.01$Species == "U_americanus", ]
+
+ggplot(data = S2.2016.01, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
