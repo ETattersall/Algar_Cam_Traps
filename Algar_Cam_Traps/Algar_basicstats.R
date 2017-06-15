@@ -177,18 +177,12 @@ sum(camEff,na.rm=T) ## 4926 in summer
 
 ########## Detections at first 24 cameras in 2016.01
 f24Stat <- cams2016[1:24,]
-camEff <- cameraOperation(f24Stat, 
-                          stationCol = "CamStation", 
-                          setupCol = "CheckDate1", 
-                          retrievalCol = "CheckDate2",
-                          hasProblems = TRUE,
-                          dateFormat = "%d/%m/%Y", 
-                          writecsv = FALSE)
+
 
 sum(camEff,na.rm=T) ## 3559
 
 f24 <- f24Stat$CamStation
-win2016.f24 <- ani.rec[1:167,] ## For some reason it subsetted a few extra rows of Algar25....
+win2016.f24 <- ani.rec[1:167,] ## subsetted a few extra rows of Algar25....b/c ALgar18 malfunctioned?
 win2016.f24 <- win2016[!win2016$Station == "ALGAR25", ]
 win2016.f24 <- win2016.f24[order(win2016.f24$Date),]
 
