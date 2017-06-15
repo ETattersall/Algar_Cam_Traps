@@ -24,6 +24,36 @@ ggplot(data = S2016.01, aes(x = Treatment, y = Total, fill = Treatment)) + geom_
 ## 2015
 ggplot(data = S2015.01, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_fill_manual(values = c("purple", "light blue"))
 
+###### Species Richness boxplots
+## 2016
+ggplot(data = S2016.01, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", " light blue", "purple"))
+## 2015
+ggplot(data = S2015.01, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_fill_manual(values = c("purple", "light blue"))
+
+## winter 2015-2016
+ggplot(data = win2015, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_fill_manual(values = c("purple", "light blue"))
+##Summer 2016
+ggplot(data = summer2016, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_fill_manual(values = c("purple", "light blue"))
+
+#### Problem with S2016.01 site by species data.frame = dropped sites with NO detections. Need to add back in
+# create a one-row matrix the same length as data
+
+temprow <- matrix(c(rep.int(NA,length(S2016.01))),nrow=2,ncol=length(S2016.01))
+
+# make it a data.frame and give cols the same names as data
+
+newrow <- data.frame(temprow)
+colnames(newrow) <- colnames(S2016.01)
+
+# rbind the empty row to data
+
+T2016.01 <- rbind(S2016.01,newrow)
+## Fill in new rows with Station data for Algar 52 and 56
+fix(T2016.01)
+## New boxplots
+ggplot(data = T2016.01, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", " light blue", "purple"))
+
+ggplot(data = T2016.01, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", " light blue", "purple"))
 ### Detection histograms
 sp_detect <- ani.rec$Species
 st_detect <- ani.rec$Station
@@ -52,7 +82,6 @@ ggplot(data = sp.plot1, aes(x = sp.1, y = Freq)) + geom_bar(stat = "identity", f
 
 ### Naive occupancy (# sites species observed at/total sites)
 
-##For each species, make object occ.species (to be gathered into table later)
 ## 2016
 
 ### Naive occupancy loop
@@ -60,30 +89,30 @@ sp7 <- c("R_tarandus","C_lupus", "U_americanus", "O_virginianus", "A_alces", "C_
 naiv.occ <- NULL
 
 for (sp in sp7) {
-  spat <- as.data.frame(table(win2016.f24[win2016.f24$Species == sp, "Station"]))
+  spat <- as.data.frame(table(rec.2016.01[rec.2016.01$Species == sp, "Station"]))
   stp <- spat %>% filter(Freq > 0)
-  naiv.occ[sp] <- nrow(stp)/24
+  naiv.occ[sp] <- nrow(stp)/56
 }
 naiv.occ <- as.data.frame(naiv.occ)
 
 ## Relative abundance loop (# detections/1000TD)
 rel.ab <- NULL
 for (sp in sp7) {
-  spat <- as.data.frame(table(win2016.f24[win2016.f24$Species == sp, "Station"]))
+  spat <- as.data.frame(table(rec.2016.01[rec.2016.01$Species == sp, "Station"]))
   stp <- spat %>% filter(Freq > 0)
-  rel.ab[sp] <- (sum(stp$Freq)/3559)*1000
+  rel.ab[sp] <- (sum(stp$Freq)/9025)*1000
   }
 rel.ab <- as.data.frame(rel.ab)
 
 ## Data frame of naive occupancy and relative abundance
-desc2016w <- cbind(naiv.occ, rel.ab, deparse.level = 1)
-desc2016w$Species <- row.names(desc2016w)
+desc2016 <- cbind(naiv.occ, rel.ab, deparse.level = 1)
+desc2016$Species <- row.names(desc2016)
 
 ## Naive occupancy
-ggplot(desc2016w, aes(x = Species, y = naiv.occ))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("C_lupus","O_virginianus", "L_canadensis", "C_latrans", "A_alces", "R_tarandus", "U_americanus"))
+ggplot(desc2016, aes(x = Species, y = naiv.occ))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("C_lupus","O_virginianus", "A_alces", "L_canadensis", "C_latrans", "R_tarandus", "U_americanus"))
 
 ## Relative abundance
-ggplot(desc2016w, aes(x = Species, y = rel.ab))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("O_virginianus", "C_lupus",  "C_latrans", "L_canadensis", "A_alces", "R_tarandus", "U_americanus"))
+ggplot(desc2016, aes(x = Species, y = rel.ab))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("O_virginianus", "C_lupus",  "C_latrans", "L_canadensis", "A_alces", "R_tarandus", "U_americanus"))
 
 
 
@@ -94,21 +123,23 @@ species <- unique(ani.rec$Species)
 f24 <- S2016.01[1:23, ]
 
 
-f24.1 <- gather(f24, Species, Sp.detect, 1:14) %>% filter(Species == sp7)
-f24.1 <- f24.1[!f24.1$Species == "U_americanus", ]
-ggplot(data = f24.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("light blue", "purple")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
+f24.1 <- gather(f24, Species, Sp.detect, 1:14)
+f24.1 <- f24.1[(f24.1$Species == "A_alces") | (f24.1$Species =="C_latrans") | (f24.1$Species =="C_lupus")| (f24.1$Species =="L_canadensis") | (f24.1$Species =="O_virginianus") | (f24.1$Species =="R_tarandus"), ]
+ggplot(data = win2015.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("light blue", "purple")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
 
 
-win2015 <- win2015[-25, ]
-win2015.1 <- gather(win2015, Species, Sp.detect, 1:14) %>% filter(Species == sp7)
-win2015.1 <- win2015.1[!win2015.1$Species == "U_americanus", ]
+win2015.1 <- gather(win2015, Species, Sp.detect, 1:14)
+win2015.1 <- win2015.1[(win2015.1$Species == "A_alces") | (win2015.1$Species =="C_latrans") | (win2015.1$Species =="C_lupus")| (win2015.1$Species =="L_canadensis") | (win2015.1$Species =="O_virginianus") | (win2015.1$Species =="R_tarandus"), ]
 ggplot(data = win2015.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("purple", "light blue")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
 
-summer2016.1 <- gather(summer2016, Species, Sp.detect, 1:14) %>% filter(Species == sp7)
-ggplot(data = summer2016.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("light blue", "purple")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
+summer2016.1 <- gather(summer2016, Species, Sp.detect, 1:14)
+summer2016.1 <- summer2016.1[(summer2016.1$Species == "A_alces") | (summer2016.1$Species =="C_latrans") | (summer2016.1$Species =="C_lupus")| (summer2016.1$Species =="L_canadensis") | (summer2016.1$Species =="O_virginianus") | (summer2016.1$Species =="R_tarandus"), ]
+ggplot(data = summer2016.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("purple", "light blue")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
 
-### Box plots for 7 target species at all 60 sites
-S2.2016.01 <- gather(S2016.01, Species, Sp.detect, 1:14) %>% filter(Species == sp7)
-S2.2016.01 <- S2.2016.01[!S2.2016.01$Species == "U_americanus", ]
+### Box plots for 7 target species at all 56 sites
 
-ggplot(data = S2.2016.01, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+T2.2016.01 <- gather(T2016.01, Species, Sp.detect, 1:14)
+T2.2016.01 <- T2.2016.01[(T2.2016.01$Species == "A_alces") | (T2.2016.01$Species =="C_latrans") | (T2.2016.01$Species =="C_lupus")| (T2.2016.01$Species =="L_canadensis") | (T2.2016.01$Species =="O_virginianus") | (T2.2016.01$Species =="R_tarandus"), ]
+
+ggplot(data = T2.2016.01, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) 
