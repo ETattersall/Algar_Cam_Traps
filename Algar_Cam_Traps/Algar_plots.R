@@ -143,3 +143,24 @@ T2.2016.01 <- gather(T2016.01, Species, Sp.detect, 1:14)
 T2.2016.01 <- T2.2016.01[(T2.2016.01$Species == "A_alces") | (T2.2016.01$Species =="C_latrans") | (T2.2016.01$Species =="C_lupus")| (T2.2016.01$Species =="L_canadensis") | (T2.2016.01$Species =="O_virginianus") | (T2.2016.01$Species =="R_tarandus"), ]
 
 ggplot(data = T2.2016.01, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) 
+
+
+#### Spatial plots
+with(T2016.01, symbols(x=utmE, y=utmN, circles=Richness, inches=2/3, bg="lightblue", fg="black", 
+                main = "Winter 2016/17"))
+
+win2015$utmE <- cams2015$utmE[match(row.names(win2015),cams2015$CamStation)]
+win2015$utmN <- cams2015$utmN[match(row.names(win2015),cams2015$CamStation)]
+with(win2015, symbols(x=utmE, y=utmN, circles=Richness, inches=2/3, bg="lightblue", fg="black", main = "Winter 2015/16"))
+
+summer2016$utmE <- cams2015$utmE[match(row.names(summer2016),cams2015$CamStation)]
+summer2016$utmN <- cams2015$utmN[match(row.names(summer2016),cams2015$CamStation)]
+with(summer2016, symbols(x=utmE, y=utmN, circles=Richness, inches=2/3, bg="lightblue", fg="black", main = "Summer 2016"))
+
+
+with(f24, symbols(x=utmE, y=utmN, circles=Total, inches=2/3, bg="lightblue", fg="black", 
+                      main = "Winter 2016/17"))
+
+## Individual species
+with(summer2016, symbols(x=utmE, y=utmN, circles=U_americanus, inches=2/3, bg="lightblue", fg="black", main = "Black bear"))
+
