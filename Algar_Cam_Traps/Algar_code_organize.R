@@ -920,7 +920,7 @@ rec.2016.01 <- recordTable(inDir                  = species_wd,
 
 
 
-write.csv(rec.spec, "2016.01_recordTable.csv")
+write.csv(rec.2016.01, "2016.01_recordTable.csv")
 
 ### Each event = 30 minutes after last record. MAKE recordTable with 
 ## deltaTimeComparedTo = lastRecord (30 minutes after last event ended)
