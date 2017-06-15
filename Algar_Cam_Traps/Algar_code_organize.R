@@ -961,61 +961,6 @@ bear.tab <- recordTableIndividual(inDir = "Species_org/U_americanus",
                                   additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
 
 
-wolf.tab <- recordTableIndividual(inDir = "Species_org/C_lupus",
-                                  hasStationFolders = TRUE,
-                                  IDfrom = "directory",
-                                  minDeltaTime = 30,
-                                  deltaTimeComparedTo = "lastRecord",
-                                  timeZone = "Canada/Mountain",
-                                  writecsv = FALSE,
-                                  additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
-
-coyote.tab <- recordTableIndividual(inDir = "Species_org/C_latrans",
-                                    hasStationFolders = TRUE,
-                                    IDfrom = "directory",
-                                    minDeltaTime = 30,
-                                    deltaTimeComparedTo = "lastRecord",
-                                    timeZone = "Canada/Mountain",
-                                    writecsv = FALSE,
-                                    additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
-
-lynx.tab <- recordTableIndividual(inDir = "Species_org/L_canadensis",
-                                  hasStationFolders = TRUE,
-                                  IDfrom = "directory",
-                                  minDeltaTime = 30,
-                                  deltaTimeComparedTo = "lastRecord",
-                                  timeZone = "Canada/Mountain",
-                                  writecsv = FALSE,
-                                  additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
-
-caribou.tab <- recordTableIndividual(inDir = "Species_org/R_tarandus",
-                                     hasStationFolders = TRUE,
-                                     IDfrom = "directory",
-                                     minDeltaTime = 30,
-                                     deltaTimeComparedTo = "lastRecord",
-                                     timeZone = "Canada/Mountain",
-                                     writecsv = FALSE,
-                                     additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
-
-WTdeer.tab <- recordTableIndividual(inDir = "Species_org/O_virginianus",
-                                    hasStationFolders = TRUE,
-                                    IDfrom = "directory",
-                                    minDeltaTime = 30,
-                                    deltaTimeComparedTo = "lastRecord",
-                                    timeZone = "Canada/Mountain",
-                                    writecsv = FALSE,
-                                    additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
-
-moose.tab <- recordTableIndividual(inDir = "Species_org/A_alces",
-                                   hasStationFolders = TRUE,
-                                   IDfrom = "directory",
-                                   minDeltaTime = 30,
-                                   deltaTimeComparedTo = "lastRecord",
-                                   timeZone = "Canada/Mountain",
-                                   writecsv = FALSE,
-                                   additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
-
-
 ### Data summarising using camtrapR record tables (rec.spec), graphing results
 ### mostly Cole's code
 
