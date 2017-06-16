@@ -131,7 +131,7 @@ ggplot(desc2015, aes(x = Species, y = naiv.occ))  + geom_bar(stat = "identity", 
 ggplot(desc2015, aes(x = Species, y = rel.ab))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("O_virginianus", "U_americanus", "C_lupus",  "C_latrans", "R_tarandus", "A_alces", "L_canadensis"))
 
 
-##### Figure 5. Detection rates for 7 target mammal species across treatment types
+##### Figure 5. Detection rates for 7 target mammal species across treatment types (56 stations)
 ## First need trap days by treatment type
 ##Active days by station:
 camEff <- as.data.frame(cameraOperation(cams2016, 
@@ -193,6 +193,7 @@ ggplot(data = deer, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_b
 #### Separating plots doesn't really show anything new (variation isn't more noticeable in other species when separated)
 
 
+######## Figure 6. Detection rates  for 7 target species between seasons for first deployment
 ### Winter 2015-16
 ##Active days by station:
 camEff <- as.data.frame(cameraOperation(cams2015, 
@@ -224,6 +225,26 @@ win2015.1$det.rate <- (win2015.1$Sp.detect/win2015.1$trapdays)*1000
 
 ggplot(data = win2015.1, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c("Purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) 
 ### No noticeable change because the number of trap days is roughly the same between treatments
+## Separating species
+deer <- filter(win2015.1, Species == "O_virginianus")
+ggplot(data = deer, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c("purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+moose <- filter(win2015.1, Species == "A_alces")
+ggplot(data = moose, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+coyote <- filter(win2015.1, Species == "C_latrans")
+ggplot(data = coyote, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+wolf <- filter(win2015.1, Species == "C_lupus")
+ggplot(data = wolf, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+lynx <- filter(win2015.1, Species == "L_canadensis")
+ggplot(data = lynx, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+caribou <- filter(win2015.1, Species == "R_tarandus")
+ggplot(data = caribou, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+
 
 ### Summer 2016
 ##Active days by station:
@@ -255,3 +276,26 @@ summer2016.1$det.rate <- (summer2016.1$Sp.detect/summer2016.1$trapdays)*1000
 
 ggplot(data = summer2016.1, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c("Purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) 
 ### No noticeable change because the number of trap days is roughly the same between treatments
+
+## Separating species
+deer <- filter(summer2016.1, Species == "O_virginianus")
+ggplot(data = deer, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c("purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+moose <- filter(summer2016.1, Species == "A_alces")
+ggplot(data = moose, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+coyote <- filter(summer2016.1, Species == "C_latrans")
+ggplot(data = coyote, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+wolf <- filter(summer2016.1, Species == "C_lupus")
+ggplot(data = wolf, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+lynx <- filter(summer2016.1, Species == "L_canadensis")
+ggplot(data = lynx, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+caribou <- filter(summer2016.1, Species == "R_tarandus")
+ggplot(data = caribou, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+bbear <- filter(summer2016.1, Species == "U_americanus")
+ggplot(data = bbear, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c( "purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
