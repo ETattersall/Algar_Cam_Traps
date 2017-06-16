@@ -205,3 +205,34 @@ win2015.1$det.rate <- (win2015.1$Sp.detect/win2015.1$trapdays)*1000
 
 ggplot(data = win2015.1, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c("Purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) 
 ### No noticeable change because the number of trap days is roughly the same between treatments
+
+### Summer 2016
+##Active days by station:
+camEff <- as.data.frame(cameraOperation(cams2015, 
+                                        stationCol = "CamStation", 
+                                        setupCol = "SeasonBreak", 
+                                        retrievalCol = "CheckDate1",
+                                        hasProblems = FALSE,
+                                        dateFormat = "%d/%m/%Y", 
+                                        writecsv = FALSE))
+camEff$Treatment <- cams2015$Treatment[match(row.names(camEff),cams2015$CamStation)] ## Adding treatment to each station
+fix(camEff) ### Editing to change "Control" to "Research" and "Site Prep Plant" to "SP+P"(consistent with other dataframes)
+camEff$Total <- apply(camEff[, 1:206],1,sum, na.rm = T)
+TD_treat <- camEff %>% select(Total, Treatment) 
+TD.res <- filter(TD_treat, Treatment== "Research")### camera days by treatment
+sum(TD.res$Total) #2463
+TD.res$trapdays <- rep(2463, length(12))
+
+TD.SPP <- filter(TD_treat, Treatment== "SP+P")
+sum(TD.SPP$Total) #2003
+TD.SPP$trapdays <- rep(2463, length(12))
+
+TD_treat <- rbind(TD.res, TD.SPP, deparse.level = 0) ## Each site now has trapdays for that treatment
+summer2016.1 <- gather(summer2016, Species, Sp.detect, 1:14)
+summer2016.1 <- summer2016.1[(summer2016.1$Species == "A_alces") | (summer2016.1$Species =="C_latrans") | (summer2016.1$Species =="C_lupus")| (summer2016.1$Species =="L_canadensis") | (summer2016.1$Species =="O_virginianus") | (summer2016.1$Species =="R_tarandus") | (summer2016.1$Species == "U_americanus"), ] ## dataframe for 7 species and their detections
+### Add detection rate to summer2016.1
+summer2016.1$trapdays <- TD_treat$trapdays[match(summer2016.1$Treatment,TD_treat$Treatment)]
+summer2016.1$det.rate <- (summer2016.1$Sp.detect/summer2016.1$trapdays)*1000
+
+ggplot(data = summer2016.1, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Research", "SP+P")) + scale_fill_manual(values=c("Purple", "light blue")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) 
+### No noticeable change because the number of trap days is roughly the same between treatments
