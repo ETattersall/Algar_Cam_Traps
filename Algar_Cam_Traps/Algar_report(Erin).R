@@ -170,8 +170,27 @@ T2.2016.01 <- T2.2016.01[(T2.2016.01$Species == "A_alces") | (T2.2016.01$Species
 T2.2016.01$trapdays <- TD_treat$trapdays[match(T2.2016.01$Treatment,TD_treat$Treatment)]
 T2.2016.01$det.rate <- (T2.2016.01$Sp.detect/T2.2016.01$trapdays)*1000
 
-ggplot(data = T2.2016.01, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) 
+ggplot(data = T2.2016.01, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
 #### Individual boxes should not have changed, but placement in relation to other boxes should have
+### Deer mainly responsible for scale on y-axis, separate by species
+moose <- filter(T2.2016.01, Species == "A_alces")
+ggplot(data = moose, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+coyote <- filter(T2.2016.01, Species == "C_latrans")
+ggplot(data = coyote, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+wolf <- filter(T2.2016.01, Species == "C_lupus")
+ggplot(data = wolf, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+lynx <- filter(T2.2016.01, Species == "L_canadensis")
+ggplot(data = lynx, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+caribou <- filter(T2.2016.01, Species == "R_tarandus")
+ggplot(data = caribou, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+
+deer <- filter(T2.2016.01, Species == "O_virginianus")
+ggplot(data = deer, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", "light blue", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
+#### Separating plots doesn't really show anything new (variation isn't more noticeable in other species when separated)
 
 
 ### Winter 2015-16
