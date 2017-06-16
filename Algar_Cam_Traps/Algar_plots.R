@@ -60,7 +60,7 @@ st_detect <- ani.rec$Station
 
 ### Frequency histograms
 
-par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
+par(mfrow = c(1,1))## Multiple plots on same page (1 row, 1 column)
 
 sp.plot <- rev(sort(table(sp_detect))) 
 sp.plot <- as.data.frame(sp.plot)
@@ -133,7 +133,7 @@ win2015.1 <- win2015.1[(win2015.1$Species == "A_alces") | (win2015.1$Species =="
 ggplot(data = win2015.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("purple", "light blue")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
 
 summer2016.1 <- gather(summer2016, Species, Sp.detect, 1:14)
-summer2016.1 <- summer2016.1[(summer2016.1$Species == "A_alces") | (summer2016.1$Species =="C_latrans") | (summer2016.1$Species =="C_lupus")| (summer2016.1$Species =="L_canadensis") | (summer2016.1$Species =="O_virginianus") | (summer2016.1$Species =="R_tarandus"), ]
+summer2016.1 <- summer2016.1[(summer2016.1$Species == "A_alces") | (summer2016.1$Species =="C_latrans") | (summer2016.1$Species =="C_lupus")| (summer2016.1$Species =="L_canadensis") | (summer2016.1$Species =="O_virginianus") | (summer2016.1$Species =="R_tarandus") | (summer2016.1$Species == "U_americanus"), ]
 ggplot(data = summer2016.1, aes(x = Treatment, y = Sp.detect, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("No. Detections") + scale_fill_manual(values=c("purple", "light blue")) + scale_x_discrete(limits = c("Research", "SP+P")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species)
 
 ### Box plots for 7 target species at all 56 sites
