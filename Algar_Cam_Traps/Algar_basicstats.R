@@ -119,6 +119,8 @@ win2015$Total <- apply(win2015,1,sum)
 
 win2015$Richness <- apply(win2015[,1:15],1,function(x) sum(ifelse(x>0,1,0)))
 
+write.csv(win2015, "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data/recordsNov2015-Apr2016.csv")
+
 ### To calculate camera effort between 2 seasons, need to add column with SeasonBreak date
 cams2015$SeasonBreak <- rep("20/04/2016", length(cams2015$CamStation))
 
@@ -153,6 +155,8 @@ summer2016 <- as.data.frame.matrix(table(st_detect,sp_detect))
 summer2016$Total <- apply(summer2016,1,sum)
 
 summer2016$Richness <- apply(summer2016[,1:15],1,function(x) sum(ifelse(x>0,1,0)))
+
+write.csv(summer2016, "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data/recordsApr-Nov2016.csv")
 
 ### To calculate camera effort between 2 seasons, need to add column with SeasonBreak date
 cams2015$SeasonBreak <- rep("20/04/2016", length(cams2015$CamStation))
