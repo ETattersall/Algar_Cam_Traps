@@ -1,6 +1,7 @@
 ### Playing with GLMMs
 ##Using pilot Algar data and examining GLMM output (based on code from Bolker, 2008 and EMD)
 
+#### Setup ####
 library(lme4)
 library(dplyr)
 library(camtrapR)
@@ -77,7 +78,7 @@ class(test.data$Date) #Date
 wolf <- test.data %>% filter(Species == "C_lupus") %>% 
         select(Station, Species, DateTimeOriginal, Date, Time, Treatment)
 
-##Testing wolf detections as a function of Treatment
+#### Detection matrices ####
 ## Need to count number of detections per month. Divide data by station and by month?
 
 ##1. Divide Date into Day, Month, Year columns
@@ -88,6 +89,13 @@ df <- data.frame(date = wolf$Date,
                        day = as.numeric(format(wolf$Date, format = "%d")),
                        month = as.numeric(format(wolf$Date, format = "%m")),
                        year = as.numeric(format(wolf$Date, format = "%Y"))) 
-## Combine new date data to wolf dataframe
-wolf <- cbind(wolf, df[,2:4])
 
+## Want to combine year and month columns (to avoid Nov. 2015 and Nov. 2016 being considered the same)
+df <-  within(df, year.month <- sprintf("%d-%02d", year, month))
+## Combine new date data to wolf dataframe
+wolf$year.month <- df$year.month
+
+unique(wolf$year.month)
+
+## Arrange into matrix of detection counts by station and year.month
+## Ask Jo how to do this...
