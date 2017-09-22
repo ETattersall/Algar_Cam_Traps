@@ -98,4 +98,5 @@ wolf$year.month <- df$year.month
 unique(wolf$year.month)
 
 ## Arrange into matrix of detection counts by station and year.month
-## Ask Jo how to do this...
+mat <- cbind.data.frame(wolf$Station,wolf$year.month)
+wolf.mat <- as.data.frame.matrix(table(wolf$Station,wolf$year.month))
