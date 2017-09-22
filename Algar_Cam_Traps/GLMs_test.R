@@ -98,5 +98,9 @@ wolf$year.month <- df$year.month
 unique(wolf$year.month)
 
 ## Arrange into matrix of detection counts by station and year.month
-mat <- cbind.data.frame(wolf$Station,wolf$year.month)
 wolf.mat <- as.data.frame.matrix(table(wolf$Station,wolf$year.month))
+wolf.mat$Station <- row.names(wolf.mat) ## Add column of station names
+wolf.mat$Treatment <- stations$Treatment[match(wolf.mat$Station, stations$CamStation)] ## Add treatment data
+
+
+#### See Jo's prelim analysis code from June! She already did all this shit
