@@ -227,6 +227,7 @@ sum(data3$Lynx) #31
 sum(data3$Wolf) #99
 sum(data3$Moose) #32
 
+write.csv(data3, "2015.01_detections_day.csv")
 
 m.deer <- data3 %>%
   group_by(Site, Treatment, Yr_Month) %>% 
@@ -277,3 +278,43 @@ m.wolf <- data3 %>%
 colnames(m.wolf) <- c("Site","Treatment","Yr_Month","Wolf")
 summary(m.wolf) # max 9 obs in one month
 sum(m.wolf$Wolf) #99 - matches
+
+#### Aggregating all monthly detection data into one data frame ####
+data.month <- m.wolf
+data.month$Wolf <- NULL #Removing wolf column for now (add back in later with all other species detections)
+data.month$Site_ym <- paste(data.month$Site,data.month$Yr_Month) ##Create a site and year/month column for matching with monthly species detections
+
+m.bear$Site_ym <- paste(m.bear$Site,m.bear$Yr_Month)
+data.month$Blackbear <- m.bear$Blackbear[match(data.month$Site_ym,m.bear$Site_ym)]
+
+m.wolf$Site_ym <- paste(m.wolf$Site,m.wolf$Yr_Month)
+data.month$Wolf <- m.wolf$Wolf[match(data.month$Site_ym,m.wolf$Site_ym)]
+
+m.coyote$Site_ym <- paste(m.coyote$Site,m.coyote$Yr_Month)
+data.month$Coyote <- m.coyote$Coyote[match(data.month$Site_ym,m.coyote$Site_ym)]
+
+m.lynx$Site_ym <- paste(m.lynx$Site,m.lynx$Yr_Month)
+data.month$Lynx <- m.lynx$Lynx[match(data.month$Site_ym,m.lynx$Site_ym)]
+
+m.caribou$Site_ym <- paste(m.caribou$Site,m.caribou$Yr_Month)
+data.month$Caribou <- m.caribou$Caribou[match(data.month$Site_ym,m.caribou$Site_ym)]
+
+m.deer$Site_ym <- paste(m.deer$Site,m.deer$Yr_Month)
+data.month$WTDeer <- m.deer$WTDeer[match(data.month$Site_ym,m.deer$Site_ym)]
+
+m.moose$Site_ym <- paste(m.moose$Site,m.moose$Yr_Month)
+data.month$Moose <- m.moose$Moose[match(data.month$Site_ym,m.moose$Site_ym)]
+
+sum(data.month$WTDeer)#244
+sum(data.month$Blackbear) #149
+sum(data.month$Caribou) #44
+sum(data.month$Coyote) #51
+sum(data.month$Lynx) #31
+sum(data.month$Wolf) #99
+sum(data.month$Moose) #32
+
+
+write.csv(data.month, "2015.01_monthlydetections.csv")
+
+#### Linear regressions (differ from Jo's Bayesian analysis) ####
+### 
