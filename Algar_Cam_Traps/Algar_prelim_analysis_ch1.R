@@ -280,7 +280,7 @@ summary(m.wolf) # max 9 obs in one month
 sum(m.wolf$Wolf) #99 - matches
 
 #### Aggregating all monthly detection data into one data frame ####
-data.month <- m.wolf
+data.month <- m.wolf ##Starting new dataframe with rows for all stations in increments by yr_month
 data.month$Wolf <- NULL #Removing wolf column for now (add back in later with all other species detections)
 data.month$Site_ym <- paste(data.month$Site,data.month$Yr_Month) ##Create a site and year/month column for matching with monthly species detections
 
@@ -313,8 +313,57 @@ sum(data.month$Lynx) #31
 sum(data.month$Wolf) #99
 sum(data.month$Moose) #32
 
+summary(data.month)
+
 
 write.csv(data.month, "2015.01_monthlydetections.csv")
 
+#### Checking data for errors + data exploration (pilot data so it's okay)
+plot(data.month$Treatment, data.month$Blackbear)
+plot(data.month$Yr_Month, data.month$Blackbear) ##Active between 2016-04 and 2016-10
+
+plot(data.month$Treatment, data.month$Wolf)
+plot(data.month$Yr_Month, data.month$Wolf)
+
+plot(data.month$Treatment, data.month$Coyote)
+plot(data.month$Yr_Month, data.month$Coyote)
+
+plot(data.month$Treatment, data.month$Lynx)
+plot(data.month$Yr_Month, data.month$Lynx)
+
+plot(data.month$Treatment, data.month$Caribou)
+plot(data.month$Yr_Month, data.month$Caribou) ##more detections between 2016-04 and 2016-09
+
+plot(data.month$Treatment, data.month$WTDeer)
+plot(data.month$Yr_Month, data.month$WTDeer)
+
+plot(data.month$Treatment, data.month$Moose)
+plot(data.month$Yr_Month, data.month$Moose)
+
 #### Linear regressions (differ from Jo's Bayesian analysis) ####
-### 
+### Check if there is a difference in species use of Control and SPP lines
+library(lme4)
+
+### Compare glmm to glm
+m1.wolf <- glmer(Wolf~Treatment + (1|Site), family = poisson, data = data.month)
+m0.wolf <- glm(Wolf~Treatment, family = poisson, data = data.month)
+anova(m1.wolf,m0.wolf) ##m1 has lower AIC score, higher logLikelihood --> enough additional variance explained to justify more complexity
+summary(m1.wolf) ### Residual deviance/residual df = 394.3/309 = 1.28 (~1, assume no overdispersion) --> Poisson distribution reasonable to use
+ranef(m1.wolf) ##standard deviation of site detections from mean
+
+## Intercept-free model, should be same as m1.wolf, just comparing 2 treatment estimates to zero rather than to each other
+m2.wolf <- glmer(Wolf~Treatment + (1|Site) -1, family = poisson, data = data.month) 
+summary(m2.wolf)
+
+##Zero-inflated GLMs
+library(pscl)
+f1 <- formula(Wolf~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
+# ZIP
+Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = data.month) 
+summary(Zip1) ## SPP estimate is sig. different from Control in the count model
+# ZINB
+Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = data.month)
+summary(Nb1)
+
+# Model selection
+AIC(m0.wolf, m1.wolf, Zip1, Nb1) ## Poisson distributed glmm has lowest AIC score --> possible to do zero-inflated glmms?
