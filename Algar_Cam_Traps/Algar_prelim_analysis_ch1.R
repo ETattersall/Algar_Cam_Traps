@@ -14,40 +14,47 @@ library(knitr)		# for the "kable" function for formatting tables
 
 ###--- set directory, load files, check that they loaded correctly
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
-data <- read.csv("2015.01_recordTable.csv",header=T, row.names=1)
+data <- read.csv("2016.01_recordTable.csv",header=T, row.names=1)
 glimpse(data)
 summary(data)
 
 ###--- Add columns for the Date.Time and Date in POSIX format:
-data$Date.Time <- as.POSIXct(strptime(data$DateTimeOriginal, format = "%d/%m/%Y %H:%M"))
-data$Datep <- as.POSIXct(strptime(data$Date, format = "%d/%m/%Y"))
+### 2016.01 data --> date data already in correct format, but needs to be converted to POSIX data type
+data$Date.Time <- as.POSIXct(data$DateTimeOriginal)
+data$Datep <- as.POSIXct(data$Date)
 str(data)
+## If format also needs to be changed
+# data$Date.Time <- as.POSIXct(strptime(data$DateTimeOriginal, format = "%d/%m/%Y %H:%M"))
+# data$Datep <- as.POSIXct(strptime(data$Date, format = "%d/%m/%Y"))
+
 
 ###--- all cameras were operational for entire year - range of detection timing depend on site
 # first date of detection per site - ranges from 2015-11-05 to 2016-05-06 
 mindate <- aggregate(Date.Time~Station, data, function(x) min(x))
-mindate.ord <- mindate[order(mindate$Date.Time, mindate$Station),] ## Order first detections by date
+mindate.ord <- mindate[order(mindate$Date.Time, mindate$Station),] ## Order first detections by date - first date of detection ranges from 2016-11-11 to 2017-04-20
 mindate.ord <- mindate[order(mindate$Station, mindate$Date.Time),] ## Order first detections by Station
 mindate.ord 
 
 maxdate <- aggregate(Date.Time~Station, data, function(x) max(x))
-maxdate.ord <- maxdate[order(maxdate$Date.Time, maxdate$Station),]
+maxdate.ord <- maxdate[order(maxdate$Date.Time, maxdate$Station),] # last date of detection per site - ranges from 2016-11-19 to 2017-04-20
 maxdate.ord <- maxdate[order(maxdate$Station, maxdate$Date.Time),]
 maxdate.ord
-# last date of detection per site - ranges from 2016-08-09 to 2016-11-10
+
 
 maxdate.ord[,2] - mindate.ord[,2] # (Needs to be ordered by Station here)
-# Time differences in days
-#[1] 300.56166 362.92569  98.13536 352.76646 216.12815 315.89721 262.92764 362.68677 366.22271 359.82296 241.57117
-#[12] 368.61998 183.88051 342.17454 364.64853 307.09172 280.61439 359.25888 360.36235 345.03010 356.48046 265.69171
-#[23] 315.82545 305.37284
+# Time differences in secs
+# [1]  5132332 13421697  6322308 10354542 12525818 13002734  9900406  8835231        0 12751167        0 11156457 10890018
+# [14]        0   796586  9751533 12719302        0  2122358 12628245 12608477  8544936  4791793  9529632  1743120 12715521
+# [27] 10049468 11891614 12168442  9849186 10570375  9457310  7114869 12009089  9948700  1827692  5870066 10543176        0
+# [40] 12684143 11954828  6884543  6376294 12260487 12903846 12158197  3117182        0  5532816  9834067 12388379 12779193
+# [53] 10889296  8844398  4213943
 
 
 # convert DateStart (but note that this doesn't have time set, so will treat as midnight)
 
 data$DateStart <- min(mindate.ord[,2]) #Adding the date of first detection to record Table
 data$DateStart <- (strptime(data$DateStart, "%Y-%m-%d", tz="MST")) ##Adding a column for the first day of the study
-DateStart <- min(data$DateStart) # The first detection from all stations - 2015-11-05 - first day of deployment
+DateStart <- min(data$DateStart) # The first detection from all stations - 2016-11-11 - first detection of the deployment
 str(data)
 
 # calculate a unique day for each day of study
@@ -56,7 +63,7 @@ str(data)
 # using "floor" so it doesn't round up to next day
 data$StudyDay <- floor(as.numeric(difftime(data$Date.Time,min(data$DateStart),units="days"))) ##Takes difference between the detection date and start date, without rounding up
 data$StudyDay <- data$StudyDay+1 #Turns start date into day 1, not day 0
-summary(data$StudyDay) # 1-372 study days
+summary(data$StudyDay) # 1-161 study days
 
 ####################################################################
 ##Adding Treatment Column (naming Stations 1-12 as Control and everything else as SPP)
@@ -64,6 +71,13 @@ data$Treatment <- as.factor(ifelse(data$Station=="Algar01"|data$Station=="Algar0
                                      data$Station=="Algar05"|data$Station=="Algar06"|data$Station=="Algar07"|data$Station=="Algar08"|
                                      data$Station=="Algar09"|data$Station=="Algar10"|data$Station=="Algar11"|data$Station=="Algar12",
                                    "Control", "SPP"))
+
+### Adding Treatment Column by matching with station data
+Stations <- read.csv("Station_data/Algar_stationdata_apr2017.csv")
+data$Treatment <- Stations$TreatmentType[match(data$Station, Stations$CamStation)]
+## Renaming to maintatin consistency with pilot data (SPP, not SP+P)
+library(plyr)
+data$Treatment <- revalue(data$Treatment, replace = c("SP+P" = "SPP", "Nat Regen" = "NatRegen", "Human Use" = "HumanUse"))
 
 glimpse(data)
 summary(data)
@@ -396,6 +410,8 @@ summary(Zip1) ## SPP estimate is sig. different from Control in the count model
 Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = data.month)
 summary(Nb1)
 
+## Zero-inflated GLMMs
+
 
 # Model selection
 AIC(m0.wolf, m1.wolf, m2.wolf, m3.wolf, m4.wolf, m5.wolf, Zip1, Nb1) ## Still m5 < m3 < m4... Negative binomial distribution decreases AIC more than adding 2nd random variable
@@ -497,3 +513,5 @@ summary(Nb1)
 
 # Model selection
 AIC(m0.coyote, m1.coyote, m2.coyote, m3.coyote, m4.coyote, m5.coyote, Zip1, Nb1) ## m5 < m3 < m4, but both negbin models failed to converge (m5 and m3)
+
+library(AICcmodavg)
