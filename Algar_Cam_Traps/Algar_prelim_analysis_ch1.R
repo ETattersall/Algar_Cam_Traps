@@ -323,18 +323,18 @@ data.month$WTDeer <- m.deer$WTDeer[match(data.month$Site_ym,m.deer$Site_ym)]
 m.moose$Site_ym <- paste(m.moose$Site,m.moose$Yr_Month)
 data.month$Moose <- m.moose$Moose[match(data.month$Site_ym,m.moose$Site_ym)]
 
-sum(data.month$WTDeer)#244
-sum(data.month$Blackbear) #149
-sum(data.month$Caribou) #44
-sum(data.month$Coyote) #51
-sum(data.month$Lynx) #31
-sum(data.month$Wolf) #99
-sum(data.month$Moose) #32
+sum(data.month$WTDeer)
+sum(data.month$Blackbear) 
+sum(data.month$Caribou) 
+sum(data.month$Coyote) 
+sum(data.month$Lynx) 
+sum(data.month$Wolf) 
+sum(data.month$Moose) 
 
 summary(data.month)
 
 
-write.csv(data.month, "2015.01_monthlydetections.csv")
+write.csv(data.month, "2016.01_monthlydetections.csv")
 
 #### Checking data for errors + data exploration (pilot data so it's okay)
 hist(data.month$Wolf)
@@ -346,7 +346,7 @@ hist(data.month$WTDeer)
 hist(data.month$Moose)
 
 plot(data.month$Treatment, data.month$Blackbear)
-plot(data.month$Yr_Month, data.month$Blackbear) ##Active between 2016-04 and 2016-10
+plot(data.month$Yr_Month, data.month$Blackbear) ##Active only in 2017-04
 
 plot(data.month$Treatment, data.month$Wolf)
 plot(data.month$Yr_Month, data.month$Wolf)
@@ -358,7 +358,7 @@ plot(data.month$Treatment, data.month$Lynx)
 plot(data.month$Yr_Month, data.month$Lynx)
 
 plot(data.month$Treatment, data.month$Caribou)
-plot(data.month$Yr_Month, data.month$Caribou) ##more detections between 2016-04 and 2016-09
+plot(data.month$Yr_Month, data.month$Caribou) 
 
 plot(data.month$Treatment, data.month$WTDeer)
 plot(data.month$Yr_Month, data.month$WTDeer)
@@ -367,21 +367,34 @@ plot(data.month$Treatment, data.month$Moose)
 plot(data.month$Yr_Month, data.month$Moose)
 
 #### Linear regressions (differ from Jo's Bayesian analysis) ####
-### Check if there is a difference in species use of Control and SPP lines
+### Check if there is a difference in species use of Control and SPP lines ##
+### Still only modelling with pilot data (3:25pm Oct. 16, 2017)
+pilot.month <- read.csv("2015.01_monthlydetections.csv")
+pilot.month$X <- NULL
+
 library(lme4)
 library(MASS)
 
+## glmmADMB conflicts with lme4 (Oct. 16 --> lme4 models already run for wolves, bears, coyotes)
+install.packages("R2admb")
+install.packages("glmmADMB", 
+                 repos=c("http://glmmadmb.r-forge.r-project.org/repos",
+                         getOption("repos")),
+                 type="source")
+library(R2admb)
+library(glmmADMB)
+
 #### Wolf modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
 ##Poisson glm
-m0.wolf <- glm(Wolf~Treatment, family = poisson, data = data.month)
+m0.wolf <- glm(Wolf~Treatment, family = poisson, data = pilot.month)
 ## Negative binomial glm
-m1.wolf <- glm.nb(Wolf~Treatment, link = "log", data = data.month) # Use log link to compare with poisson
+m1.wolf <- glm.nb(Wolf~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
 
 ## Poisson GLMM
-m2.wolf <- glmer(Wolf~Treatment + (1|Site), family = poisson, data = data.month)
+m2.wolf <- glmer(Wolf~Treatment + (1|Site), family = poisson, data = pilot.month)
 
 ## Negative binomial GLMM
-m3.wolf <- glmer.nb(Wolf~Treatment + (1|Site), data = data.month)
+m3.wolf <- glmer.nb(Wolf~Treatment + (1|Site), data = pilot.month)
 
 anova(m0.wolf, m2.wolf)##m2 has lower AIC score, higher logLikelihood --> enough additional variance explained to justify more complexity
 AIC(m0.wolf, m1.wolf, m2.wolf, m3.wolf) ## m3 has lowest AIC
@@ -393,14 +406,14 @@ summary(m3.wolf)
 
 
 ## Intercept-free model, should be same as m1.wolf, just comparing 2 treatment estimates to zero rather than to each other
-m2.wolf <- glmer(Wolf~Treatment + (1|Site) -1, family = poisson, data = data.month) 
+m2.wolf <- glmer(Wolf~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
 summary(m2.wolf)
 
 ### Adding second random effect of time
-m4.wolf <- glmer(Wolf~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = data.month)
+m4.wolf <- glmer(Wolf~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = pilot.month)
 summary(m4.wolf) ## Yr_Month random variable doesn't account for much variance....
 anova(m2.wolf, m3.wolf, m4.wolf) ##m3 still wins
-m5.wolf <- glmer.nb(Wolf~Treatment + (1 |Site) + (1|Yr_Month), data = data.month)
+m5.wolf <- glmer.nb(Wolf~Treatment + (1 |Site) + (1|Yr_Month), data = pilot.month)
 anova(m2.wolf,m3.wolf, m4.wolf, m5.wolf) ## m5 < m3
 summary(m5.wolf)
 
@@ -408,13 +421,14 @@ summary(m5.wolf)
 library(pscl)
 f1 <- formula(Wolf~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
 # ZIP
-Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = data.month) 
+Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = pilot.month) 
 summary(Zip1) ## SPP estimate is sig. different from Control in the count model
 # ZINB
-Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = data.month)
+Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
 summary(Nb1)
 
 ## Zero-inflated GLMMs
+
 
 
 # Model selection
@@ -423,15 +437,15 @@ AIC(m0.wolf, m1.wolf, m2.wolf, m3.wolf, m4.wolf, m5.wolf, Zip1, Nb1) ## Still m5
 
 #### Blackbear modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
 ##Poisson glm
-m0.bear <- glm(Blackbear~Treatment, family = poisson, data = data.month)
+m0.bear <- glm(Blackbear~Treatment, family = poisson, data = pilot.month)
 ## Negative binomial glm
-m1.bear <- glm.nb(Blackbear~Treatment, link = "log", data = data.month) # Use log link to compare with poisson
+m1.bear <- glm.nb(Blackbear~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
 
 ## Poisson GLMM
-m2.bear <- glmer(Blackbear~Treatment + (1|Site), family = poisson, data = data.month)
+m2.bear <- glmer(Blackbear~Treatment + (1|Site), family = poisson, data = pilot.month)
 
 ## Negative binomial GLMM
-m3.bear <- glmer.nb(Blackbear~Treatment + (1|Site), data = data.month)
+m3.bear <- glmer.nb(Blackbear~Treatment + (1|Site), data = pilot.month)
 
 anova(m0.bear, m2.bear)##m2 has lower AIC score, higher logLikelihood --> enough additional variance explained to justify more complexity
 AIC(m0.bear, m1.bear, m2.bear, m3.bear) ## m3 has lowest AIC, followed by m1
@@ -444,14 +458,14 @@ summary(m3.bear)
 
 
 ## Intercept-free model, should be same as m1.bear, just comparing 2 treatment estimates to zero rather than to each other
-m2.bear <- glmer(Blackbear~Treatment + (1|Site) -1, family = poisson, data = data.month) 
+m2.bear <- glmer(Blackbear~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
 summary(m2.bear)
 
 ### Adding second random effect of time
-m4.bear <- glmer(Blackbear~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = data.month)
+m4.bear <- glmer(Blackbear~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = pilot.month)
 summary(m4.bear) ## Yr_Month random variable accounts for LOTS of variance
 anova(m2.bear, m3.bear, m4.bear) ##m3 and m4 significantly lower than m2, m4 = 445 vs. 503
-m5.bear <- glmer.nb(Blackbear~Treatment + (1 |Site) + (1|Yr_Month), data = data.month)
+m5.bear <- glmer.nb(Blackbear~Treatment + (1 |Site) + (1|Yr_Month), data = pilot.month)
 anova(m2.bear, m3.bear, m4.bear, m5.bear)
 summary(m5.bear)
 
@@ -459,10 +473,10 @@ summary(m5.bear)
 library(pscl)
 f1 <- formula(Blackbear~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
 # ZIP
-Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = data.month) 
+Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = pilot.month) 
 summary(Zip1) ## SPP estimate is sig. different from Control in the count model
 # ZINB
-Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = data.month)
+Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
 summary(Nb1)
 
 # Model selection
@@ -472,15 +486,15 @@ AIC(m0.bear, m1.bear, m2.bear, m3.bear, m4.bear, m5.bear, Zip1, Nb1) ## m5 < m4 
 
 #### Coyote modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
 ##Poisson glm
-m0.coyote <- glm(Coyote~Treatment, family = poisson, data = data.month)
+m0.coyote <- glm(Coyote~Treatment, family = poisson, data = pilot.month)
 ## Negative binomial glm
-m1.coyote <- glm.nb(Coyote~Treatment, link = "log", data = data.month) # Use log link to compare with poisson
+m1.coyote <- glm.nb(Coyote~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
 
 ## Poisson GLMM
-m2.coyote <- glmer(Coyote~Treatment + (1|Site), family = poisson, data = data.month)
+m2.coyote <- glmer(Coyote~Treatment + (1|Site), family = poisson, data = pilot.month)
 
 ## Negative binomial GLMM
-m3.coyote <- glmer.nb(Coyote~Treatment + (1|Site), data = data.month)
+m3.coyote <- glmer.nb(Coyote~Treatment + (1|Site), data = pilot.month)
 
 
 AIC(m0.coyote, m1.coyote, m2.coyote, m3.coyote) ## m3 < m2 < m1
@@ -493,14 +507,14 @@ summary(m3.coyote)
 
 
 ## Intercept-free model, should be same as m1.coyote, just comparing 2 treatment estimates to zero rather than to each other
-m2.coyote <- glmer(Coyote~Treatment + (1|Site) -1, family = poisson, data = data.month) 
+m2.coyote <- glmer(Coyote~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
 summary(m2.coyote)
 
 ### Adding second random effect of time
-m4.coyote <- glmer(Coyote~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = data.month)
+m4.coyote <- glmer(Coyote~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = pilot.month)
 summary(m4.coyote) ## Yr_Month random variable accounts for LOTS of variance
 anova(m2.coyote, m3.coyote, m4.coyote) ##m3  significantly lower than m2, m3 = 235 and m4 = 236
-m5.coyote <- glmer.nb(Coyote~Treatment + (1 |Site) + (1|Yr_Month), data = data.month) ## Warning message:
+m5.coyote <- glmer.nb(Coyote~Treatment + (1 |Site) + (1|Yr_Month), data = pilot.month) ## Warning message:
 #                                                                                        In theta.ml(Y, mu, weights = object@resp$weights, limit = #                                                                                        limit,:iteration limit reached
 anova(m2.coyote, m3.coyote, m4.coyote, m5.coyote)
 summary(m5.coyote)
@@ -509,10 +523,10 @@ summary(m5.coyote)
 library(pscl)
 f1 <- formula(Coyote~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
 # ZIP
-Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = data.month) 
+Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = pilot.month) 
 summary(Zip1) ## SPP estimate is sig. different from Control in the count model
 # ZINB
-Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = data.month)
+Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
 summary(Nb1)
 
 # Model selection
