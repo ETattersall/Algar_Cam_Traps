@@ -68,10 +68,10 @@ summary(data$StudyDay) # 1-161 study days
 
 ####################################################################
 ##Adding Treatment Column (naming Stations 1-12 as Control and everything else as SPP)
-data$Treatment <- as.factor(ifelse(data$Station=="Algar01"|data$Station=="Algar02"|data$Station=="Algar03"|data$Station=="Algar04"|
-                                     data$Station=="Algar05"|data$Station=="Algar06"|data$Station=="Algar07"|data$Station=="Algar08"|
-                                     data$Station=="Algar09"|data$Station=="Algar10"|data$Station=="Algar11"|data$Station=="Algar12",
-                                   "Control", "SPP"))
+data$Treatment <- as.factor(ifelse(data$Station=="Algar1"|data$Station=="Algar2"|data$Station=="Algar3"|data$Station=="Algar4"|
+                                     data$Station=="Algar5"|data$Station=="Algar6"|data$Station=="Algar7"|data$Station=="Algar8"|
+                                     data$Station=="Algar9"|data$Station=="Algar10"|data$Station=="Algar11"|data$Station=="Algar12",
+                                   "Control", "SPP")) ### Station names 1-9 can't have a 0 to match pilot data!
 
 ### Adding Treatment Column by matching with station data
 Stations <- read.csv("Station_data/Algar_stationdata_apr2017.csv")
@@ -370,7 +370,12 @@ plot(data.month$Yr_Month, data.month$Moose)
 ### Check if there is a difference in species use of Control and SPP lines ##
 ### Still only modelling with pilot data (3:25pm Oct. 16, 2017)
 pilot.month <- read.csv("2015.01_monthlydetections.csv")
+## Editing pilot.month Stations for consistency with 2nd deployment data
+library(plyr)
 pilot.month$X <- NULL
+pilot.month$Site <- revalue(pilot.month$Site, replace = c("Algar1" = "Algar01", "Algar2" = "Algar02", "Algar3" = "Algar03", "Algar4" = "Algar04", "Algar5" = "Algar05", "Algar6" = "Algar06", "Algar7" = "Algar07", "Algar8" = "Algar08", "Algar9" = "Algar09"))
+### Pilot data csv's have mismatched sites and treatments. Need to go back and fix....
+
 
 library(lme4)
 library(MASS)
