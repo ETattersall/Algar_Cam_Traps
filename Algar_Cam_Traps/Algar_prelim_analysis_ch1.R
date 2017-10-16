@@ -6,6 +6,7 @@
 ###########################################################
 
 library(reshape2)	# for formatting data frames
+# library(plyr) need for renaming Treatments for consistency, but conflicts with dplyr
 library(dplyr)		# for applying functions to subsets of data frames
 library(ggplot2)	# for data visualization
 library(stringr)	# for working with character strings
@@ -76,7 +77,7 @@ data$Treatment <- as.factor(ifelse(data$Station=="Algar01"|data$Station=="Algar0
 Stations <- read.csv("Station_data/Algar_stationdata_apr2017.csv")
 data$Treatment <- Stations$TreatmentType[match(data$Station, Stations$CamStation)]
 ## Renaming to maintatin consistency with pilot data (SPP, not SP+P)
-library(plyr)
+
 data$Treatment <- revalue(data$Treatment, replace = c("SP+P" = "SPP", "Nat Regen" = "NatRegen", "Human Use" = "HumanUse"))
 
 glimpse(data)
@@ -96,11 +97,12 @@ study.days <- 1:max(data$StudyDay)
 sites <- unique(data$Station)
 sites <- sort(sites, decreasing=FALSE)
 
-Site_rep <- rep(sites,372) ## Repeat site names 372 times (# days in study period)
+Site_rep <- rep(sites,161) ## Repeat site names 161 times (# days in study period)
 length(Site_rep)
 head(Site_rep)
 
-study.days_rep <- rep(study.days, 24) ## Repeat study days 24 times (# of camera sites)
+unique(data$Station) #55 stations with detections
+study.days_rep <- rep(study.days, 55) ## Repeat study days 55 times (# of camera sites with detections)
 study.days_rep <- sort(study.days_rep, decreasing=FALSE)
 
 d <- cbind(as.data.frame(Site_rep),study.days_rep) ## Creates a data frame of sites and study day
@@ -115,64 +117,66 @@ head(data2)
 
 levels(data$Species) ##Names of different species detected
 
-#### Create individual species data frames --> # detections per day ####
+#### Create individual species data frames --> # detections per day #### 
+## if summarise function only gives a 1 by 1 output that sums the count column: close R and reload with dplyr loaded only (not plyr)
+
 d.deer <- data2 %>%
   filter(Species == "O_virginianus") %>% ##Select deer data only
   group_by(Station, StudyDay) %>%        ## Arrange data first by Station, then by StudyDay (both in ascending order)
   summarise(sum(count, na.rm = TRUE))    ## Summarise the detection count for that day, add to new column in data frame
 colnames(d.deer) <- c("Site","StudyDay","WTDeer") ##Renaming columns (ignore Warnings, function will add colname)
-glimpse(d.deer) #207 days of deer detections (where some days have multiple detections)
-plot(d.deer$StudyDay, d.deer$WTDeer, xlim=c(0,350)) ##Most days have 1 detection, some 2, 2 days have 3 and 2 days have 5
+glimpse(d.deer) #91 days of deer detections (where some days have multiple detections)
+plot(d.deer$StudyDay, d.deer$WTDeer, xlim=c(0,170)) ##Most days have 1 detection, some 2
 
 d.bear <- data2 %>%
   filter(Species == "U_americanus") %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.bear) <- c("Site","StudyDay","Blackbear")
-glimpse(d.bear) #134 obs
-plot(d.bear$StudyDay, d.bear$Blackbear, xlim=c(0,350))
-head(d.bear[order(d.bear$StudyDay),]) ##First detections of bears within this deployment
-tail(d.bear[order(d.bear$StudyDay),]) ##Last detections of bears within this deployment
+glimpse(d.bear) #3 obs
+plot(d.bear$StudyDay, d.bear$Blackbear, xlim=c(0,170))
+head(d.bear[order(d.bear$StudyDay),]) ##First detections of bears within this deployment - day 151
+tail(d.bear[order(d.bear$StudyDay),]) ##Last detections of bears within this deployment - doesn't make sense for this deployment
 
 d.caribou <- data2 %>%
   filter(Species == "R_tarandus") %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.caribou) <- c("Site","StudyDay","Caribou")
-glimpse(d.caribou) #41 obs
-plot(d.caribou$StudyDay, d.caribou$Caribou, xlim=c(0,350))
+glimpse(d.caribou) #20 obs
+plot(d.caribou$StudyDay, d.caribou$Caribou, xlim=c(0,170))
 
 d.moose <- data2 %>%
   filter(Species == "A_alces") %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.moose) <- c("Site","StudyDay","Moose")
-glimpse(d.moose) #28 obs
-plot(d.moose$StudyDay, d.moose$Moose, xlim=c(0,350))
+glimpse(d.moose) #42 obs
+plot(d.moose$StudyDay, d.moose$Moose, xlim=c(0,170))
 
 d.coyote <- data2 %>%
   filter(Species == "C_latrans") %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.coyote) <- c("Site","StudyDay","Coyote")
-glimpse(d.coyote) #46 obs
-plot(d.coyote$StudyDay, d.coyote$Coyote, xlim=c(0,350))
+glimpse(d.coyote) #45 obs
+plot(d.coyote$StudyDay, d.coyote$Coyote, xlim=c(0,170))
 
 d.lynx <- data2 %>%
   filter(Species == "L_canadensis") %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.lynx) <- c("Site","StudyDay","Lynx")
-glimpse(d.lynx) # 30 obs
-plot(d.lynx$StudyDay, d.lynx$Lynx, xlim=c(0,350))
+glimpse(d.lynx) # 26 obs
+plot(d.lynx$StudyDay, d.lynx$Lynx, xlim=c(0,170))
 
 d.wolf <- data2 %>%
   filter(Species == "C_lupus") %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.wolf) <- c("Site","StudyDay","Wolf")
-glimpse(d.wolf) # 91 obs
-plot(d.wolf$StudyDay, d.wolf$Wolf, xlim=c(0,350))
+glimpse(d.wolf) # 83 obs
+plot(d.wolf$StudyDay, d.wolf$Wolf, xlim=c(0,170))
 
 #### Adding species detections counts to a master data frame ####
 
@@ -210,21 +214,21 @@ data3$Wolf <- d.wolf$Wolf[match(data3$Site_SD,d.wolf$Site_SD)]
 
 summary(data3)
 
-data3[is.na(data3)] <- 0 ##Converting NAs to 0's
+data3[is.na(data3)] <- 0 ## Converting NAs to 0's
 summary(data3)
 nrow(data3)
 
-sum(data3$WTDeer) #244
-sum(data3$Blackbear) #149
-sum(data3$Caribou) #44
-sum(data3$Coyote) #51
-sum(data3$Lynx) #31
-sum(data3$Wolf) #99
-sum(data3$Moose) #32
+sum(data3$WTDeer) #99
+sum(data3$Blackbear) #3
+sum(data3$Caribou) #22
+sum(data3$Coyote) #47
+sum(data3$Lynx) #27
+sum(data3$Wolf) #92
+sum(data3$Moose) #45
 
 ####--- aggregate species detection data by month ####
 data$Site_SD <- paste(data$Station,data$StudyDay)
-data3$StudyDay.date <- as.Date(data3$StudyDay,origin = "2015-11-04")
+data3$StudyDay.date <- as.Date(data3$StudyDay,origin = "2016-11-10") # Origin = day before first detection
 data3$Year <- as.factor(format(as.Date(data3$StudyDay.date), "%Y")) ##Separating date info into year, month, and year_month (to distinguish Nov.2015 from Nov. 2016)
 data3$Month <- as.factor(format(as.Date(data3$StudyDay.date), "%b"))
 data3$Yr_Month <- as.factor(format(as.Date(data3$StudyDay.date), "%Y-%m"))
@@ -233,65 +237,65 @@ head(data3)
 summary(data3)
 levels(data3$Yr_Month)
 
-sum(data3$WTDeer)#244
-sum(data3$Blackbear) #149
-sum(data3$Caribou) #44
-sum(data3$Coyote) #51
-sum(data3$Lynx) #31
-sum(data3$Wolf) #99
-sum(data3$Moose) #32
+sum(data3$WTDeer)#99
+sum(data3$Blackbear) #3
+sum(data3$Caribou) #22
+sum(data3$Coyote) #47
+sum(data3$Lynx) # 27
+sum(data3$Wolf) # 92
+sum(data3$Moose) # 45
 
-write.csv(data3, "2015.01_detections_day.csv")
+write.csv(data3, "2016.01_detections_day.csv")
 
 m.deer <- data3 %>%
   group_by(Site, Treatment, Yr_Month) %>% 
   summarise(sum(WTDeer, na.rm = TRUE))
 colnames(m.deer) <- c("Site","Treatment","Yr_Month","WTDeer")
-summary(m.deer) #max 21 obs in one month
-sum(m.deer$WTDeer) #244 - matches
+summary(m.deer) #max 7 obs/ station in one month
+sum(m.deer$WTDeer) #99 - matches
 
 m.bear <- data3 %>%
   group_by(Site, Treatment, Yr_Month) %>% 
   summarise(sum(Blackbear, na.rm = TRUE))
 colnames(m.bear) <- c("Site","Treatment","Yr_Month","Blackbear")
-summary(m.bear) # max 12 obs in one month
-sum(m.bear$Blackbear) #149 - matches
+summary(m.bear) # max 1 obs/station in one month
+sum(m.bear$Blackbear) #3 - matches
 
 m.caribou <- data3 %>%
   group_by(Site, Treatment, Yr_Month) %>% 
   summarise(sum(Caribou, na.rm = TRUE))
 colnames(m.caribou) <- c("Site","Treatment","Yr_Month","Caribou")
-summary(m.caribou) # max 6 obs in one month
-sum(m.caribou$Caribou) #44 - matches
+summary(m.caribou) # max 4 obs/station in one month
+sum(m.caribou$Caribou) #22 - matches
 
 m.moose <- data3 %>%
   group_by(Site, Treatment, Yr_Month) %>% 
   summarise(sum(Moose, na.rm = TRUE))
 colnames(m.moose) <- c("Site","Treatment","Yr_Month","Moose")
-summary(m.moose) # max 4 obs in one month
-sum(m.moose$Moose) #32 - matches
+summary(m.moose) # max 6 obs/ station in one month
+sum(m.moose$Moose) #45 - matches
 
 
 m.coyote <- data3 %>%
   group_by(Site, Treatment, Yr_Month) %>% 
   summarise(sum(Coyote, na.rm = TRUE))
 colnames(m.coyote) <- c("Site","Treatment","Yr_Month","Coyote")
-summary(m.coyote) # max 9 obs in one month
-sum(m.coyote$Coyote) #51 - matches
+summary(m.coyote) # max 5 obs in one month
+sum(m.coyote$Coyote) # 47 - matches
 
 m.lynx <- data3 %>%
   group_by(Site, Treatment, Yr_Month) %>% 
   summarise(sum(Lynx, na.rm = TRUE))
 colnames(m.lynx) <- c("Site","Treatment","Yr_Month","Lynx")
-summary(m.lynx) # max 3 obs in one month
-sum(m.lynx$Lynx) #31 - matches
+summary(m.lynx) # max 4 obs in one month
+sum(m.lynx$Lynx) #27 - matches
 
 m.wolf <- data3 %>%
   group_by(Site, Treatment, Yr_Month) %>% 
   summarise(sum(Wolf, na.rm = TRUE))
 colnames(m.wolf) <- c("Site","Treatment","Yr_Month","Wolf")
-summary(m.wolf) # max 9 obs in one month
-sum(m.wolf$Wolf) #99 - matches
+summary(m.wolf) # max 4 obs in one month
+sum(m.wolf$Wolf) # 92 - matches
 
 #### Aggregating all monthly detection data into one data frame ####
 data.month <- m.wolf ##Starting new dataframe with rows for all stations in increments by yr_month
