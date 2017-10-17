@@ -516,6 +516,22 @@ AIC(m0.bear, m1.bear, m2.bear, m3.bear, m4.bear, m5.bear, Zip1, Nb1) ## m5 < m4 
 
 ## Negative binomial with 2 random variables wins
 
+
+### Zero-inflated GLMMs
+## Need to restart R session first to unload lme4
+ZIPmer.bear <- glmmadmb(Blackbear~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
+ZINBmer.bear <- glmmadmb(Blackbear~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE) 
+summary(ZIPmer.bear)
+
+### Comparing results of glmmADMB to glmer with neg. bin. glmm
+glmm.bear <- glmmadmb(Blackbear~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = FALSE)
+AIC(m3.bear,glmm.bear) ## Comparable AIC values and summaries
+summary(m3.bear)
+summary(glmm.bear)
+
+AIC(m0.bear, m1.bear, m2.bear, m3.bear, m4.bear, m5.bear, Zip1, Nb1, ZIPmer.bear) ## Still no lower AIC than nbin.glmm
+
+
 #### Coyote modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
 ##Poisson glm
 m0.coyote <- glm(Coyote~Treatment, family = poisson, data = pilot.month)
@@ -564,6 +580,22 @@ summary(Nb1)
 # Model selection
 AIC(m0.coyote, m1.coyote, m2.coyote, m3.coyote, m4.coyote, m5.coyote, Zip1, Nb1) ## m5 < m3 < m4, but both negbin models failed to converge (m5 and m3)
 
+### Zero-inflated glmms with glmmADMB
+ZIPmer.coyote <- glmmadmb(Coyote~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
+ZINBmer.coyote <- glmmadmb(Coyote~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE) 
+summary(ZIPmer.coyote)
+summary(ZINBmer.coyote)
+
+### Comparing results of glmmADMB to glmer with neg. bin. glmm
+glmm.coyote <- glmmadmb(Coyote~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = FALSE)
+AIC(m3.coyote,glmm.coyote) ## Comparable AIC values and summaries
+summary(m3.coyote)
+summary(glmm.coyote)
+
+AIC(m0.coyote, m1.coyote, m2.coyote, m3.coyote, m4.coyote, m5.coyote, Zip1, Nb1, ZIPmer.coyote) ### Neg. bin. glmms still lowest
+
+
+
 #### Lynx modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
 ##Poisson glm
 m0.lynx <- glm(Lynx~Treatment, family = poisson, data = pilot.month)
@@ -610,6 +642,13 @@ summary(Nb1)
 
 # Model selection
 AIC(m0.lynx, m1.lynx, m2.lynx, m3.lynx, m4.lynx, m5.lynx, Zip1, Nb1) ## m2 has relatively greatest expl. power
+
+### Zero-inflated glmms with glmmADMB
+ZIPmer.lynx <- glmmadmb(Lynx~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
+# Function maximiser failed
+ZINBmer.lynx <- glmmadmb(Lynx~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE)
+# Function maximiser failed
+
 
 
 
