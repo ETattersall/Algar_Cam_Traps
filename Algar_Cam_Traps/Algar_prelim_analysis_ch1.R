@@ -671,10 +671,6 @@ AIC(m0.caribou, m1.caribou, m2.caribou, m3.caribou) ## m3 > m2 > m1
 anova(m2.caribou, m3.caribou) ## m3 significantly less than m2, but both models failed to converge
 
 
-
-
-
-
 ## Intercept-free model, should be same as m1.caribou, just comparing 2 treatment estimates to zero rather than to each other
 ## Not run for pilot
 ## m2.caribou <- glmer(Caribou~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
@@ -700,6 +696,15 @@ summary(Nb1)
 
 # Model selection
 AIC(m0.caribou, m1.caribou, m2.caribou, m3.caribou, m4.caribou, m5.caribou, Zip1, Nb1) ## m5<m4<m3. m2 and m3 didn't converge though
+
+### Zero-inflated glmms with glmmADMB
+ZIPmer.caribou <- glmmadmb(Caribou~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
+
+ZINBmer.caribou <- glmmadmb(Caribou~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE)
+#Function maximizer failed
+
+AIC(m2.caribou, m4.caribou, ZIPmer.caribou)
+
 
 
 #### WTDeer modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
