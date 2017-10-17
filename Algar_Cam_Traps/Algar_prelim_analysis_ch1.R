@@ -461,8 +461,10 @@ aictab(cand.set.wolf, modnames = names, second.ord = TRUE, nobs = NULL,
 
 ### Zero-inflated GLMMs
 ## Need to restart R session first to unload lme4
+ZIPmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
+ZINBmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE) ##Parameters estimated, but standard errors were not. Function maximiser failed
 
-
+AIC(m0.wolf, m1.wolf, m2.wolf, m3.wolf, m4.wolf, m5.wolf, m6.wolf, Zip1, Nb1, ZIPmer.wolf) ## Still no lower AIC than nbin.glmm
 
 #### Blackbear modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
 ##Poisson glm
