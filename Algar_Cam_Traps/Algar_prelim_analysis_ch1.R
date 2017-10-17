@@ -809,3 +809,7 @@ summary(Nb1)
 
 # Model selection
 AIC(m0.Moose, m1.Moose, m2.Moose, m3.Moose, m4.Moose, m5.Moose, Zip1, Nb1) ## m5<m3<m4. Negative binomial distributions best
+
+
+
+### For all species except lynx, negative binomial glmm with a random effect of site has lowest AIC (including random effect of Yr_Month decresases further but may not make sense)
