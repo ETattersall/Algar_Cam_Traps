@@ -95,7 +95,7 @@ Algarnum <- 25:60
 Site <- paste(Algar, Algarnum, sep="")
 class(Site)
 Site <- as.factor(Site)
-Site <- rep(Site, 12)
+Site <- rep(Site, 12) # 12 = no. months
 
 inac36 <- as.data.frame(Site)
 head(inac36)
@@ -109,7 +109,7 @@ head(inac36)
 
 ## Adding Yr_Month
 Yr_Month <- c("2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10")
-Yr_Month <- rep(Yr_Month, 36)
+Yr_Month <- rep(Yr_Month, 36) #36 = no. of cameras
 inac36$Yr_Month <- Yr_Month 
 head(inac36)
 
@@ -119,7 +119,7 @@ inac36$Site_ym <- paste(inac36$Site, inac36$Yr_Month)
 head(inac36)
 
 ## Adding NAs for detection data
-detections <- as.data.frame(matrix(NA, nrow = 432, ncol = 7))
+detections <- as.data.frame(matrix(NA, nrow = 432, ncol = 7)) # 432 = 12*36
 colnames(detections) <- c("Blackbear", "Wolf", "Coyote", "Lynx", "Caribou", "WTDeer", "Moose")
 head(detections)
 
@@ -134,3 +134,24 @@ tail(Alg.data)
 Alg.data <- with(Alg.data, Alg.data[order(as.factor(as.character(Site)), Yr_Month), ])
 head(Alg.data)
 tail(Alg.data)
+
+#### Adding NA rows for failed cameras: Algar 18, 32, 50 ####
+## Algar18 has 2016-11 data for first deployment but not for 2nd --> mark as inactive for 2016-12 to 2017-04 but not 2016-11
+
+# Do Algar 18 separately, first
+Algar18 <- as.data.frame(rep("Algar18", 5))
+colnames(Algar18) <- "Site"
+head(Algar18)
+Algar18$Treatment <- rep("SPP", 5)
+Algar18$Yr_Month <- c("2016-12", "2017-01", "2017-02", "2017-03", "2017-04")
+head(Algar18)
+Algar18$Site_ym <- paste(Algar18$Site, Algar18$Yr_Month)
+
+## Adding NAs for detection data
+detections <- as.data.frame(matrix(NA, nrow = 5, ncol = 7))
+colnames(detections) <- c("Blackbear", "Wolf", "Coyote", "Lynx", "Caribou", "WTDeer", "Moose")
+head(detections)
+
+Algar18 <- cbind.data.frame(Algar18, detections)
+
+## Al
