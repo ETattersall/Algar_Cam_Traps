@@ -154,4 +154,30 @@ head(detections)
 
 Algar18 <- cbind.data.frame(Algar18, detections)
 
-## Al
+## Algar 32, 50
+Algar32 <- rep("Algar32", 6)
+Algar50 <- rep("Algar50", 6)
+Site <- append(Algar32, Algar50)
+inac <- as.data.frame(Site)
+inac
+inac$Treatment <- as.factor(ifelse(inac$Site == "Algar32", "HumanUse", "SPP"))
+inac
+
+Yr_Month <- rep(c("2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04"), 2)
+inac$Yr_Month <- as.factor(Yr_Month)
+inac
+
+inac$Site_ym <- paste(inac$Site, inac$Yr_Month)
+
+## Adding NAs for detection data
+detections <- as.data.frame(matrix(NA, nrow = 12, ncol = 7))
+colnames(detections) <- c("Blackbear", "Wolf", "Coyote", "Lynx", "Caribou", "WTDeer", "Moose")
+head(detections)
+
+inac <- cbind.data.frame(inac, detections)
+inac
+
+inac <- rbind(Algar18, inac)
+inac
+
+#### Dataframe for failed cameras. Still need to add to Alg.data
