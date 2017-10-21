@@ -135,7 +135,7 @@ Alg.data <- with(Alg.data, Alg.data[order(as.factor(as.character(Site)), Yr_Mont
 head(Alg.data)
 tail(Alg.data)
 
-#### Adding NA rows for failed cameras: Algar 18, 32, 50 ####
+#### 2. Adding NA rows for failed cameras: Algar 18, 32, 50 ####
 ## Algar18 has 2016-11 data for first deployment but not for 2nd --> mark as inactive for 2016-12 to 2017-04 but not 2016-11
 
 # Do Algar 18 separately, first
@@ -180,4 +180,26 @@ inac
 inac <- rbind(Algar18, inac)
 inac
 
-#### Dataframe for failed cameras. Still need to add to Alg.data
+Alg.data <- rbind(Alg.data, inac)
+head(Alg.data)
+tail(Alg.data)
+Alg.data <- with(Alg.data, Alg.data[order(as.factor(as.character(Site)), Yr_Month), ])
+head(Alg.data)
+tail(Alg.data)
+
+#### 3. Fix Algar49 ####
+Alg.data %>% filter(Site == "Algar49") %>% print()
+fix(Alg.data) ## Added NAs to Algar49 for 2017-01 to 2017-04. Also Added Treatments to Algar32 and 50 for first deployment months (skipped because they aren't present in first data.frame)
+summary(Alg.data$Treatment) ##Still 24 NA's
+
+Alg.data[which(is.na(Alg.data$Treatment)), ] ##Algar52 and 56, active no detection sites
+Alg.data[which(is.na(Alg.data$Treatment))[c(1:24)], "Treatment"] <- "NatRegen" #Reassigning NAs to NatRegen. Rows called by c(1:24), column called by "Treatment"
+
+summary(Alg.data$Treatment) #NAs gone
+Alg.data %>% filter(Site == "Algar52") %>% print() #NAs gone
+Alg.data %>% filter(Site == "Algar56") %>% print() #NAs gone
+summary(Alg.data)
+glimpse(Alg.data)
+
+getwd()
+write.csv(Alg.data, "monthlydetections_alldata.csv")
