@@ -124,9 +124,39 @@ table(ImgDat$Genus)
 # Selecting relevant columns
 ImgDat <- ImgDat %>% select(File, RelativePath, Folder, Date, Time, Temperature, MoonPhase, Genus, Species, SpCount, Sex, Age)
 
+## To make Folder name match Station in Station dataframe, need to use revalue (restart R and load plyr)
+library(plyr)
+
+ImgDat$Folder <- revalue(ImgDat$Folder, replace = c("Algar1" = "Algar01", "Algar2" = "Algar02", "Algar3" = "Algar03", "Algar4" = "Algar04", "Algar5" = "Algar05", "Algar6" = "Algar06", "Algar7" = "Algar07", "Algar8" = "Algar08", "Algar9" = "Algar09"))
+
+
+
 
 #### 3. Bulk Import CSV from Camelot ####
+## Merge image data LAST (after station data)
 Camelot <- read.csv("Camelot_BulkImport_2015.01.csv")
+head(Camelot) #Path.Component.9 = Station names, need to be revalued also (May need to actually renmae Folders...)
+
+Camelot$Path.Component.9 <- revalue(Camelot$Path.Component.9, replace = c("Algar1" = "Algar01", "Algar2" = "Algar02", "Algar3" = "Algar03", "Algar4" = "Algar04", "Algar5" = "Algar05", "Algar6" = "Algar06", "Algar7" = "Algar07", "Algar8" = "Algar08", "Algar9" = "Algar09"))
 head(Camelot)
-colnames(Camelot)
+
+
+
+## Combining station data to Camelot data by matching Cam24$CamStation to Camelot$Path.Component.9
+## merge function
+IS <- merge(Camelot, Cam24, by.x = "Path.Component.9", by.y = "CamStation")
+colnames(IS)
+
+## Combining Timelapse image data with others by matching file names
+ISC <- merge(IS, ImgDat, by.x = "File.Name", by.y = "File", all = TRUE) #all = TRUE ensure images without a match are appended
+head(ISC)
+
+## Adding a Site name (just Algar)
+ISC$Site.Name <- "Algar"
+
+## Should be 18036 rows but there are 18039...check if Camelot import works?
+write.csv(ISC, "2015.01Camelot_Import.csv")
+
+
+
 
