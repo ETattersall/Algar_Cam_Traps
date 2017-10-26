@@ -30,14 +30,33 @@ for(row in 1:60){
   } else CamDat$Treat[row]== "SPP"
 }
 unique(CamDat$Treat)
-fix(CamDat) # Manually change Treatment values
+fix(CamDat) # Manually change Treatment values. Also need to remove symbols from Time and height columns
+
+write.csv(CamDat, "Station_data/Algar_DeployData.csv") ## Save standardization steps
+CamDat <- read.csv("Station_data/Algar_DeployData.csv")
+CamDat$X <- NULL
 
 unique(CamDat$Treatment)
 
+glimpse(CamDat)
 
+# DeployDate, Deploy Time need to be POSIX class (in %Y - %m - %d format)
+CamDat$DeployDate <- as.POSIXct(strptime(CamDat$DeployDate, format = "%d/%m/%Y"))
+
+glimpse(CamDat)
 
 ## First deployment --> only use first 24 cams (test Camelot with first deployment)
 Cam24 <- CamDat[1:24,]
+
+## Need to add Retrieval/Check Dates. Take from Algar_stationdata_apr2017.csv
+Cam.apr <- read.csv("Station_data/Algar_stationdata_apr2017.csv")
+str(Cam.apr)
+CheckDate1 <- Cam.apr$CheckDate1
+Cam24$CheckDate1 <- CheckDate1[1:24]
+glimpse(Cam24)
+Cam24$CheckDate1 <- as.POSIXct(strptime(Cam24$CheckDate1, format = "%d/%m/%Y"))
+glimpse(Cam24)
+
 
 #### 2.  Retrieve image processing data from Timelapse CSVs ####
 ImgDat <- read.csv("2015.01CSVs_12Dec_2016.csv")
@@ -135,16 +154,17 @@ ImgDat$Folder <- revalue(ImgDat$Folder, replace = c("Algar1" = "Algar01", "Algar
 #### 3. Bulk Import CSV from Camelot ####
 ## Merge image data LAST (after station data)
 Camelot <- read.csv("Camelot_BulkImport_2015.01.csv")
-head(Camelot) #Path.Component.9 = Station names, need to be revalued also (May need to actually renmae Folders...)
+head(Camelot) #Path.Component.9 = Station names. Add new Station column with same names, revalued to add 0's
+Camelot$Station <- Camelot$Path.Component.9
 
-Camelot$Path.Component.9 <- revalue(Camelot$Path.Component.9, replace = c("Algar1" = "Algar01", "Algar2" = "Algar02", "Algar3" = "Algar03", "Algar4" = "Algar04", "Algar5" = "Algar05", "Algar6" = "Algar06", "Algar7" = "Algar07", "Algar8" = "Algar08", "Algar9" = "Algar09"))
+Camelot$Station <- revalue(Camelot$Station, replace = c("Algar1" = "Algar01", "Algar2" = "Algar02", "Algar3" = "Algar03", "Algar4" = "Algar04", "Algar5" = "Algar05", "Algar6" = "Algar06", "Algar7" = "Algar07", "Algar8" = "Algar08", "Algar9" = "Algar09"))
 head(Camelot)
 
 
 
 ## Combining station data to Camelot data by matching Cam24$CamStation to Camelot$Path.Component.9
 ## merge function
-IS <- merge(Camelot, Cam24, by.x = "Path.Component.9", by.y = "CamStation")
+IS <- merge(Camelot, Cam24, by.x = "Station", by.y = "CamStation")
 colnames(IS)
 
 ## Combining Timelapse image data with others by matching file names
