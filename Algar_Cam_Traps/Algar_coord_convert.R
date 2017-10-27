@@ -21,8 +21,10 @@ class(spgeo)
 longlat <- as.data.frame(spgeo)
 colnames(longlat) <- c("Longitude", "Latitude")
 Stat <- cbind(Stat, longlat)
+head(Stat)
+colnames(Stat)
 
 Site.data <- Stat %>% select(CamStation, utmE, utmN, Longitude, Latitude, DeployDate, DeployTime_24h, Treatment, Elev_m, CamHeight_cm, CamDirection)
 colnames(Site.data)
 glimpse(Site.data)
-write.csv(Site.data, "Station_data/Algar_DeployData.csv")
+write.csv(Site.data, "Station_data/Algar_DeployData.csv") ## Further modified and saved over to standardize formats in Camelot_bulk_import.R
