@@ -75,73 +75,97 @@ ImgDat <- ImgDat %>% gather(key = Sp_code,
 colnames(ImgDat)
 unique(ImgDat$Sp_code)
 
-## Add Genus and Species columns
+## Add Genus, Species, and common name columns
 ImgDat$Genus <- rep(NA, 5741)
 ImgDat$Species <- rep(NA, 5741)
+ImgDat$ComNam <- rep(NA, 5741)
 
-# Populating Genus, species columns according to Timelapse code
+# Populating Genus, species, and common name columns according to Timelapse code
 for(i in 1:nrow(ImgDat)){
   if(ImgDat$Sp_code[i] == "O_virginianus") {
     ImgDat$Genus[i] = "Odocoileus"
     ImgDat$Species[i] = "virginianus"
+    ImgDat$ComNam[i] = "White-Tailed Deer"
   } else if(ImgDat$Sp_code[i] == "R_tarandus"){
     ImgDat$Genus[i] = "Rangifer"
     ImgDat$Species[i] = "tarandus"
+    ImgDat$ComNam[i] = "Caribou"
   } else if(ImgDat$Sp_code[i] == "A_alces"){
     ImgDat$Genus[i] = "Alces"
     ImgDat$Species[i] = "alces"
+    ImgDat$ComNam[i] = "Moose"
   } else if(ImgDat$Sp_code[i] == "C_lupus"){
     ImgDat$Genus[i] = "Canis"
     ImgDat$Species[i] = "lupus"
+    ImgDat$ComNam[i] = "Gray Wolf"
   } else if(ImgDat$Sp_code[i] == "C_latrans"){
     ImgDat$Genus[i] = "Canis"
     ImgDat$Species[i] = "latrans"
+    ImgDat$ComNam[i] = "Coyote"
   } else if(ImgDat$Sp_code[i] == "U_americanus"){
     ImgDat$Genus[i] = "Ursus"
     ImgDat$Species[i] = "americanus"
+    ImgDat$ComNam[i] = "American Black Bear"
   }  else if(ImgDat$Sp_code[i] == "L_canadensis"){
     ImgDat$Genus[i] = "Lynx"
     ImgDat$Species[i] = "canadensis"
+    ImgDat$ComNam[i] = "Canadian Lynx"
   } else if(ImgDat$Sp_code[i] == "G_gulo"){
     ImgDat$Genus[i] = "Gulo"
     ImgDat$Species[i] = "gulo"
+    ImgDat$ComNam[i] = "Wolverine"
   } else if(ImgDat$Sp_code[i] == "M_americana"){
     ImgDat$Genus[i] = "Martes"
     ImgDat$Species[i] = "americana"
+    ImgDat$ComNam[i] = "American Marten"
   } else if(ImgDat$Sp_code[i] == "M_pennanti"){
     ImgDat$Genus[i] = "Martes"
     ImgDat$Species[i] = "pennanti"
+    ImgDat$ComNam[i] = "Fisher"
   } else if(ImgDat$Sp_code[i] == "V_vulpes"){
     ImgDat$Genus[i] = "Vulpes"
     ImgDat$Species[i] = "vulpes"
+    ImgDat$ComNam[i] = "Red Fox"
   }  else if(ImgDat$Sp_code[i] == "T_hudsonicus"){
     ImgDat$Genus[i] = "Tamiasciurus"
     ImgDat$Species[i] = "hudsonicus"
+    ImgDat$ComNam[i] = "Red Squirrel"
   }  else if(ImgDat$Sp_code[i] == "L_americanus"){
     ImgDat$Genus[i] = "Lepus"
     ImgDat$Species[i] = "americanus"
+    ImgDat$ComNam[i] = "Snowshoe Hare"
   } else if(ImgDat$Sp_code[i] == "H_sapiens"){
     ImgDat$Genus[i] = "Homo"
     ImgDat$Species[i] = "sapiens"
+    ImgDat$ComNam[i] = "Human"
   } else if(ImgDat$Sp_code[i] == "G_canadensis"){
     ImgDat$Genus[i] = "Grus"
     ImgDat$Species[i] = "canadensis"
+    ImgDat$ComNam[i] = "Sandhill Crane"
   } else if (ImgDat$Sp_code[i] == "Other_birds"){
     ImgDat$Genus[i] = "Other bird"
     ImgDat$Species[i] = "Other bird"
+    ImgDat$ComNam[i] = "Other bird"
   } else if(ImgDat$Sp_code[i] == "Other"){
     ImgDat$Genus[i] = "Other"
     ImgDat$Species[i] = "Other"
+    ImgDat$ComNam[i] = "Other"
   }}
+
+
+
+
 
     
 unique(ImgDat$Genus)
 head(ImgDat$Genus)
 table(ImgDat$Genus)
-
+unique(ImgDat$ComNam)
 
 # Selecting relevant columns
-ImgDat <- ImgDat %>% select(File, RelativePath, Folder, Date, Time, Temperature, MoonPhase, Genus, Species, SpCount, Sex, Age)
+ImgDat <- ImgDat %>% select(File, RelativePath, Folder, Date, Time, Temperature, MoonPhase, ComNam, Genus, Species, SpCount, Sex, Age)
+glimpse(ImgDat)
+unique(ImgDat$Sex)
 
 ## To make Folder name match Station in Station dataframe, need to use revalue (restart R and load plyr)
 library(plyr)
@@ -173,10 +197,20 @@ head(ISC)
 
 ## Adding a Site name (just Algar)
 ISC$Site.Name <- "Algar"
+str(ISC)
+
+
+
+##### Sighting fields that Camelot has an issue with:
+# Sighting quantity (SpCount): all should be an integer... change NAs to 0?
+# Adding a common name... see above
+
+
+# Common name
+class(ISC$SpCount)
 
 ## Should be 18036 rows but there are 18039...check if Camelot import works?
 write.csv(ISC, "2015.01Camelot_Import.csv")
-
 
 
 
