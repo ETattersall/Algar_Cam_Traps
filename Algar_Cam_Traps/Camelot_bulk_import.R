@@ -20,15 +20,16 @@ CamDat$X <- NULL
 unique(CamDat$Treatment)
 
 ## for loop standardizing treatment column--> doesn't work :( Fix manually
-for(row in 1:60){
-  if(CamDat$Treatment[row]== "Control") {
-    CamDat$Treat[row]== "Control"
-  } else if(CamDat$Treatment[row]== "Human Use"){
-    CamDat$Treat[row]== "HumanUse"
-  } else if(CamDat$Treatment[row]== "Natural Regeneration"){
-    CamDat$Treat[row]== "NatRegen"
-  } else CamDat$Treat[row]== "SPP"
-}
+# for(row in 1:60){
+#  if(CamDat$Treatment[row]== "Control") {
+#   CamDat$Treat[row]== "Control"
+#  } else if(CamDat$Treatment[row]== "Human Use"){
+#    CamDat$Treat[row]== "HumanUse"
+#  } else if(CamDat$Treatment[row]== "Natural Regeneration"){
+#    CamDat$Treat[row]== "NatRegen"
+#  } else CamDat$Treat[row]== "SPP"
+#}
+
 unique(CamDat$Treat)
 fix(CamDat) # Manually change Treatment values. Also need to remove symbols from Time and height columns
 
@@ -44,6 +45,14 @@ glimpse(CamDat)
 CamDat$DeployDate <- as.POSIXct(strptime(CamDat$DeployDate, format = "%d/%m/%Y"))
 
 glimpse(CamDat)
+str(CamDat)
+
+## Session End Date in the future... 30/12/2020
+## Redult: Camelot didn't like this :(
+# CamDat$EndDate <- as.factor("30/12/2020")
+# str(CamDat$EndDate)
+# CamDat$EndDate <- as.POSIXct(strptime(CamDat$EndDate, format = "%d/%m/%Y"))
+# str(CamDat$EndDate)
 
 ## First deployment --> only use first 24 cams (test Camelot with first deployment)
 Cam24 <- CamDat[1:24,]
@@ -56,6 +65,7 @@ Cam24$CheckDate1 <- CheckDate1[1:24]
 glimpse(Cam24)
 Cam24$CheckDate1 <- as.POSIXct(strptime(Cam24$CheckDate1, format = "%d/%m/%Y"))
 glimpse(Cam24)
+
 
 
 #### 2.  Retrieve image processing data from Timelapse CSVs ####
@@ -203,11 +213,9 @@ str(ISC)
 
 ##### Sighting fields that Camelot has an issue with:
 # Sighting quantity (SpCount): all should be an integer... change NAs to 0?
-# Adding a common name... see above
-
-
-# Common name
-class(ISC$SpCount)
+summary(ISC$SpCount)
+ISC$SpCount[is.na(ISC$SpCount)] <- 0
+summary(ISC$SpCount)
 
 ## Should be 18036 rows but there are 18039...check if Camelot import works?
 write.csv(ISC, "2015.01Camelot_Import.csv")
