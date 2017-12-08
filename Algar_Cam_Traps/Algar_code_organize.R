@@ -1036,9 +1036,25 @@ par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
 sp.plot <- rev(sort(table(sp_detect))) 
 xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,250))
 text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
-###################################################################################
+#### Species detection graph including all deployments ####
+## Uses full record table, recordTable_nov2015-nov2017.csv, currently read in as All.rec
 
-# create Site x Species matrix
+sp_detect <- All.rec$Species
+
+sp.plot1 <- rev(sort(table(sp_detect)))
+sp.plot1 <- as.data.frame(sp.plot1) ##data frame summing detections --> fix scientific names to common
+fix(sp.plot1)
+
+
+
+### Frequency histograms
+
+par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
+
+ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Sandhill crane", "Black bear", "Grey wolf", "Snowshoe hare", "Bird spp.", "Woodland caribou", "Human", "Canada lynx", "Red squirrel", "Red fox", "American marten", "Cougar", "Fisher", "Wolverine", "River otter", "Beaver"))
+
+
+#### create Site x Species matrix ####
 sp_detect <- ani.rec$Species
 ani.rec$Station <- toupper(ani.rec$Station) ### Need to do to match CamStations in cam2016
 st_detect <- ani.rec$Station
