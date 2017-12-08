@@ -1,6 +1,8 @@
 ###########################
+# Dat summaries, modified for each deployment
 # .RData Workspace in Algar_git
 # Started by Erin T., Feb 7, 2017...June 2, 2017 modified for 2016.01 deployment
+# Apr 2017 - Nov2017 deployment summaries started Dec. 7, 2017 (some steps aren't necessary, Camelot creates data summaries)
 # Code organization for Algar Camera Trap Data
 ############################
 
@@ -11,22 +13,28 @@ library(dplyr)
 
 
 ####### Cole's code
-### Load camera station data for the 24 cameras set in November 2015, checked in November 2016
-images_wd <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps"
-setwd(images_wd)
-cams2016 <- read.csv("Algar_stationdata.2016.01.csv")
-with(cams2016,plot(utmE,utmN))
+### Load camera station data for the deployed cameras
+images_wd <- "E:/Algar_Apr-Nov2017/Renamed_Images"
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data/Station_data")
+camdata <- read.csv("AlgarStations_DeploymentData.csv")
+
+## plotting cam stations
+with(camdata,plot(utmE,utmN))
+
+
 
 # specify folder with renamed images
-imgDir <- "C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Renamed_Images" 
+setwd(images_wd)
+ 
 
 # check number of JPG images [this stuff isn't needed now that we have tagged images]
-length(list.files(imgDir, pattern = "JPG", recursive = TRUE)) # [1] 30632 --> includes stations with misfiring cameras
+length(list.files(images_wd, pattern = "JPG", recursive = TRUE)) # [1] 63840 --> includes stations with misfiring cameras
 
 # try this for each station (Image count per Station)
-stations <- as.character(cams2016$CamStation)
+stations <- as.character(camdata$CamStation[1:60]) ## Need to exclude offline sites, which currently have no data
 
-stationDir <- paste("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/2016.01/Renamed_Images",stations,sep="/")
+
+stationDir <- paste("E:/Algar_Apr-Nov2017/Renamed_Images",stations,sep="/")
 
 stn.img <- rep(NA,length(stations))
 for (i in 1:length(stations)) {
@@ -34,41 +42,33 @@ for (i in 1:length(stations)) {
 }
 sum(stn.img)
 
-# add to camera station table
-cams2016$img.cnt <- stn.img
+## Create a station summary data frame for this deployment
+stn.sum <- camdata[1:60,] %>% select(CamStation, utmE, utmN, Treatment, Session3Start, Problem2_from, Problem2_to,Session4Start)
+## Ad station images to stn.sum
+stn.sum$StationImages <- stn.img
 
 # tally survey effort
-### cams2016 is not updated CSV with retrieval info: RESOLVED (June 2), continued June 5
 
-camEff <- cameraOperation(cams2016, 
-                          stationCol = "CamStation", 
-                          setupCol = "CheckDate1", 
-                          retrievalCol = "CheckDate2",
-                          hasProblems = FALSE,
-                          dateFormat = "%d/%m/%Y", 
-                          writecsv = FALSE)
-
-# total camera days
-sum(camEff,na.rm=T) #9612 --> Inaccurate because of malfunctioning cameras. Need to add "Problems" to CTtable to account for issues with 4 cameras
 
 ## Added columns "Problem1_from" and "Problem1_to" to CTtable ('Algar_stationdata.2016.01.csv')
 
-camEff <- cameraOperation(cams2016, 
+camEff <- cameraOperation(stn.sum, 
                           stationCol = "CamStation", 
-                          setupCol = "CheckDate1", 
-                          retrievalCol = "CheckDate2",
+                          setupCol = "Session3Start", 
+                          retrievalCol = "Session4Start",
                           hasProblems = TRUE,
                           dateFormat = "%d/%m/%Y", 
                           writecsv = FALSE)
 
-sum(camEff,na.rm=T) ## 9025
+sum(camEff,na.rm=T) ## 7703
 
 # days per station
-summary(rowSums(camEff,na.rm=T)) # median = 160, range = 4-162
+summary(rowSums(camEff,na.rm=T)) # mean = 128.4, median = 203, range = 0 - 206
 
 # add to camera station table
 cams2016$trapdays <- rowSums(camEff,na.rm=T)
 
+#### Done by Camelot, not necessary for apr 2017 - nov 2017 ####
 # subtract days from total images for estimate of motion triggers [not needed, see image data below]
 ## Not done for 2016.01 deployment
 cams2016$EstTrig <- cams2016$img.cnt - cams2016$trapdays
@@ -960,20 +960,33 @@ bear.tab <- recordTableIndividual(inDir = "Species_org/U_americanus",
                                   writecsv = FALSE,
                                   additionalMetadataTags = c("AmbientTemperature", "MoonPhase"))
 
+#### Removing 'No Animal' images from record table ####
+
+## Import recordTables created by Camelot
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+det_data <- read.csv("2017.01_recordTable.csv")
+
+## Remove Species = No Animal (Timelapse and Misfires)
+det_data <- det_data[!det_data$Species == "No Animal", ] # 1247 obs., fewer than the 1410 reported in other Camelot summaries
+unique(det_data$Species)
+summary(det_data$Species)
+# Camelot summary output determines independent obs. bade on specific criteria. For consistency with early datam use detections from record table
+
+write.csv(det_data, "2017.01_recordTable.csv")
 
 ### Data summarising using camtrapR record tables (rec.spec), graphing results
 ### mostly Cole's code
 
 ## No. of detections by species and station
-sp_detect <- rec.2016.01$Species
-st_detect <- rec.2016.01$Station
+sp_detect <- det_data$Species
+st_detect <- det_data$Station
 
 ### Frequency histograms
 
 par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
 
 sp.plot <- rev(sort(table(sp_detect))) 
-xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,100))
+xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,350))
 text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
 
 ## Remove humans, mustelid spp and other birds (in the most roundabout way ever...)
