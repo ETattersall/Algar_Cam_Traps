@@ -10,6 +10,7 @@
 library(camtrapR)
 library(tidyr)
 library(dplyr)
+library(ggplot2)
 
 
 ####### Cole's code
@@ -990,9 +991,9 @@ xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detectio
 text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
 
 ## Remove humans, mustelid spp and other birds (in the most roundabout way ever...)
-no.hum <- rec.2016.01[!rec.2016.01$Species == "H_sapiens", ]
-no.oth <- no.hum[!no.hum$Species == "Mustelid spp", ]
-ani.rec <- no.mus[!no.mus$Species == "Other_birds", ]
+no.hum <- det_data[!det_data$Species == "Homo sapiens", ]
+ani.rec <- no.hum[!no.hum$Species == "Bird spp.", ] ## Leave in identified birds
+
 
 sp_detect <- ani.rec$Species
 st_detect <- ani.rec$Station
@@ -1002,7 +1003,7 @@ st_detect <- ani.rec$Station
 par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
 
 sp.plot <- rev(sort(table(sp_detect))) 
-xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,100))
+xvals <- barplot(sp.plot,names.arg = NA,col="royalblue4",ylab = "Camera detections",cex.lab=1.5,ylim=c(0,350))
 text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
 
 ###########Do same for 2015.01 deployment, i.e. removing humans and other birds#######################
