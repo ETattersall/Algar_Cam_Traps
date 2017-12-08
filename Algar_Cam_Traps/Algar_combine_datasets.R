@@ -1,14 +1,86 @@
 #################################################
 # Combining Algar survey data sets
 # Pilot data (Algar01 - Algar 24) with Winter 2016-17 data (Algar01-60)
+# Dec. 8, 2017: Combining record tables from Nov 2016, Apr 2017, and Nov 2017
 # Started by Erin T. on Oct. 19, 2017
 #################################################
 
-library(dplyr)
+library(plyr)
+library(dplyr) #only load after using revalue function
 
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 
-# No. detections/ month data
+#### Combining record tables for three deployments ####
+rec.2015 <- read.csv("2015.01_recordTable.csv")
+rec.2016 <- read.csv("2016.01_recordTable.csv")
+rec.2017 <- read.csv("2017.01_recordTable.csv")
+
+## 1. Rename 2015.01's stations to include 0's (usine plyr function revalue)
+
+rec.2015$Station <- revalue(rec.2015$Station, replace = c("Algar1" = "Algar01", "Algar2" = "Algar02", "Algar3" = "Algar03", "Algar4" = "Algar04", "Algar5" = "Algar05", "Algar6" = "Algar06", "Algar7" = "Algar07", "Algar8" = "Algar08", "Algar9" = "Algar09"))
+unique(rec.2015$Station)
+
+##2. Check and standardize species names
+unique(rec.2015$Species)
+unique(rec.2016$Species)
+unique(rec.2017$Species)
+
+## Combining 2015 and 2016 datasets
+All.rec <- rbind.data.frame(rec.2015, rec.2016,deparse.level = 0)
+unique(All.rec$Species)
+
+# Change species names in 2015-2016 datasets
+All.rec$Species <- gsub("A_alces","Alces alces", All.rec$Species)
+All.rec$Species <- gsub("O_virginianus", "Odocoileus virginianus", All.rec$Species)
+All.rec$Species <- gsub("U_americanus", "Ursus americanus", All.rec$Species)
+All.rec$Species <- gsub("C_latrans","Canis latrans", All.rec$Species)
+All.rec$Species <- gsub("C_lupus", "Canis lupus", All.rec$Species)
+All.rec$Species <- gsub("G_canadensis", "Grus canadensis", All.rec$Species)
+All.rec$Species <- gsub("L_canadensis", "Lynx canadensis", All.rec$Species)
+All.rec$Species <- gsub("Other_birds", "Bird spp.", All.rec$Species)
+All.rec$Species <- gsub("R_tarandus", "Rangifer tarandus", All.rec$Species)
+All.rec$Species <- gsub("V_vulpes","Vulpes vulpes", All.rec$Species)
+All.rec$Species <- gsub("L_americanus","Lepus americanus", All.rec$Species)
+All.rec$Species <- gsub("M_pennanti","Martes pennanti", All.rec$Species)
+All.rec$Species <- gsub("T_hudsonicus","Tamiasciurus hudsonicus", All.rec$Species)
+All.rec$Species <- gsub("H_sapiens","Homo sapiens", All.rec$Species)
+All.rec$Species <- gsub("G_gulo","Gulo gulo", All.rec$Species)
+All.rec$Species <- gsub("P_concolor","Puma concolor", All.rec$Species)
+All.rec$Species <- gsub("M_americana","Martes americana", All.rec$Species)
+
+unique(All.rec$Species)
+
+## Remove unknowns (here, just mustelid spp.)
+All.rec <- All.rec[!All.rec$Species == "Mustelid spp", ]
+
+## Change known birds to bird spp in 2017
+rec.2017$Species <- gsub("Perisoreus canadensis", "Bird spp.", rec.2017$Species)
+rec.2017$Species <- gsub("Colaptes auratus", "Bird spp.", rec.2017$Species)
+rec.2017$Species <- gsub("Tympanuchus phasianellus", "Bird spp.", rec.2017$Species)
+rec.2017$Species <- gsub("Strix nebulosa", "Bird spp.", rec.2017$Species)
+rec.2017$Species <- gsub("Canachites canadensis", "Bird spp.", rec.2017$Species)
+rec.2017$Species <- gsub("Branta canadensis", "Bird spp.", rec.2017$Species)
+
+## Remove Unknown spp
+rec.2017 <- rec.2017[!rec.2017$Species == "Unknown species",]
+
+unique(rec.2017$Species)
+unique(All.rec$Species)
+
+##3. Remove additional rows from Camelot record table (Camera, CameraName, TrapAndCamera)
+rec.2017$Camera <- NULL
+rec.2017$CameraName <- NULL
+rec.2017$TrapAndCamera <- NULL
+
+## 4. Bind all record tables together
+All.rec <- rbind.data.frame(All.rec, rec.2017,deparse.level = 0)
+unique(All.rec$Species)
+unique(All.rec$Station) ## Missing Algar32 --> malfunctioned both deployments so no detections
+
+write.csv(All.rec, "recordTable_nov2015-nov2017.csv")
+
+
+#### No. detections/ month data ####
 pilot <- read.csv("2015.01_monthlydetections.csv")
 pilot$X <- NULL
 win60 <- read.csv("2016.01_monthlydetections.csv")
