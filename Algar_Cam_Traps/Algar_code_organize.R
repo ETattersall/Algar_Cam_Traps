@@ -1012,6 +1012,8 @@ st_detect <- ani.rec$Station
 sp.plot1 <- rev(sort(table(sp_detect)))
 sp.plot1 <- as.data.frame(sp.plot1) ##data frame summing detections --> fix scientific names to common
 fix(sp.plot1)
+colnames(sp.plot1) <- c("Species", "Total Detections")
+write.csv(sp.plot1, "SpDetectionSummary_nov2017.csv")
 
 
 ### Frequency histograms
