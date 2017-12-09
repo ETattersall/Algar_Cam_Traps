@@ -20,7 +20,17 @@ rec.2017 <- read.csv("2017.01_recordTable.csv")
 rec.2015$Station <- revalue(rec.2015$Station, replace = c("Algar1" = "Algar01", "Algar2" = "Algar02", "Algar3" = "Algar03", "Algar4" = "Algar04", "Algar5" = "Algar05", "Algar6" = "Algar06", "Algar7" = "Algar07", "Algar8" = "Algar08", "Algar9" = "Algar09"))
 unique(rec.2015$Station)
 
-##2. Check and standardize species names
+##2.Standardize date formats
+str(All.rec) ## Date and Time info is all factor format for each record table. Not consistent format
+str(rec.2015) 
+str(rec.2016)## Different format
+str(rec.2017)
+
+rec.2016$DateTimeOriginal <- as.factor(as.Date(rec.2016, format = "%d/%m/%Y %H:%M"))
+str(rec.2016)
+
+
+##3. Check and standardize species names
 unique(rec.2015$Species)
 unique(rec.2016$Species)
 unique(rec.2017$Species)
@@ -67,17 +77,19 @@ rec.2017 <- rec.2017[!rec.2017$Species == "Unknown species",]
 unique(rec.2017$Species)
 unique(All.rec$Species)
 
-##3. Remove additional rows from Camelot record table (Camera, CameraName, TrapAndCamera)
+##4. Remove additional rows from Camelot record table (Camera, CameraName, TrapAndCamera)
 rec.2017$Camera <- NULL
 rec.2017$CameraName <- NULL
 rec.2017$TrapAndCamera <- NULL
 
-## 4. Bind all record tables together
+## 5. Bind all record tables together
 All.rec <- rbind.data.frame(All.rec, rec.2017,deparse.level = 0)
 unique(All.rec$Species)
 unique(All.rec$Station) ## Missing Algar32 --> malfunctioned both deployments so no detections
 
 write.csv(All.rec, "recordTable_nov2015-nov2017.csv")
+
+
 
 
 #### No. detections/ month data ####
