@@ -1055,9 +1055,9 @@ ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identit
 
 
 #### create Site x Species matrix ####
-sp_detect <- ani.rec$Species
-ani.rec$Station <- toupper(ani.rec$Station) ### Need to do to match CamStations in cam2016
-st_detect <- ani.rec$Station
+sp_detect <- All.rec$Species
+All.rec$Station <- toupper(All.rec$Station) ### Need to do to match CamStations in cam2016
+st_detect <- All.rec$Station
 S <- as.data.frame.matrix(table(st_detect,sp_detect))
 
 # species totals to compare with table(sp_detect)
