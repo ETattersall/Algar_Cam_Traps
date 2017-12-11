@@ -20,11 +20,7 @@ rec.2017 <- read.csv("2017.01_recordTable.csv")
 rec.2015$Station <- revalue(rec.2015$Station, replace = c("Algar1" = "Algar01", "Algar2" = "Algar02", "Algar3" = "Algar03", "Algar4" = "Algar04", "Algar5" = "Algar05", "Algar6" = "Algar06", "Algar7" = "Algar07", "Algar8" = "Algar08", "Algar9" = "Algar09"))
 unique(rec.2015$Station)
 
-##2.Standardize date formats
-str(All.rec) ## Date and Time info is all factor format for each record table. Not consistent format
-str(rec.2015) 
-str(rec.2016)## Different format
-str(rec.2017)
+
 
 rec.2016$DateTimeOriginal <- as.factor(as.Date(rec.2016, format = "%d/%m/%Y %H:%M"))
 str(rec.2016)
@@ -89,8 +85,23 @@ unique(All.rec$Station) ## Missing Algar32 --> malfunctioned both deployments so
 
 write.csv(All.rec, "recordTable_nov2015-nov2017.csv")
 
+##2.Standardize date formats (done in Excel :P Need to pasted Date and time to do DateTime Original)
+#str(All.rec) ## Date and Time info is all factor format for each record table. Not consistent format
+#str(rec.2015) 
+#str(rec.2016)## Different format
+#str(rec.2017)
 
+All.rec <- read.csv("recordTable_nov2015-nov2017.csv")
+All.rec$X.1 <- NULL
+All.rec$X <- NULL
+str(All.rec)
 
+##Convert to POSIXct time
+All.rec$Date.Time <- as.POSIXct(strptime(All.rec$DateTimeOriginal, format = "%d/%m/%Y %H:%M"))
+All.rec$Datep <- as.POSIXct(strptime(All.rec$Date, format = "%d/%m/%Y"))
+str(All.rec)
+
+write.csv(All.rec, "recordTable_nov2015-nov2017.csv")
 
 #### No. detections/ month data ####
 pilot <- read.csv("2015.01_monthlydetections.csv")
