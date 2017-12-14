@@ -4,6 +4,8 @@ library(dplyr)
 library(tidyr)
 library(camtrapR)
 
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+
 
 ### Figure1. Total species detections, both deployments
 ## Combine 2 recordTables
@@ -27,6 +29,12 @@ sp.plot1 <- as.data.frame(sp.plot1) ##data frame summing detections --> fix scie
 fix(sp.plot1)
 ggplot(data = sp.plot1, aes(x = sp.1, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Sandhill crane", "Grey wolf", "Black bear", "Coyote", "Other birds", "Snowshoe hare", "Moose", "Woodland caribou", "Human", "Red squirrel", "Canada lynx", "Red fox", "Mustelid spp", "American marten", "Cougar", "Fisher", "Wolverine"))
 
+## Add Treatments to All.rec
+StatData <- read.csv("Station_data/AlgarStations_DeploymentData.csv")
+colnames(StatData)
+colnames(All.rec)
+All.rec$Treatment <- StatData$Treatment[match(All.rec$Station,StatData$CamStation)]
+colnames(All.rec)
 
 
 
@@ -55,6 +63,18 @@ t.test(S2015.01$Total~S2015.01$Treatment) ### data:  S2015.01$Total by S2015.01$
                                           ### alternative hypothesis: true difference in means is not equal to 0
                                           ###  95 percent confidence interval:
                                           ###  -40.31831  18.65164
+
+#### Nov 2015- Nov 2017
+## Uses data 'detectionsByStation.csv', read in as 'S' (Algar32 doesn't need to be added)
+ggplot(data = S, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Total Detections") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("red", "light green", "orange", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+
+tapply(S$Total, S$Treatment, mean)
+# Control HumanUse NatRegen  OffLine      SPP 
+# 64.83333 38.53846 18.75000       NA 55.27273 
+tapply(S$Total, S$Treatment, median)
+# Control HumanUse NatRegen  OffLine      SPP 
+# 39.0     30.0     15.5       NA     31.5
 
 
 ###### Species Richness boxplots
