@@ -1039,11 +1039,21 @@ text(xvals,par("usr")[3]-0.25,srt=45,adj=1.2,labels=names(sp.plot),xpd=TRUE)
 #### Species detection graph including all deployments ####
 ## Uses full record table, recordTable_nov2015-nov2017.csv, currently read in as All.rec
 
+## Add Treatments to All.rec
+StatData <- read.csv("Station_data/AlgarStations_DeploymentData.csv")
+colnames(StatData)
+colnames(All.rec)
+All.rec$Treatment <- StatData$Treatment[match(All.rec$Station,StatData$CamStation)]
+colnames(All.rec)
+
+
 sp_detect <- All.rec$Species
 
 sp.plot1 <- rev(sort(table(sp_detect)))
 sp.plot1 <- as.data.frame(sp.plot1) ##data frame summing detections --> fix scientific names to common
 fix(sp.plot1)
+
+write.csv(sp.plot1, "SpDetectionSummary_nov2015-nov2017.csv")
 
 
 
@@ -1056,33 +1066,66 @@ ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identit
 
 #### create Site x Species matrix ####
 sp_detect <- All.rec$Species
-All.rec$Station <- toupper(All.rec$Station) ### Need to do to match CamStations in cam2016
-st_detect <- All.rec$Station
+ # All.rec$Station <- toupper(All.rec$Station) ### Need to do to match CamStations in cam2016
+st_detect <- All.rec$Station ##Will need to add row for Algar32 at some point (no detections)
 S <- as.data.frame.matrix(table(st_detect,sp_detect))
 
 # species totals to compare with table(sp_detect)
 apply(S,2,sum)
 # number of sites per species
 sp.sites <- apply(S,2,function(x) sum(ifelse(x>0,1,0)))
-sp.plot2 <- rev(sort(sp.sites)) 
-xvals <- barplot(sp.plot2,names.arg = NA,col="royalblue4",ylab = "Number of sites",cex.lab=1.5, ylim=c(0,30))
-text(xvals,par("usr")[3]-0.25,srt=45,adj=1,labels=names(sp.plot2),xpd=TRUE)
+sp.plot2 <- as.data.frame(rev(sort(sp.sites)))
+colnames(sp.plot2) <- c("NumSites")
+fix(sp.plot2) #Changing scientific names to common
+
+# xvals <- barplot(sp.plot2,names.arg = NA,col="lightblue",ylab = "Number of sites",cex.lab=1.5, ylim=c(0,70))
+# text(xvals,par("usr")[3]-0.25,srt=45,adj=1,labels=names(sp.plot2),xpd=TRUE)
+
+## ggplot way (using dataframe)
+ggplot(data = sp.plot2, aes(x = row.names(sp.plot2), y = NumSites))+ geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Number of Sites") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("Black bear", "Grey wolf", "Sandhill crane", "Bird spp.", "Moose", "White-tailed deer", "Woodland caribou", "Canada lynx", "Snowshoe hare", "Coyote", "Human", "Red fox", "Red squirrel", "American marten", "Cougar", "Fisher","River otter", "Wolverine", "Beaver"))
+
+
 
 # add total count and total species (richness) for each site
 S$Total <- apply(S,1,sum)
 
-S$Richness <- apply(S[,1:14],1,function(x) sum(ifelse(x>0,1,0)))
-## Edit to Cole's code: S$Richness included total in Richness count. Adding [,1:17] to specify counting only species 
+S$Richness <- apply(S[,1:19],1,function(x) sum(ifelse(x>0,1,0)))
+## Edit to Cole's code: S$Richness included total in Richness count. Adding [,1:19] to specify counting only species 
 ## columns
 
 # add coordinates and treatment to dataframe
-S$utmE <- cams2016$utmE[match(row.names(S),cams2016$CamStation)]
-S$utmN <- cams2016$utmN[match(row.names(S),cams2016$CamStation)]
+S$utmE <- StatData$utmE[match(row.names(S),StatData$CamStation)]
+S$utmN <- StatData$utmN[match(row.names(S),StatData$CamStation)]
 
-S$Treatment <- cams2016$TreatmentType[match(row.names(S),cams2016$CamStation)]
-setwd(images_wd)
-write.csv(S, "2016.01/detectionsByStation.csv")
+S$Treatment <- StatData$Treatment[match(row.names(S),StatData$CamStation)]
+str(S)
+unique(S$Treatment)
 
+## Add row for station with no detections (Algar32)
+#### Don't actually need to do this: Algar32 was inactive, sostation cannot contribute data regardless ####
+
+# create a one-row matrix the same length as data
+
+temprow <- matrix(c(rep.int(NA,length(S))),nrow=1,ncol=length(S))
+
+# make it a data.frame and give cols the same names as data
+
+newrow <- data.frame(temprow)
+colnames(newrow) <- colnames(S)
+
+# rbind the empty row to data
+
+S <- rbind(S,newrow)
+## Fill in new rows with Station data for Algar32
+fix(S)
+
+#######################################################################
+
+# setwd(images_wd)
+write.csv(S, "detectionsByStation.csv")
+
+
+#### NOTE: Graphs done in ggplot in script 'Algar_report(Erin).R' ####
 # plot spatial variation by station [note: need to specify species columns now that other variables added]
 with(S, symbols(x=utmE, y=utmN, circles=Total, inches=2/3, bg="royalblue3", fg="darkblue", 
                 main = "Total animal detections by camera station"))
