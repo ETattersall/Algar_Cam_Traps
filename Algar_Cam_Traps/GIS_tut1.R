@@ -10,6 +10,11 @@ library(raster)  # grids, rasters
 library(rasterVis)  # raster visualisation
 library(maptools)
 library(rgeos)
+library(rgdal)
+library(ggmap)
+library(tmap)
+library(dplyr)
+library(tidyr)
 # and their dependencies
 
 #### 1. Retrieving base maps from Google ####
@@ -136,3 +141,14 @@ locs.gb <- subset(locs, locs$country == "United Kingdom")  # select only locs in
 plot(locs.gb, pch = 20, cex = 1, col = "steelblue")
 title("Laurus nobilis occurrences in UK")
 plot(countriesLow, add = T)
+
+## Mapping vectorial data using gmap from dismo
+gbmap <- gmap(locs.gb, type = "satellite")
+locs.gb.merc <- Mercator(locs.gb)  # Google Maps are in Mercator projection. 
+# This function projects the points to that projection to enable mapping
+plot(gbmap)
+points(locs.gb.merc, pch = 20, col = "red")
+
+
+#### Using raster data ####
+vignette("Raster")
