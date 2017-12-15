@@ -1,6 +1,7 @@
 ####################################
 # GIS_tut1.R
-# Tutorial for GIS analysis in R
+# Tutorial for GIS analysis in R, 
+# http://pakillo.github.io/R-GIS-tutorial/
 # Started Dec 14 2017 by Erin T.
 ###################################
 
@@ -78,8 +79,8 @@ setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data/Stat
 Stat <- read.csv("AlgarStations60.csv")
 summary(Stat$Longitude) #Min = -112.6, Max = -112.4
 summary(Stat$Latitude) #Min = 56.17, Max = 56.48
-Algarmap <- GetMap.bbox(lonR = c(-112.3, -112.7),
-                        latR = c(56.07, 56.58),
+Algarmap <- GetMap.bbox(lonR = c(-112.4, -112.6),
+                        latR = c(56.17, 56.48),
                         destfile = "Algarmap.png", 
                         maptype = "satellite")
 
@@ -89,7 +90,49 @@ PlotOnStaticMap(Algarmap,
                 lon = Stat$Longitude, 
                 zoom = 30, 
                 cex = 1, 
-                pch = 19, 
-                col = "red", 
+                pch = 20, 
+                col = "white", 
                 FUN = points, 
                 add = F)
+
+
+#### Spatial Vector Data (Points, lines, polygons) ####
+# Using example data from Global Biodiversity Information Facility
+
+library(dismo)  # check also the nice 'rgbif' package! 
+laurus <- gbif("Laurus", "nobilis")
+
+# get data frame with spatial coordinates (points)
+locs <- subset(laurus, select = c("country", "lat", "lon"))
+head(locs)  # a simple data frame with coordinates
+
+
+# Discard data with errors in coordinates:
+locs <- subset(locs, locs$lat < 90)
+
+#Specifying that lat and long are spatial
+coordinates(locs) <- c("lon", "lat")  # set spatial coordinates
+plot(locs)
+
+#Define the geographical projection, consult descriptions at http://www.spatialreference.org/
+
+crs.geo <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")  # geographical, datum WGS84
+proj4string(locs) <- crs.geo  # define projection system of our data
+summary(locs)
+
+## Quickly plot points on map
+plot(locs, pch = 20, col = "steelblue")
+library(rworldmap)
+# library rworldmap provides different types of global maps, e.g:
+data(coastsCoarse)
+data(countriesLow)
+plot(coastsCoarse, add = T)
+
+##Subsetting, re-mapping
+table(locs$country)
+
+
+locs.gb <- subset(locs, locs$country == "United Kingdom")  # select only locs in UK
+plot(locs.gb, pch = 20, cex = 1, col = "steelblue")
+title("Laurus nobilis occurrences in UK")
+plot(countriesLow, add = T)
