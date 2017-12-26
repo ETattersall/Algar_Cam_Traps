@@ -37,7 +37,7 @@ class(dist) #matrix
 dist <- as.vector(dist) #Coerces into vector
 dist <- sort(dist) #Sorting distances into ascending order
 mean(dist) #12.73439 km
-median(dist) #11.47476 km
+
 max(dist) #36.60532 km
 min(dist) #0 Distance between station and itself
 hist(dist)
@@ -48,4 +48,14 @@ dist <- dist[!dist== 0]
 min(dist) #0.3382544km -->338m
 head(dist)
 tail(dist)
-hist(dist)
+hist(dist) #Mode occurs ~8km
+median(dist) #11.6673
+dist.5000 <- dist[which(dist<5.0)] #540 distances of 3540 that are <5km
+hist(dist.5000)
+dist.4000 <- dist[which(dist<4.0)]
+dist.2000 <- dist[which(dist<2.0)]
+dist.1000 <- dist[which(dist<1.0)]
+540/3540 # 15.25% of distances
+388/3540 # 10.96
+104/3540 # 2.94% of distances
+26/3540  # 0.73% of distances
