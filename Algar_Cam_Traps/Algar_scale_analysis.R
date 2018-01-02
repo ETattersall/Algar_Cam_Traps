@@ -113,6 +113,13 @@ b2000 <- gBuffer(Algcoord, width = 2000)
 # Need to first convert AVIE into class raster
 r <- raster(ncol = 100, nrow = 100)
 AVIEraster <- rasterize(AVIE, r)
+
+r <- raster(ncol=100, nrow=100)
+AVIEraster <- rasterize(AVIE, r, 
+                     field = "Veg_simple",
+                     fun = "first",
+                     update = TRUE, 
+                     updateValue = "all")
 summary(AVIEraster) #Returns object of NA :(
 AVIEraster@data
 
