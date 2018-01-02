@@ -11,6 +11,8 @@ library(dplyr)
 library(tidyr) # For data manipulation
 library(tmap)  # For making pretty maps
 library(sp)    # Functions for working with spatial data 
+library(raster)# Manipulating raster data
+library(rgeos)
 
 # Spatial data for Algar located on Algar Project Google Drive
 setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/GIS data")
@@ -55,7 +57,79 @@ hist(dist.5000)
 dist.4000 <- dist[which(dist<4.0)]
 dist.2000 <- dist[which(dist<2.0)]
 dist.1000 <- dist[which(dist<1.0)]
-540/3540 # 15.25% of distances
-388/3540 # 10.96
-104/3540 # 2.94% of distances
-26/3540  # 0.73% of distances
+540/3540 # 15.25% of distances are less that 5km
+388/3540 # 10.96 of distances are less than 4km
+104/3540 # 2.94% of distances are less than 2km
+26/3540  # 0.73% of distances are less than 1km
+# I will test 8 buffer sizes from 250m - 2000m at intervals of 250m
+
+###### Drawing buffers on AVI habitat data ####
+# Load AVIE data
+AVIE <- readOGR("GIS", "AVIE_Veg_simple")
+
+summary(AVIE) # Spatial polygons data frame, projected in NAD83. Lowland, Non-forest, and upland categories
+class(AVIE)
+AVIE
+
+
+
+#Camera station data
+Algcoord <- readOGR("GIS", "AlgarSites_April2017")
+summary(Algcoord)
+plot(Algcoord, pch = 18, col = "red")
+Cams <- Algcoord@coords #matrix of coordinates
+Algcoord@data
+
+
+## Visualizing features ##
+plot(AVIE, col = "lightgreen") 
+# Addin colour to lowland areas 
+low <- AVIE$Veg_simple == "Lowland"
+plot(AVIE[ low, ], col = "darkgreen", add = TRUE)
+# Adding colour to nonforest areas
+nofo <- AVIE$Veg_simple == "Non-forest"
+plot(AVIE[ nofo, ], col = "lightblue", add = TRUE)
+
+## I want % lowland habitat (AVIE$Veg_simple == "Lowland")
+
+# Creating buffer around Camera stations
+b100 <- gBuffer(Algcoord, width = 100)
+summary(b100)#SpatialPolygons class, projected in NAD83
+
+# Creating the 8 buffers to be used (250-2000)
+b250 <- gBuffer(Algcoord, width = 250)
+b500 <- gBuffer(Algcoord, width = 500)
+b750 <- gBuffer(Algcoord, width = 750)
+b1000 <- gBuffer(Algcoord, width = 1000)
+b1250 <- gBuffer(Algcoord, width = 1250)
+b1500 <- gBuffer(Algcoord, width = 1500)
+b1750 <- gBuffer(Algcoord, width = 1750)
+b2000 <- gBuffer(Algcoord, width = 2000)
+
+
+
+#Extracting landcover data for that buffer
+
+# Need to first convert AVIE into class raster
+r <- raster(ncol = 100, nrow = 100)
+AVIEraster <- rasterize(AVIE, r, fun = "first", update = TRUE, updateValue = "all")
+summary(AVIEraster) #Returns object of NA :(
+AVIEraster@data
+
+
+#Tried method for x = Raster, y = SpatialPolygons
+# AVIE data is a spatial polygons dataframe
+lw100 <- extract(x=AVIE@polygons, 
+                 y = b100, 
+                 fun=NULL, 
+                 na.rm=FALSE,
+                 weights=FALSE,
+                 normalizeWeights=TRUE,
+                 cellnumbers=FALSE,
+                 small=TRUE,
+                 df=FALSE, 
+                 layer, 
+                 nl, 
+                 factors=FALSE, 
+                 sp=FALSE)
+summary(b100) # Returns an empty matrix for poly.ID and Veg_simple
