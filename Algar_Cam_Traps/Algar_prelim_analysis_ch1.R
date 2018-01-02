@@ -20,6 +20,7 @@ data <- read.csv("recordTable_nov2015-nov2017.csv",header=T, row.names=1)
 glimpse(data)
 summary(data)
 
+
 ###--- Add columns for the Date.Time and Date in POSIX format:
 ### 2016.01 data --> date data already in correct format, but needs to be converted to POSIX data type
 data$Date.Time <- as.POSIXct(data$Date.Time)
