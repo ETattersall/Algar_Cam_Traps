@@ -105,12 +105,56 @@ b1250 <- gBuffer(Algcoord, width = 1250)
 b1500 <- gBuffer(Algcoord, width = 1500)
 b1750 <- gBuffer(Algcoord, width = 1750)
 b2000 <- gBuffer(Algcoord, width = 2000)
+# Confirming buffers were drawn
+plot(Algcoord)
+plot(b100)
+plot(b2000)
+#Create a vector of buffers (for extracting landcover later)
+Buffers <- c(b100,b250,b500,b750,b1000,b1250,b1500,b1750,b2000)
+
+#### Extracting landcover data for that buffer ####
+# comparing CRS between layers
+proj4string(b100)# NAD83 utm zone 12
+proj4string(AVIE)# NAD83 tmerc
+
+# Converting AVIE to UTM
+AVIE_UTM <- spTransform(AVIE, CRSobj = CRS(proj4string(Algcoord)))
+proj4string(AVIE_UTM)
+AVIE <- AVIE_UTM #Overwrite original AVIE CRS
 
 
+#Clipping landcover data for buffers using rgeos::gIntersection(over and gIntersects didn't work for clipping a polygon by a polygon)
 
-#Extracting landcover data for that buffer
+int100 <- gIntersection(AVIE, b100, byid = T) #Finds overlapping points
+plot(int100)
+int250 <- gIntersection(AVIE, b250, byid = T)
+int500 <- gIntersection(AVIE, b500, byid = T)
+int750 <- gIntersection(AVIE, b750, byid = T)
+int1000 <- gIntersection(AVIE, b1000, byid = T)
+int1250 <- gIntersection(AVIE, b1250, byid = T)
+int1500 <- gIntersection(AVIE, b1500, byid = T)
+int1750 <- gIntersection(AVIE, b1750, byid = T)
+int2000 <- gIntersection(AVIE, b2000, byid = T)
+plot(int250)
+plot(int500)
+plot(int1000)
+plot(int1500)
+plot(int2000)
 
-# Need to first convert AVIE into class raster
+#### Writing for loop to extract AVIE polygons? ####
+#Buffers = vector of all 9 buffers
+lnd <- rep(NA,9)# Empty vector to receive landcover data
+for (i in 1:9){
+  lnd[i] <- gIntersection(AVIE, Buffers[i], byid = T)
+}
+# Error in RGEOSBinTopoFunc(spgeom1, spgeom2, byid, id, drop_lower_td, unaryUnion_if_byid_false,  : 
+# trying to get slot "proj4string" from an object of a 
+# basic class ("list") with no slots
+#####
+
+
+#### Unnecessary to convert to raster class ####
+# Need to first convert AVIE into class raster####
 r <- raster(ncol = 100, nrow = 100)
 AVIEraster <- rasterize(AVIE, r)
 
