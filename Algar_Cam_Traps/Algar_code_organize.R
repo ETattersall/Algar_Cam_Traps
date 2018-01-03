@@ -1065,6 +1065,7 @@ ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identit
 
 
 #### create Site x Species matrix ####
+All.rec <- read.csv("2017.01_recordTable.csv") #Data already cleaned, just loading in
 sp_detect <- All.rec$Species
  # All.rec$Station <- toupper(All.rec$Station) ### Need to do to match CamStations in cam2016
 st_detect <- All.rec$Station ##Will need to add row for Algar32 at some point (no detections)
