@@ -275,7 +275,7 @@ SpecFolderCreate1 <- createSpeciesFolders (inDir               = "2016.01/Specie
 
 
 
-###Code works for looping all species in one folder, for now just repeat this 24 times (Can select all and run at once)
+#### Code works for looping all species in one folder, for now just repeat this 24 times (Can select all and run at once) ####
 ## Loop for organizing photos into species folders (1 station only)
 ##Still have to remove other images from each folder manually...ALSO removed wolf photo from Algar49 during misfiring period
 
@@ -1065,7 +1065,7 @@ ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identit
 
 
 #### create Site x Species matrix ####
-All.rec <- read.csv("2017.01_recordTable.csv") #Data already cleaned, just loading in
+All.rec <- read.csv("recordTable_nov2015-nov2017.csv") #Data already cleaned, just loading in
 sp_detect <- All.rec$Species
  # All.rec$Station <- toupper(All.rec$Station) ### Need to do to match CamStations in cam2016
 st_detect <- All.rec$Station ##Will need to add row for Algar32 at some point (no detections)
@@ -1095,12 +1095,13 @@ S$Richness <- apply(S[,1:19],1,function(x) sum(ifelse(x>0,1,0)))
 ## columns
 
 # add coordinates and treatment to dataframe
-S$utmE <- StatData$utmE[match(row.names(S),StatData$CamStation)]
-S$utmN <- StatData$utmN[match(row.names(S),StatData$CamStation)]
+S$utmE <- camdata$utmE[match(row.names(S),camdata$CamStation)]
+S$utmN <- camdata$utmN[match(row.names(S),camdata$CamStation)]
 
-S$Treatment <- StatData$Treatment[match(row.names(S),StatData$CamStation)]
+S$Treatment <- camdata$Treatment[match(row.names(S),camdata$CamStation)]
 str(S)
 unique(S$Treatment)
+fix(S) #Species columns need to be one word
 
 ## Add row for station with no detections (Algar32)
 #### Don't actually need to do this: Algar32 was inactive, sostation cannot contribute data regardless ####
@@ -1190,28 +1191,28 @@ t.test(S$A_alces~S$Treatment)
 par(mfrow = c(1,2))## Multiple plots on same page (1 row, 2 columns)
 par(mfrow = c(1,1))
 # Caribou
-with(S, symbols(x=utmE, y=utmN, circles=R_tarandus, inches=2/3, bg="royalblue3", fg="darkblue", 
-                main = "Total caribou detections by camera station"))
+with(S, symbols(x=utmE, y=utmN, circles=Caribou, inches=2/3, bg="royalblue3", fg="darkblue", 
+                main = "Caribou detections"))
 # Wolves
-with(S, symbols(x=utmE, y=utmN, circles=C_lupus, inches=1/3, bg="royalblue3", fg="darkblue", 
+with(S, symbols(x=utmE, y=utmN, circles=Wolf, inches=1/3, bg="royalblue3", fg="darkblue", 
                 main = "Total wolf detections by camera station"))
 
 # Black bears
-with(S, symbols(x=utmE, y=utmN, circles=U_americanus, inches=2/3, bg="royalblue3", fg="darkblue", 
+with(S, symbols(x=utmE, y=utmN, circles=Bear, inches=2/3, bg="royalblue3", fg="darkblue", 
                 main = "Total black bear detections by camera station"))
 
 # Coyote
-with(S, symbols(x=utmE, y=utmN, circles=C_latrans, inches=1/3, bg="royalblue3", fg="darkblue", 
+with(S, symbols(x=utmE, y=utmN, circles=Coyote, inches=1/3, bg="royalblue3", fg="darkblue", 
                 main = "Total coyote detections by camera station"))
 # Lynx
-with(S, symbols(x=utmE, y=utmN, circles=L_canadensis, inches=1/3, bg="royalblue3", fg="darkblue", 
+with(S, symbols(x=utmE, y=utmN, circles=Lynx, inches=1/3, bg="royalblue3", fg="darkblue", 
                 main = "Total lynx detections by camera station"))
 # Moose
-with(S, symbols(x=utmE, y=utmN, circles=A_alces, inches=1/3, bg="royalblue3", fg="darkblue", 
+with(S, symbols(x=utmE, y=utmN, circles=Moose, inches=1/3, bg="royalblue3", fg="darkblue", 
                 main = "Total moose detections by camera station"))
 
 # WT deer
-with(S, symbols(x=utmE, y=utmN, circles=O_virginianus, inches=1/3, bg="royalblue3", fg="darkblue", 
+with(S, symbols(x=utmE, y=utmN, circles=WTDeer, inches=1/3, bg="royalblue3", fg="darkblue", 
                 main = "Total WT deer detections by camera station"))
 
 
