@@ -1103,6 +1103,7 @@ str(S)
 unique(S$Treatment)
 fix(S) #Species columns need to be one word
 
+
 ## Add row for station with no detections (Algar32)
 #### Don't actually need to do this: Algar32 was inactive, sostation cannot contribute data regardless ####
 
@@ -1192,28 +1193,28 @@ par(mfrow = c(1,2))## Multiple plots on same page (1 row, 2 columns)
 par(mfrow = c(1,1))
 # Caribou
 with(S, symbols(x=utmE, y=utmN, circles=Caribou, inches=2/3, bg="royalblue3", fg="darkblue", 
-                main = "Caribou detections"))
+                main = "Caribou"))
 # Wolves
 with(S, symbols(x=utmE, y=utmN, circles=Wolf, inches=1/3, bg="royalblue3", fg="darkblue", 
-                main = "Total wolf detections by camera station"))
+                main = "Wolf"))
 
 # Black bears
 with(S, symbols(x=utmE, y=utmN, circles=Bear, inches=2/3, bg="royalblue3", fg="darkblue", 
-                main = "Total black bear detections by camera station"))
+                main = "Black bear"))
 
 # Coyote
 with(S, symbols(x=utmE, y=utmN, circles=Coyote, inches=1/3, bg="royalblue3", fg="darkblue", 
-                main = "Total coyote detections by camera station"))
+                main = "Coyote"))
 # Lynx
 with(S, symbols(x=utmE, y=utmN, circles=Lynx, inches=1/3, bg="royalblue3", fg="darkblue", 
-                main = "Total lynx detections by camera station"))
+                main = "Lynx"))
 # Moose
 with(S, symbols(x=utmE, y=utmN, circles=Moose, inches=1/3, bg="royalblue3", fg="darkblue", 
-                main = "Total moose detections by camera station"))
+                main = "Moose"))
 
 # WT deer
 with(S, symbols(x=utmE, y=utmN, circles=WTDeer, inches=1/3, bg="royalblue3", fg="darkblue", 
-                main = "Total WT deer detections by camera station"))
+                main = "WT deer"))
 
 
 
