@@ -60,6 +60,9 @@ writeOGR(int15000, dsn = "GIS", layer = "AlgarSites_HF_15kmbuffer", driver = "ES
 
 
 
+
+
+
 ##### Read in ABMI landcover data (TOO BIG, R has trouble clipping)
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 lndcov <- readOGR("2010LanCoverShapeFiles", "Lancover_Polygons_2010")
