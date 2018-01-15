@@ -1061,7 +1061,7 @@ write.csv(sp.plot1, "SpDetectionSummary_nov2015-nov2017.csv")
 
 par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
 
-ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Sandhill crane", "Black bear", "Grey wolf", "Snowshoe hare", "Bird spp.", "Woodland caribou", "Human", "Canada lynx", "Red squirrel", "Red fox", "American marten", "Cougar", "Fisher", "Wolverine", "River otter", "Beaver"))
+ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Sandhill crane", "Black bear", "Grey wolf", "Snowshoe hare", "Bird spp.", "Coyote", "Moose", "Woodland caribou", "Human", "Canada lynx", "Red squirrel", "Red fox", "American marten", "Cougar", "Fisher", "Wolverine", "River otter", "Beaver"))
 
 
 #### create Site x Species matrix ####
