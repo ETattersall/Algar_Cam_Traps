@@ -233,7 +233,7 @@ A2$Treatment <- cams2016$TreatmentType[match(A2$Folder,cams2016$CamStation)] ##I
 cams2016$CamStation <- toupper(cams2016$CamStation) ## Works now
 
 table(A2$Treatment)
-###--- DETECTION RATE INDEX
+###--- DETECTION RATE INDEX 
 
 # I will start with a liberal index of allowing 1 photo per minute (rather than hour)
 # to set up, follow code used for Boreal Deer dataset (e.g. from SpatialCountDensity.R)
