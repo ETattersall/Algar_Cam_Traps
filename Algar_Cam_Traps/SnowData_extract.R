@@ -108,6 +108,29 @@ S$Date <- all$Date
 S$Snow <- Snow
 str(S) #Factor, Date, character
 
+#### Extracting Snow data from Camelot full export (April 2017 deployment) ####
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+fexp <- read.csv("2017.01_fullexport(Camelot).csv")
+rt <- read.csv("2017.01_rawrecordTable.csv") #Other record table has already had 'No Animal' detections removed
+
+str(fexp) #Both Timelapse and Snow have 3 levels: "", "false", "true"
+table(fexp$Timelapse) #True = 7492 --> does not match study days, but close (7703)
+
+str(rt)
+Nan <- rt %>% filter(Species == "No Animal") %>% select(Station,Species, DateTimeOriginal,Date,Time)
+TL <- rt %>% filter(Time == "12:00:00") #7640 (26 of which are marked as a Species), closer than 7492 but not all
+wtf <- rt %>% filter(Time == "12:00:00" & Species != "No Animal") # Mostly cranes and bird, one coyote, one bear, 2 WTDeer...need to be resolved first?
+
+### Check number of Timelapse images with camtrapR metadata extraction? ###
+library(camtrapR)
+EXIF <- exifTagNames(inDir = "D:/Algar_Apr-Nov2017/Renamed_Images", returnMetadata = TRUE) #File: FileName, MakerNotes:TriggerMode--> only returns metadata for one image
+
+
+
+A <- fexp %>% select(Date.Time, Trap.Station.Name, Timelapse, Snow) %>% filter(Timelapse == "true")
+A1 <- fexp %>% select(Date.Time, Trap.Station.Name, Timelapse, Snow) %>% filter(Timelapse == "")
+#Of A1 images, could try to extract all images taken at 12:00:00?
+str(A1$Date.Time)
 
 #### Ordering data by date and station, creating study days ####
 # Adapted from Jo (and Algar_prelim_analysis_ch1.R)
