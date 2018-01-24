@@ -96,7 +96,7 @@ file.copy(from = from_csvs, to = to_csvs, overwrite = FALSE, recursive = TRUE, c
 ## Removing csvs from original folder
 file.remove(from_csvs)
 
-############ Original Algar code (Dec. 9, 2016), modified for 2016.01 deployment (June 1, 2017)
+############ Original Algar code (Dec. 9, 2016), modified for 2016.01 deployment (June 1, 2017) ####
 ## Renaming CSVs with date
 setwd("C:/Users/ETattersall/Documents/Sync/Algar/2016.01/CSvs_2016.01")
 n.name <- paste(cams2016.01,"01June_2017", sep = "_")
@@ -891,7 +891,7 @@ setwd(images_wd)
 ### May want to remove images from Station folders (keep only those organized into species folders)--> do this manually?
 ## Need to clean up to run recordTable()
 
-###### Image data extraction
+###### Image data extraction ####
 
 
 ###1. recordTable --> need it to run a number of different functions
@@ -1105,7 +1105,7 @@ fix(S) #Species columns need to be one word
 
 
 ## Add row for station with no detections (Algar32)
-#### Don't actually need to do this: Algar32 was inactive, sostation cannot contribute data regardless ####
+#### Don't actually need to do this: Algar32 was inactive, sostation cannot contribute data regardless. When station has data this will matter ####
 
 # create a one-row matrix the same length as data
 
