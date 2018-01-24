@@ -66,15 +66,17 @@ t.test(S2015.01$Total~S2015.01$Treatment) ### data:  S2015.01$Total by S2015.01$
 
 #### Nov 2015- Nov 2017
 ## Uses data 'detectionsByStation.csv', read in as 'S' (Algar32 doesn't need to be added)
-ggplot(data = S, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Total Detections") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("red", "light green", "orange", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+ggplot(data = S, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Total Detections") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+ggplot(data = S, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Species Richness") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
 
 
 tapply(S$Total, S$Treatment, mean)
 # Control HumanUse NatRegen  OffLine      SPP 
-# 64.83333 38.53846 18.75000       NA 55.27273 
+# 64.75000 37.15385 18.66667       NA 54.95455
 tapply(S$Total, S$Treatment, median)
 # Control HumanUse NatRegen  OffLine      SPP 
-# 39.0     30.0     15.5       NA     31.5
+# 39.0     29.0     15.5       NA     31.0
 
 
 ###### Species Richness boxplots
