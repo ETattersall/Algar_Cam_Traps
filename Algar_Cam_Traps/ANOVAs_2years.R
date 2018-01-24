@@ -12,7 +12,10 @@ library(dplyr)
 library(tidyr)
 library(camtrapR)
 
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data") #dataframes and csvs
+S <- read.csv("detectionsByStation.csv")
+
+sum(S$Grus.canadensis)
 
 ## Boxplot comparing total detections by treatment
 ggplot(data = S, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Total Detections") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", "lightgreen", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
@@ -114,7 +117,7 @@ naiv.occ <- as.data.frame(naiv.occ)
 rel.ab <- NULL
 
 ## Need to calculate total active days for survey to date
-# Nov 2016 and Apr 2017 Check dates will be counted twice. Add all 'total trap days. Subtract 24 days # for Nov 2016, and 60 days for Apr 2017?
+# Nov 2016 and Apr 2017 Check dates will be counted twice. Add all 'total trap days. Subtract 24 days # for Nov 2016, and 60 days for Apr 2017 (1 check date x num. of cameras)?
 
 8911 + 9025 + 7703 #25639
 25639-24-60 #25555
@@ -157,7 +160,7 @@ camEff$Treatment <- StatData$Treatment[match(row.names(camEff),StatData$CamStati
 camEff$Treatment
 
 camEff$Total <- apply(camEff[, 1:737],1,sum, na.rm = T)
-camEff$Total[32]
+camEff$Total[32] #Algar32 only active for 8 days
 
 TD_treat <- camEff %>% select(Total, Treatment) 
 TD.con <- filter(TD_treat, Treatment== "Control")
@@ -181,6 +184,9 @@ TD_treat <- rbind(TD.con,TD.HU,TD.NR, TD.SPP, deparse.level = 0) ## Each site no
 
 fix(S) # Convert to common names
 S7 <- gather(S, Species, Sp.detect, 1:19)
+# Warning message:
+#  attributes are not identical across measure variables;
+#  they will be dropped 
 S7 <- S7[(S7$Species == "Moose") | (S7$Species =="Coyote") | (S7$Species =="Wolf")| (S7$Species =="Lynx") | (S7$Species =="WT deer") | (S7$Species =="Caribou") | (S7$Species == "Black bear"), ] ## dataframe for 7 species and their detections
 
 ### Add detection rate to S7
