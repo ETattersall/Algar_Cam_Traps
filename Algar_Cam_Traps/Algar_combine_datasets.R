@@ -15,15 +15,19 @@ rec.2015 <- read.csv("2015.01_recordTable.csv")
 rec.2016 <- read.csv("2016.01_recordTable.csv")
 rec.2017 <- read.csv("2017.01_recordTable.csv")
 
+str(rec.2015) #12variables. Need to change Station names and Date format
+str(rec.2016) #12 variables
+str(rec.2017) #15 variables
 ## 1. Rename 2015.01's stations to include 0's (usine plyr function revalue)
 
 rec.2015$Station <- revalue(rec.2015$Station, replace = c("Algar1" = "Algar01", "Algar2" = "Algar02", "Algar3" = "Algar03", "Algar4" = "Algar04", "Algar5" = "Algar05", "Algar6" = "Algar06", "Algar7" = "Algar07", "Algar8" = "Algar08", "Algar9" = "Algar09"))
 unique(rec.2015$Station)
 
 
-
-rec.2016$DateTimeOriginal <- as.factor(as.Date(rec.2016, format = "%d/%m/%Y %H:%M"))
-str(rec.2016)
+# Altering DateTimeOriginal to POSIXct then to Factor to match other 2
+rec.2015$DateTimeOriginal <- as.factor(as.POSIXct(strptime(rec.2015$DateTimeOriginal, format = "%d/%m/%Y %H:%M")))
+rec.2015$Date <- as.factor(as.Date(rec.2015$Date, "%d/%m/%Y"))
+str(rec.2015)
 
 
 ##3. Check and standardize species names
@@ -85,6 +89,8 @@ unique(All.rec$Station) ## Missing Algar32 --> malfunctioned both deployments so
 
 write.csv(All.rec, "recordTable_nov2015-nov2017.csv")
 
+str(All.rec)
+
 ##2.Standardize date formats (done in Excel :P Need to pasted Date and time to do DateTime Original)
 #str(All.rec) ## Date and Time info is all factor format for each record table. Not consistent format
 #str(rec.2015) 
@@ -95,10 +101,12 @@ All.rec <- read.csv("recordTable_nov2015-nov2017.csv")
 All.rec$X.1 <- NULL
 All.rec$X <- NULL
 str(All.rec)
+head(All.rec$DateTimeOriginal)
+tail(All.rec$DateTimeOriginal) # same format
 
 ##Convert to POSIXct time
-All.rec$Date.Time <- as.POSIXct(strptime(All.rec$DateTimeOriginal, format = "%d/%m/%Y %H:%M"))
-All.rec$Datep <- as.POSIXct(strptime(All.rec$Date, format = "%d/%m/%Y"))
+All.rec$Date.Time <- as.POSIXct(strptime(All.rec$DateTimeOriginal, format = "%Y-%m-%d %H:%M:%S"))
+All.rec$Datep <- as.POSIXct(strptime(All.rec$Date, format = "%Y-%m-%d"))
 str(All.rec)
 
 write.csv(All.rec, "recordTable_nov2015-nov2017.csv")
