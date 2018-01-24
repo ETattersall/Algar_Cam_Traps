@@ -111,10 +111,14 @@ str(All.rec)
 
 write.csv(All.rec, "recordTable_nov2015-nov2017.csv")
 
-#### No. detections/ month data ####
+#### No. detections/ month data. FIRST 2 DEPLOYMENTS ONLY ####
 pilot <- read.csv("2015.01_monthlydetections.csv")
 pilot$X <- NULL
-win60 <- read.csv("2016.01_monthlydetections.csv")
+pilot$X.1 <- NULL
+#Jan. 23: pilot data contains snow days. Drop for now and re-add later
+pilot$SnowDays <- NULL
+win60 <- read.csv("2016.01_monthlydetections.csv") 
+
 win60$X <- NULL
 
 # Full dataset will have NAs for the months that Algar25-60 were inactive (Nov. 2015-Oct.2016)
