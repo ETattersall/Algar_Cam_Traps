@@ -1069,7 +1069,7 @@ All.rec <- read.csv("recordTable_nov2015-nov2017.csv") #Data already cleaned, ju
 sp_detect <- All.rec$Species
  # All.rec$Station <- toupper(All.rec$Station) ### Need to do to match CamStations in cam2016
 st_detect <- All.rec$Station ##Will need to add row for Algar32 at some point (no detections)
-S <- as.data.frame.matrix(table(st_detect,sp_detect))
+S <- as.data.frame.matrix(table(st_detect,sp_detect)) #Creates matrix where stations = rows, species = columns
 
 # species totals to compare with table(sp_detect)
 apply(S,2,sum)
