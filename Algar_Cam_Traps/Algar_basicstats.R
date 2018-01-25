@@ -9,6 +9,7 @@ library(dplyr)
 
 setwd(images_wd) ##Algar_Camera_Traps
 
+
 ########## No. of images############### 
 ## 2015
 x2015.01 <- read.csv("2015.01/Algar_master_12Dec_2016.csv")
