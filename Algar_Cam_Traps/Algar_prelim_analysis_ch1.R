@@ -228,12 +228,12 @@ data3[is.na(data3)] <- 0 ## Converting NAs to 0's
 summary(data3)
 nrow(data3)
 
-sum(data3$WTDeer) #541
-sum(data3$Blackbear) #361
+sum(data3$WTDeer) #539
+sum(data3$Blackbear) #360
 sum(data3$Caribou) #133
-sum(data3$Coyote) #150
+sum(data3$Coyote) #148
 sum(data3$Lynx) #69
-sum(data3$Wolf) #310
+sum(data3$Wolf) #309
 sum(data3$Moose) #138
 
 
@@ -250,12 +250,12 @@ head(data3)
 summary(data3)
 levels(data3$Yr_Month)
 
-sum(data3$WTDeer)#541
-sum(data3$Blackbear) #361
+sum(data3$WTDeer)#539
+sum(data3$Blackbear) #360
 sum(data3$Caribou) #133
-sum(data3$Coyote) #150
+sum(data3$Coyote) #148
 sum(data3$Lynx) #69
-sum(data3$Wolf) #310
+sum(data3$Wolf) #309
 sum(data3$Moose) #138
 
 write.csv(data3, "detectionsByDay_nov2015-nov2017.csv")
