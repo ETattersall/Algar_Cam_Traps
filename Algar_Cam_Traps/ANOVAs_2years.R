@@ -183,10 +183,7 @@ TD.SPP$trapdays <- rep(10202, length(22))
 TD_treat <- rbind(TD.con,TD.HU,TD.NR, TD.SPP, deparse.level = 0) ## Each site now has trapdays for that treatment
 
 fix(S) # Convert to common names
-S7 <- gather(S, Species, Sp.detect, 1:19)
-# Warning message:
-#  attributes are not identical across measure variables;
-#  they will be dropped 
+S7 <- gather(S, Species, Sp.detect, 2:20) #Confirm which columns correspond to species
 S7 <- S7[(S7$Species == "Moose") | (S7$Species =="Coyote") | (S7$Species =="Wolf")| (S7$Species =="Lynx") | (S7$Species =="WT deer") | (S7$Species =="Caribou") | (S7$Species == "Black bear"), ] ## dataframe for 7 species and their detections
 
 ### Add detection rate to S7
