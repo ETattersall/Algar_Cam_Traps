@@ -12,7 +12,7 @@ library(ggplot2)
 
 getwd()
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
-dat <- read.csv("monthlydetections_alldata.csv")
+dat <- read.csv("Monthlydetections_nov2015-nov2017.csv")
 head(dat)
 dat$X <- NULL
 head(dat)
@@ -38,6 +38,9 @@ cand.set.wolf <- c(m0.wolf, m0nb.wolf, m1.wolf)
 names <- c("NULLglmm.Pois", "NULLglmm.nb", "TREATglmm.nb")
 aictab(cand.set.wolf, modnames = names, second.ord = TRUE, nobs = NULL,
        sort = TRUE)
+
+
+summary(m0nb.wolf)
 
 ## Zero-inflated model (restart R to load glmmADMB)
 library(glmmADMB)
