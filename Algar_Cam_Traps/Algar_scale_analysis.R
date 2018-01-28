@@ -13,6 +13,7 @@ library(tmap)  # For making pretty maps
 library(sp)    # Functions for working with spatial data 
 library(raster)# Manipulating raster data
 library(rgeos)
+library(ggplot2)
 
 # Spatial data for Algar located on Algar Project Google Drive
 setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/GIS data")
@@ -291,3 +292,53 @@ lowland$Prop2000 <- data2000$Percent_cover[1:60]
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 
 write.csv(lowland,"Lowlandcover_9buffersizes.csv")
+
+##### Comparing %lowland at different scales
+
+#Loading % lowland data
+low <- read.csv("Lowlandcover_9buffersizes.csv")
+# Forgot to include 750m scale. May not be important if there is no diff. across scales
+## Compare averages, mins and means across 250, 500, 1000, 2000 (keeping in mind some are cut off)
+prop4areas <- cbind.data.frame(low$Prop250, low$Prop500, low$Prop1000, low$Prop2000)
+colnames(prop4areas) <- c("250m", "500m", "1000m", "2000m")
+prop4areas$Station <- low$CamStation
+summary(prop4areas) #approximately the same
+
+#Need to check if % lowland changes with inc. in scale
+# To do this, gather 'Prop' columns into matrix with sites as columns, scales as rows
+
+P <- low %>% select(CamStation, Treatment, Prop100, Prop250, Prop500, Prop1000, Prop1250, Prop1500, Prop1750, Prop2000)
+# Rename Proportion columns (need to be numeric before plotting)
+colnames(P) <- c("CamStation", "Treatment", "100", "250", "500", "1000", "1250", "1500", "1750", "2000")
+
+#Gather Scales into one colum
+P1 <- gather(data = P, key = Scale, value = Prop_low, 3:10)
+str(P1) #Scale is character class, convert to numeric
+P1$Scale <- as.numeric(P1$Scale)
+str(P1)
+
+#Plotting distribution of %lowland
+hist(P1$Prop_low) #Skewed dramatically to higher %
+
+#Plotting %lowland against scale
+fig.a <- ggplot(data = P1, aes(x = Scale, y = Prop_low, fill = Scale)) + geom_point()
+fig.a + geom_smooth(method = "lm") #Proportion lowland seems to dec. with inc. scale, but no clear breaks
+
+## Checking R-sq. in linear model
+library(lme4)
+low.scale <- lm(formula = Prop_low~Scale, data = P1)
+summary(low.scale) # R-squared: 0.033
+
+#Comparing central limits
+mean(P[ ,3]) #Mean %lowland at 100m buffer: 0.782
+min(P[ , 3]) #0.091
+max(P[ , 3]) #0.984
+median(P[ , 3]) #0.88
+sd(P[ , 3]) #0.253
+
+mean(P[ ,10]) #Mean %lowland at 2000m buffer: 0.66
+min(P[ , 10]) #0.090
+max(P[ , 10]) #0.98
+median(P[ , 10]) #0.73
+sd(P[ , 10]) #0.200
+
