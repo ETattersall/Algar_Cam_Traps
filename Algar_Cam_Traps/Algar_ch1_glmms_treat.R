@@ -41,6 +41,8 @@ aictab(cand.set.wolf, modnames = names, second.ord = TRUE, nobs = NULL,
 
 
 summary(m0nb.wolf)
+summary(m0.wolf)
+summary(m1.wolf)
 
 ## Zero-inflated model (restart R to load glmmADMB)
 library(glmmADMB)
