@@ -5,13 +5,14 @@
 # Merge csvs, extract Snow column, convert to numeric (0 = False, 1 = True),
 # Collect monthly average, add to monthly detection data
 # Started Jan. 19, 2018 by Erin T.
+# Updated Jan. 30 for 2016-2017 Winter deployment
 ################################
 
 library(dplyr)
 library(tidyr)
 
 # working directory for Nisha's csvs
-setwd('C:/Users/ETattersall/OneDrive/ALGAR/Snow_csvs(Nisha)')
+setwd('C:/Users/ETattersall/OneDrive/ALGAR/Snow_csvs(Nisha)/CSV 2016-2017 snow data')
 list.files() #24 csvs
 
 
@@ -21,8 +22,8 @@ csv.names <- list.files() #vector of all file names
 #### Attempt 1: Merge all csvs and fix discrepancies (Date is easier to standaradize separately) ####
 #Read csv files into a list
 csv.list <- lapply(csv.names, read.csv, sep = ",")
-summary(csv.list) # First 12 csvs have 29 variables, last 12 have 30
-str(csv.list) # Additional variable is 'X' column of NAs. In addition, last 12 csvs show case discrepancies in logical variables (TRUE/FALSE is lower case)
+summary(csv.list) # All have 30 variables
+str(csv.list) # Appear to all be the same. Check possible problem variables?
 head(csv.list) # Each element is a data frame, one from each station
 tail(csv.list)
 
@@ -35,7 +36,7 @@ all <- csv.list %>%
   bind_rows() %>% 
   mutate_each(funs('as.factor')) # Worked with error `mutate_each()` is deprecated. Use `mutate_all()`, `mutate_at()` or `mutate_if()` instead.
 
-str(all) #24 levels for  folders, logicals are mix of upper and lower case
+str(all) #56 levels for folders: 2 were inactive, Algar49 and Algar51 not done. Emailed Nisha, set aside for now (Jan. 30)
 
 Snow <- all$Snow
 Snow <- toupper(Snow) #All characters to upper case
