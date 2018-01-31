@@ -144,5 +144,16 @@ plot(x=dat$low500, y=dat$Lynx)
 #Will hold off on further exploration until we receive updated AVIE data
 
 
+#### Step 3: Normality of data ####
+hist(dat$Wolf)
+hist(dat$Blackbear)
+hist(dat$Coyote)
+hist(dat$Lynx)
+hist(dat$Caribou)
+hist(dat$WTDeer)
+hist(dat$Moose)
+hist(dat$SnowDays)
+hist(dat$low500)
 
+#### Step 4: Zeroes in data: addressed in previous steps ####
 
