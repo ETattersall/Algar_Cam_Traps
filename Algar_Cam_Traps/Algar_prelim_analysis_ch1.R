@@ -421,7 +421,8 @@ m2.wolf <- glmer(Wolf~Treatment + (1|Site), family = poisson, data = pilot.month
 ## Negative binomial GLMM
 m3.wolf <- glmer.nb(Wolf~Treatment + (1|Site), data = pilot.month)
 
-anova(m0.wolf, m2.wolf)##m2 has lower AIC score, higher logLikelihood --> enough additional variance explained to justify more complexity
+
+anova(m0.wolf, m2.wolf)##m2 has lower AIC score, higher logLikelihood --> enough additional variance explained to justify more complexity of random effect
 AIC(m0.wolf, m1.wolf, m2.wolf, m3.wolf) ## m3 has lowest AIC
 anova(m2.wolf, m3.wolf) ## m3 AIC significantly lower than m2 AIC
 summary(m3.wolf)
