@@ -310,3 +310,68 @@ glimpse(Alg.data)
 
 getwd()
 write.csv(Alg.data, "monthlydetections_alldata.csv")
+
+#### Add Snow data for Nov. 2015 - Nov.2016 ####
+Alg.data <- read.csv("monthlydetections_nov2015-apr2017.csv") #I changed name for clarity, Jan. 23, 2018
+Alg.data$X <- NULL 
+dep1 <- read.csv("2015.01_monthlydetections.csv")
+dep1$X.1 <- NULL
+dep1$X <- NULL
+dep2 <- read.csv("2016.01_monthlydetections.csv")
+dep2$X <- NULL
+
+
+#### 1st attempt: First add SnowDays from 1st deployment (DOES NOT WORK) ####
+Alg.data$SnowDays <- dep1$SnowDays[match(Alg.data$Site_ym, dep1$Site_ym)]
+#Add 2nd deployment SnowDays to new column
+Alg.data$SnowDays2 <- dep2$SnowDays[match(Alg.data$Site_ym, dep2$Site_ym)]
+#Nov 2016 has SnowDay counts for both deployments. Can add together, as the Check Date will be recorded in one deployment or the other, depending on the time of the camera check. It will not be recorded twice.
+
+#Combine SnowDays and SnowDays2 in Alg.data, summing cells with 2 counts
+# Duplicate data for insurance
+A2 <- Alg.data 
+unique(colnames(A2))
+
+#rename SnowDays2 to match SnowDays (done manually)
+fix(A2)
+unique(colnames(A2))
+str(A2) #SnowDays are both numeric
+
+# sapply(unique(colnames(A2)), function(x) rowSums(A2[,grepl(x, colnames(A2))])) --> hasn't worked yet
+
+Alg.data[which(is.na(Alg.data$SnowDays)), "SnowDays"] <- dep2$SnowDays[match(Alg.data$Site_ym, dep2$Site_ym)]
+
+
+#### 2nd attempt: combine snow data from both deployments (WORKS) ####
+b1 <- dep1 %>% select(Site, Site_ym, Yr_Month, SnowDays)
+b2 <- dep2 %>% select(Site, Site_ym, Yr_Month, SnowDays)
+str(b1) 
+str(b2) 
+b <- bind_rows(b1, b2)
+str(b) #coerces factors into characters
+b$Site <- as.factor(b$Site)
+b$Site_ym <- as.factor(b$Site_ym)
+b$Yr_Month <- as.factor(b$Yr_Month)
+head(b)
+tail(b)
+#Order by Site
+b <- b[with(b, order(Site, Yr_Month )), ] ## Ordering by Site and Yr_month
+
+## Double counts for Nov. 2016 (counted in both surveys) (copied from above)
+nov2016 <- b %>% filter(Yr_Month == "2016-11") ## 81 (24 cameras from 1st deployment + active cameras from second = 24 + 57 = 81)
+
+## Use aggregate function. Tested on data frame with only duplicated months
+nov2016 <- aggregate(. ~ Site + Yr_Month + Site_ym, data = nov2016, sum) 
+
+### Combining data for 24 cams for full survey
+b <- b[!b$Yr_Month == "2016-11", ] #Remove duplicated rows
+
+b <- rbind(b,nov2016) #Combine fixed 2016-11 data to other months
+b <- b[with(b, order(Site, Yr_Month)), ] ## Ordering by Site and Yr_month
+
+#Algar49 has 0's where NA's should be:2017-01, 2017-02, 2017-03 (camera effectively inactive)
+fix(b)#fix manually
+
+Alg.data$SnowDays <- b$SnowDays[match(Alg.data$Site_ym, b$Site_ym)]
+
+write.csv(Alg.data, "monthlydetections_nov2015-apr2017.csv")
