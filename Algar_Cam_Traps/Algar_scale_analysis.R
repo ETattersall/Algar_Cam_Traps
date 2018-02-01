@@ -70,7 +70,7 @@ AVIE <- readOGR("GIS", "AVIE_Veg_simple")
 
 summary(AVIE) # Spatial polygons data frame, projected in NAD83. Lowland, Non-forest, and upland categories
 class(AVIE)
-AVIE
+plot(AVIE)
 
 
 
@@ -123,10 +123,9 @@ proj4string(AVIE_UTM)
 AVIE <- AVIE_UTM #Overwrite original AVIE CRS
 
 
-#Clipping landcover data for buffers using rater::intersect
-#over and gIntersects didn't work for clipping a polygon by a polygon
+#Clipping landcover data for buffers using raster::intersect
+#Functions over and gIntersects didn't work for clipping a polygon by a polygon
 #gIntersection clipped the layer but did not retain attribute data
-
 
 
 int500 <- intersect(AVIE, b500)
