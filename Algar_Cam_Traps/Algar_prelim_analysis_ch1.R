@@ -499,7 +499,12 @@ ZINBmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family 
 
 #re-run with debug=TRUE
 ZINBmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE, debug = TRUE) # Can't understand output.
-#Return to ZINBmer at later date
+
+## run with different admbControl (suggest by Richard Shuster on https://groups.google.com/a/admb-project.org/forum/#!topic/users/DXHfeLEHiAQ)
+ZINBmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE, admb.opts=admbControl(shess=FALSE,noinit=FALSE)) 
+
+##admbControl take 2...took longer to run, same error messages
+ZINBmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE, admb.opts=admbControl(shess=FALSE,noinit=FALSE, impSamp=200,maxfn=1000,imaxfn=500,maxph=5))
 
 
 summary(ZINBmer.wolf)
@@ -577,6 +582,238 @@ summary(glmm.bear)
 AIC(m0.bear, m1.bear, m2.bear, m3.bear, m4.bear, m5.bear, Zip1, Nb1, ZIPmer.bear) ## Still no lower AIC than nbin.glmm
 
 
+
+
+
+
+#### Caribou modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
+##Poisson glm
+m0.caribou <- glm(Caribou~Treatment, family = poisson, data = pilot.month)
+## Negative binomial glm
+m1.caribou <- glm.nb(Caribou~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
+
+## Poisson GLMM
+m2.caribou <- glmer(Caribou~Treatment + (1|Site), family = poisson, data = pilot.month) ## Failed to converge
+summary(m2.caribou)
+
+### Testing convergence issues
+relgrad <- with(m2.caribou@optinfo$derivs,solve(Hessian,gradient))
+max(abs(relgrad)) #5.001e-05
+
+## Will re-fit with current parameter estimates set (suggested by lme4 documentation)
+
+m2.caribou@theta #current estimate = 2.381955
+
+m2.caribou <- glmer(Caribou~Treatment + (1|Site), family = poisson, data = pilot.month, start = m2.caribou@theta) #same convergence error
+summary(m2.caribou)
+
+#Starting with estimate in m2. summary
+m2.caribou <- glmer(Caribou~Treatment + (1|Site), family = poisson, data = pilot.month, start =  1.734731) #can only have one theta component
+summary(m2.caribou)
+#Still failing to converge, same results
+# Try new optimizer using control = glmerControl() argument
+?glmerControl
+m2.caribou <- glmer(Caribou~Treatment + (1|Site), family = poisson, data = pilot.month, control = glmerControl(optimizer = "Nelder_Mead")) #Same warning
+summary(m2.caribou) # Consistent results. lme4 documentation indicates there is not really a problem
+
+
+
+## Negative binomial GLMM
+m3.caribou <- glmer.nb(Caribou~Treatment + (1|Site), data = pilot.month)
+summary(m3.caribou)
+
+### Testing convergence issues
+relgrad <- with(m3.caribou@optinfo$derivs,solve(Hessian,gradient))
+max(abs(relgrad)) #2.655e-06
+
+## Will re-fit with current parameter estimates set (suggested by lme4 documentation)
+
+m3.caribou@theta #current estimate = 2.200174
+
+m3.caribou <- glmer.nb(Caribou~Treatment + (1|Site), family = poisson, data = pilot.month, start = m3.caribou@theta) #same convergence error
+summary(m3.caribou)
+
+#Starting with estimate in m2. summary
+m3.caribou <- glmer.nb(Caribou~Treatment + (1|Site), family = poisson, data = pilot.month, start =  1.734731) #can only have one theta component
+summary(m3.caribou)
+#Still failing to converge, same results
+# Try new optimizer using control = glmerControl() argument
+?glmerControl
+m3.caribou <- glmer.nb(Caribou~Treatment + (1|Site), family = poisson, data = pilot.month, control = glmerControl(optimizer = "Nelder_Mead")) #Same warning
+summary(m3.caribou) # Consistent results. lme4 documentation indicates there is not really a problem
+
+anova(m2.caribou, m3.caribou)
+
+AIC(m0.caribou, m1.caribou, m2.caribou, m3.caribou) ## m3 > m2 > m1
+anova(m2.caribou, m3.caribou) ## m3 significantly less than m2, but both models failed to converge
+# Warning message:
+#  In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+#                 Model failed to converge with max|grad| = 0.0487246 (tol = 0.001, component 1)
+
+
+
+## Intercept-free model, should be same as m1.caribou, just comparing 2 treatment estimates to zero rather than to each other
+## Not run for pilot
+## m2.caribou <- glmer(Caribou~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
+
+
+### Adding second random effect of time
+m4.caribou <- glmer(Caribou~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = pilot.month)
+summary(m4.caribou) ## Yr_Month random variable accounts for LOTS of variance
+anova(m2.caribou, m3.caribou, m4.caribou) 
+m5.caribou <- glmer.nb(Caribou~Treatment + (1 |Site) + (1|Yr_Month), data = pilot.month)
+anova(m2.caribou, m3.caribou, m4.caribou, m5.caribou) 
+
+
+##Zero-inflated GLMs
+library(pscl)
+f1 <- formula(Caribou~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
+# ZIP
+Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = pilot.month) 
+summary(Zip1) 
+# ZINB
+Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
+summary(Nb1)
+
+# Model selection
+AIC(m0.caribou, m1.caribou, m2.caribou, m3.caribou, m4.caribou, m5.caribou, Zip1, Nb1) ## m5<m4<m3. m2 and m3 didn't converge though
+
+### Zero-inflated glmms with glmmADMB
+ZIPmer.caribou <- glmmadmb(Caribou~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
+anova(m2.caribou, ZIPmer.caribou)
+
+ZINBmer.caribou <- glmmadmb(Caribou~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE)
+#Function maximizer failed
+
+AIC(m2.caribou, ZIPmer.caribou)
+
+
+
+#### WTDeer modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
+##Poisson glm
+m0.WTDeer <- glm(WTDeer~Treatment, family = poisson, data = pilot.month)
+## Negative binomial glm
+m1.WTDeer <- glm.nb(WTDeer~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
+
+## Poisson GLMM
+m2.WTDeer <- glmer(WTDeer~Treatment + (1|Site), family = poisson, data = pilot.month)
+summary(m2.WTDeer)
+
+## Negative binomial GLMM
+m3.WTDeer <- glmer.nb(WTDeer~Treatment + (1|Site), data = pilot.month)
+summary(m3.WTDeer)
+
+
+AIC(m0.WTDeer, m1.WTDeer, m2.WTDeer, m3.WTDeer) ## m3 > m2 > m1
+anova(m2.WTDeer, m3.WTDeer) ## m3 significantly less than m2
+
+##Treatment has a significant effect on WT deer detections in all models
+
+
+
+
+
+## Intercept-free model, should be same as m1.WTDeer, just comparing 2 treatment estimates to zero rather than to each other
+## Not run for pilot
+## m2.WTDeer <- glmer(WTDeer~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
+
+
+### Adding second random effect of time
+m4.WTDeer <- glmer(WTDeer~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = pilot.month)
+summary(m4.WTDeer) ## Yr_Month random variable accounts for LOTS of variance
+anova(m2.WTDeer, m3.WTDeer, m4.WTDeer) ##m3  significantly lower than m2
+m5.WTDeer <- glmer.nb(WTDeer~Treatment + (1 |Site) + (1|Yr_Month), data = pilot.month)
+anova(m2.WTDeer, m3.WTDeer, m4.WTDeer, m5.WTDeer) ## m5 has significantly more explanatory power
+
+
+##Zero-inflated GLMs
+library(pscl)
+f1 <- formula(WTDeer~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
+# ZIP
+Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = pilot.month) 
+summary(Zip1) 
+# ZINB
+Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
+summary(Nb1)
+
+
+
+# Model selection
+AIC(m0.WTDeer, m1.WTDeer, m2.WTDeer, m3.WTDeer, m4.WTDeer, m5.WTDeer, Zip1, Nb1) ## m5<m3<m4. Negative binomial distributions best
+
+### Zero-inflated glmms with glmmADMB
+ZIPmer.WTDeer <- glmmadmb(WTDeer~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
+anova(m2.WTDeer, ZIPmer.WTDeer)
+
+ZINBmer.WTDeer <- glmmadmb(WTDeer~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE)
+anova(ZIPmer.WTDeer, ZINBmer.WTDeer)
+AIC(ZIPmer.WTDeer, ZINBmer.WTDeer)
+summary(ZINBmer.WTDeer)
+
+plot(pilot.month$Treatment,pilot.month$WTDeer)
+
+
+#### Moose modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
+##Poisson glm
+m0.Moose <- glm(Moose~Treatment, family = poisson, data = pilot.month)
+## Negative binomial glm
+m1.Moose <- glm.nb(Moose~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
+
+## Poisson GLMM
+m2.Moose <- glmer(Moose~Treatment + (1|Site), family = poisson, data = pilot.month) 
+summary(m2.Moose)
+
+## Negative binomial GLMM
+m3.Moose <- glmer.nb(Moose~Treatment + (1|Site), data = pilot.month)
+summary(m3.Moose)
+anova(m2.Moose, m3.Moose)
+
+AIC(m0.Moose, m1.Moose, m2.Moose, m3.Moose) ## m3<m1<m2. Negative binomial stronger explanatory distribution than glmer Poisson 
+anova(m2.Moose, m3.Moose) ## m3 significantly less than m2
+
+
+
+
+
+
+
+## Intercept-free model, should be same as m1.Moose, just comparing 2 treatment estimates to zero rather than to each other
+## Not run for pilot
+## m2.Moose <- glmer(Moose~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
+
+
+### Adding second random effect of time
+m4.Moose <- glmer(Moose~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = pilot.month)
+summary(m4.Moose) ## Yr_Month random variable accounts for LOTS of variance
+anova(m2.Moose, m3.Moose, m4.Moose) ##m3  significantly lower than m2, 
+m5.Moose <- glmer.nb(Moose~Treatment + (1 |Site) + (1|Yr_Month), data = pilot.month)
+anova(m2.Moose, m3.Moose, m4.Moose, m5.Moose) ## m5 has significantly more explanatory power
+
+
+##Zero-inflated GLMs
+library(pscl)
+f1 <- formula(Moose~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
+# ZIP
+Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = pilot.month) 
+summary(Zip1) 
+# ZINB
+Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
+summary(Nb1)
+
+# Model selection
+AIC(m0.Moose, m1.Moose, m2.Moose, m3.Moose, m4.Moose, m5.Moose, Zip1, Nb1) ## m5<m3<m4. Negative binomial distributions best
+
+### Zero-inflated glmms with glmmADMB
+ZIPmer.Moose <- glmmadmb(Moose~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
+anova(m2.Moose, ZIPmer.Moose)
+
+ZINBmer.Moose <- glmmadmb(Moose~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE)
+anova(ZIPmer.Moose, ZINBmer.Moose)
+AIC(ZIPmer.Moose, ZINBmer.Moose)
+summary(ZINBmer.Moose)
+
+
+### Disregard mesocarnivores for ch. 1 analyses (no a priori hypotheses stated yet)
 #### Coyote modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
 ##Poisson glm
 m0.coyote <- glm(Coyote~Treatment, family = poisson, data = pilot.month)
@@ -693,193 +930,6 @@ ZIPmer.lynx <- glmmadmb(Lynx~Treatment + (1| Site), data = pilot.month, family =
 # Function maximiser failed
 ZINBmer.lynx <- glmmadmb(Lynx~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE)
 # Function maximiser failed
-
-
-
-
-#### Caribou modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
-##Poisson glm
-m0.caribou <- glm(Caribou~Treatment, family = poisson, data = pilot.month)
-## Negative binomial glm
-m1.caribou <- glm.nb(Caribou~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
-
-## Poisson GLMM
-m2.caribou <- glmer(Caribou~Treatment + (1|Site), family = poisson, data = pilot.month) ## Failed to converge
-summary(m2.caribou)
-
-## Negative binomial GLMM
-m3.caribou <- glmer.nb(Caribou~Treatment + (1|Site), data = pilot.month)
-summary(m3.caribou)
-
-anova(m2.caribou, m3.caribou)
-
-AIC(m0.caribou, m1.caribou, m2.caribou, m3.caribou) ## m3 > m2 > m1
-anova(m2.caribou, m3.caribou) ## m3 significantly less than m2, but both models failed to converge
-# Warning message:
-#  In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
-#                 Model failed to converge with max|grad| = 0.0487246 (tol = 0.001, component 1)
-
-##### Try running glmms with first 2 deployments
-dep2 <- read.csv("monthlydetections_nov2015-apr2017.csv")
-
-## Poisson GLMM
-m2.caribou <- glmer(Caribou~Treatment + (1|Site), family = poisson, data = dep2) ## Failed to converge
-summary(m2.caribou)
-
-## Negative binomial GLMM
-m3.caribou <- glmer.nb(Caribou~Treatment + (1|Site), data = dep2)
-summary(m3.caribou)
-
-## Both return warnings:
-#Warning messages:
-#  1: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  ... :
-#                   unable to evaluate scaled gradient
-#                  2: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  ... :
-#                                    Hessian is numerically singular: parameters are not uniquely 
-# determined
-
-anova(m2.caribou, m3.caribou)
-
-
-## Intercept-free model, should be same as m1.caribou, just comparing 2 treatment estimates to zero rather than to each other
-## Not run for pilot
-## m2.caribou <- glmer(Caribou~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
-
-
-### Adding second random effect of time
-m4.caribou <- glmer(Caribou~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = pilot.month)
-summary(m4.caribou) ## Yr_Month random variable accounts for LOTS of variance
-anova(m2.caribou, m3.caribou, m4.caribou) 
-m5.caribou <- glmer.nb(Caribou~Treatment + (1 |Site) + (1|Yr_Month), data = pilot.month)
-anova(m2.caribou, m3.caribou, m4.caribou, m5.caribou) 
-
-
-##Zero-inflated GLMs
-library(pscl)
-f1 <- formula(Caribou~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
-# ZIP
-Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = pilot.month) 
-summary(Zip1) 
-# ZINB
-Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
-summary(Nb1)
-
-# Model selection
-AIC(m0.caribou, m1.caribou, m2.caribou, m3.caribou, m4.caribou, m5.caribou, Zip1, Nb1) ## m5<m4<m3. m2 and m3 didn't converge though
-
-### Zero-inflated glmms with glmmADMB
-ZIPmer.caribou <- glmmadmb(Caribou~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
-anova(m2.caribou, ZIPmer.caribou)
-
-ZINBmer.caribou <- glmmadmb(Caribou~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE)
-#Function maximizer failed
-
-AIC(m2.caribou, ZIPmer.caribou)
-
-
-
-#### WTDeer modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
-##Poisson glm
-m0.WTDeer <- glm(WTDeer~Treatment, family = poisson, data = pilot.month)
-## Negative binomial glm
-m1.WTDeer <- glm.nb(WTDeer~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
-
-## Poisson GLMM
-m2.WTDeer <- glmer(WTDeer~Treatment + (1|Site), family = poisson, data = pilot.month) ## Failed to converge
-summary(m2.WTDeer)
-
-## Negative binomial GLMM
-m3.WTDeer <- glmer.nb(WTDeer~Treatment + (1|Site), data = pilot.month)
-summary(m3.WTDeer)
-
-
-AIC(m0.WTDeer, m1.WTDeer, m2.WTDeer, m3.WTDeer) ## m3 > m2 > m1
-anova(m2.WTDeer, m3.WTDeer) ## m3 significantly less than m2
-
-##Treatment has a significant effect on WT deer detections in all models
-
-
-
-
-
-## Intercept-free model, should be same as m1.WTDeer, just comparing 2 treatment estimates to zero rather than to each other
-## Not run for pilot
-## m2.WTDeer <- glmer(WTDeer~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
-
-
-### Adding second random effect of time
-m4.WTDeer <- glmer(WTDeer~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = pilot.month)
-summary(m4.WTDeer) ## Yr_Month random variable accounts for LOTS of variance
-anova(m2.WTDeer, m3.WTDeer, m4.WTDeer) ##m3  significantly lower than m2
-m5.WTDeer <- glmer.nb(WTDeer~Treatment + (1 |Site) + (1|Yr_Month), data = pilot.month)
-anova(m2.WTDeer, m3.WTDeer, m4.WTDeer, m5.WTDeer) ## m5 has significantly more explanatory power
-
-
-##Zero-inflated GLMs
-library(pscl)
-f1 <- formula(WTDeer~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
-# ZIP
-Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = pilot.month) 
-summary(Zip1) 
-# ZINB
-Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
-summary(Nb1)
-
-# Model selection
-AIC(m0.WTDeer, m1.WTDeer, m2.WTDeer, m3.WTDeer, m4.WTDeer, m5.WTDeer, Zip1, Nb1) ## m5<m3<m4. Negative binomial distributions best
-
-plot(pilot.month$Treatment,pilot.month$WTDeer)
-
-
-#### Moose modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
-##Poisson glm
-m0.Moose <- glm(Moose~Treatment, family = poisson, data = pilot.month)
-## Negative binomial glm
-m1.Moose <- glm.nb(Moose~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
-
-## Poisson GLMM
-m2.Moose <- glmer(Moose~Treatment + (1|Site), family = poisson, data = pilot.month) ## Failed to converge
-summary(m2.Moose)
-
-## Negative binomial GLMM
-m3.Moose <- glmer.nb(Moose~Treatment + (1|Site), data = pilot.month)
-summary(m3.Moose)
-
-
-AIC(m0.Moose, m1.Moose, m2.Moose, m3.Moose) ## m3<m1<m2. Negative binomial stronger explanatory distribution than glmer Poisson 
-anova(m2.Moose, m3.Moose) ## m3 significantly less than m2
-
-
-
-
-
-
-
-## Intercept-free model, should be same as m1.Moose, just comparing 2 treatment estimates to zero rather than to each other
-## Not run for pilot
-## m2.Moose <- glmer(Moose~Treatment + (1|Site) -1, family = poisson, data = pilot.month) 
-
-
-### Adding second random effect of time
-m4.Moose <- glmer(Moose~Treatment + (1|Site) + (1|Yr_Month), family = poisson, data = pilot.month)
-summary(m4.Moose) ## Yr_Month random variable accounts for LOTS of variance
-anova(m2.Moose, m3.Moose, m4.Moose) ##m3  significantly lower than m2, 
-m5.Moose <- glmer.nb(Moose~Treatment + (1 |Site) + (1|Yr_Month), data = pilot.month)
-anova(m2.Moose, m3.Moose, m4.Moose, m5.Moose) ## m5 has significantly more explanatory power
-
-
-##Zero-inflated GLMs
-library(pscl)
-f1 <- formula(Moose~Treatment | 1) #where the count distribution is modelled as a function of treatment, binomial distrib. modelled as constant
-# ZIP
-Zip1 <- zeroinfl(f1, dist = "poisson", link = "logit", data = pilot.month) 
-summary(Zip1) 
-# ZINB
-Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
-summary(Nb1)
-
-# Model selection
-AIC(m0.Moose, m1.Moose, m2.Moose, m3.Moose, m4.Moose, m5.Moose, Zip1, Nb1) ## m5<m3<m4. Negative binomial distributions best
 
 
 
