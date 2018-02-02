@@ -415,15 +415,23 @@ m0.wolf <- glm(Wolf~Treatment, family = poisson, data = pilot.month)
 ## Negative binomial glm
 m1.wolf <- glm.nb(Wolf~Treatment, link = "log", data = pilot.month) # Use log link to compare with poisson
 
+#Comparing Poisson and Neg. binomial with anova (lieklihood ratio test)
+anova(m0.wolf, m1.wolf)
+summary(m0.wolf)
+summary(m1.wolf)
+
 ## Poisson GLMM
 m2.wolf <- glmer(Wolf~Treatment + (1|Site), family = poisson, data = pilot.month)
 
 ## Negative binomial GLMM
 m3.wolf <- glmer.nb(Wolf~Treatment + (1|Site), data = pilot.month)
 
+anova(m2.wolf, m3.wolf)
+
 
 anova(m0.wolf, m2.wolf)##m2 has lower AIC score, higher logLikelihood --> enough additional variance explained to justify more complexity of random effect
-AIC(m0.wolf, m1.wolf, m2.wolf, m3.wolf) ## m3 has lowest AIC
+
+AIC(m0.wolf, m1.wolf, m2.wolf, m3.wolf) ## m3 has lowest AIC. Not sure if AIC is an appropriate comparison
 anova(m2.wolf, m3.wolf) ## m3 AIC significantly lower than m2 AIC
 summary(m3.wolf)
 
@@ -459,7 +467,7 @@ summary(Zip1) ## SPP estimate is sig. different from Control in the count model
 Nb1 <- zeroinfl(f1, dist = "negbin", link = "logit", data = pilot.month)
 summary(Nb1)
 
-## Zero-inflated GLMMs
+## Zero-inflated GLMMs?
 
 
 
@@ -473,10 +481,31 @@ aictab(cand.set.wolf, modnames = names, second.ord = TRUE, nobs = NULL,
 
 ### Zero-inflated GLMMs
 ## Need to restart R session first to unload lme4
+## For zero-inflated glmms --> not yet tested, Oct. 17, 2017
+install.packages("R2admb")
+install.packages("glmmADMB", 
+                 repos=c("http://glmmadmb.r-forge.r-project.org/repos",
+                         getOption("repos")),
+                 type="source")
+library(R2admb)
+library(glmmADMB)
 ZIPmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
-ZINBmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE) ##Parameters estimated, but standard errors were not. Function maximiser failed
+summary(ZIPmer.wolf)
+AIC(m2.wolf, ZIPmer.wolf)
 
-AIC(m0.wolf, m1.wolf, m2.wolf, m3.wolf, m4.wolf, m5.wolf, m6.wolf, Zip1, Nb1, ZIPmer.wolf) ## Still no lower AIC than nbin.glmm
+ZINBmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE) ##Parameters estimated, but standard errors were not. Function maximiser failed. Re-run with save.dir specified as getwd()
+
+ZINBmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE, save.dir = getwd()) ## saves an output I can't open...
+
+#re-run with debug=TRUE
+ZINBmer.wolf <- glmmadmb(Wolf~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE, debug = TRUE) # Can't understand output.
+#Return to ZINBmer at later date
+
+
+summary(ZINBmer.wolf)
+
+## Comparing nb glmms to ZINBglmms, pois glmms to ZIPglmms
+AIC(m2.wolf, m3.wolf, ZIPmer.wolf) ## Still no lower AIC than nbin.glmm
 
 #### Blackbear modelling: Compare glmm to glm, adding 2 random effects, checking out zero-inflated Poisson and Neg. binomial GLMs ####
 ##Poisson glm
@@ -489,6 +518,8 @@ m2.bear <- glmer(Blackbear~Treatment + (1|Site), family = poisson, data = pilot.
 
 ## Negative binomial GLMM
 m3.bear <- glmer.nb(Blackbear~Treatment + (1|Site), data = pilot.month)
+
+anova(m2.bear, m3.bear)
 
 anova(m0.bear, m2.bear)##m2 has lower AIC score, higher logLikelihood --> enough additional variance explained to justify more complexity
 AIC(m0.bear, m1.bear, m2.bear, m3.bear) ## m3 has lowest AIC, followed by m1
@@ -534,6 +565,8 @@ AIC(m0.bear, m1.bear, m2.bear, m3.bear, m4.bear, m5.bear, Zip1, Nb1) ## m5 < m4 
 ZIPmer.bear <- glmmadmb(Blackbear~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
 ZINBmer.bear <- glmmadmb(Blackbear~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE) 
 summary(ZIPmer.bear)
+anova(ZIPmer.bear, ZINBmer.bear)
+AIC(ZIPmer.bear, ZINBmer.bear)
 
 ### Comparing results of glmmADMB to glmer with neg. bin. glmm
 glmm.bear <- glmmadmb(Blackbear~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = FALSE)
@@ -678,9 +711,34 @@ summary(m2.caribou)
 m3.caribou <- glmer.nb(Caribou~Treatment + (1|Site), data = pilot.month)
 summary(m3.caribou)
 
+anova(m2.caribou, m3.caribou)
 
 AIC(m0.caribou, m1.caribou, m2.caribou, m3.caribou) ## m3 > m2 > m1
 anova(m2.caribou, m3.caribou) ## m3 significantly less than m2, but both models failed to converge
+# Warning message:
+#  In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+#                 Model failed to converge with max|grad| = 0.0487246 (tol = 0.001, component 1)
+
+##### Try running glmms with first 2 deployments
+dep2 <- read.csv("monthlydetections_nov2015-apr2017.csv")
+
+## Poisson GLMM
+m2.caribou <- glmer(Caribou~Treatment + (1|Site), family = poisson, data = dep2) ## Failed to converge
+summary(m2.caribou)
+
+## Negative binomial GLMM
+m3.caribou <- glmer.nb(Caribou~Treatment + (1|Site), data = dep2)
+summary(m3.caribou)
+
+## Both return warnings:
+#Warning messages:
+#  1: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  ... :
+#                   unable to evaluate scaled gradient
+#                  2: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  ... :
+#                                    Hessian is numerically singular: parameters are not uniquely 
+# determined
+
+anova(m2.caribou, m3.caribou)
 
 
 ## Intercept-free model, should be same as m1.caribou, just comparing 2 treatment estimates to zero rather than to each other
@@ -711,11 +769,12 @@ AIC(m0.caribou, m1.caribou, m2.caribou, m3.caribou, m4.caribou, m5.caribou, Zip1
 
 ### Zero-inflated glmms with glmmADMB
 ZIPmer.caribou <- glmmadmb(Caribou~Treatment + (1| Site), data = pilot.month, family = "poisson", link = "log", zeroInflation = TRUE)
+anova(m2.caribou, ZIPmer.caribou)
 
 ZINBmer.caribou <- glmmadmb(Caribou~Treatment + (1| Site), data = pilot.month, family = "nbinom", link = "log", zeroInflation = TRUE)
 #Function maximizer failed
 
-AIC(m2.caribou, m4.caribou, ZIPmer.caribou)
+AIC(m2.caribou, ZIPmer.caribou)
 
 
 
