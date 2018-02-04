@@ -16,7 +16,7 @@ library(bbmle) #AICtab function
 
 getwd()
 
-setwd("F:/Modelling")
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 dat <- read.csv("monthlydetections_nov2015-apr2017.csv") # First 2 deployments monthly detection data + snow days
 head(dat)
 dat$X <- NULL
@@ -33,6 +33,9 @@ summary(prop4areas) #approximately the same
 ##Add 250m and 500m to monthly detections
 dat$low250 <- low$Prop250[match(dat$Site, low$CamStation)]
 dat$low500 <- low$Prop500[match(dat$Site, low$CamStation)]
+
+# Update CSV with lowland data
+write.csv(dat, "monthlydetections_nov2015-apr2017.csv")
 
 ### Try ZINBmer with glmmADMB one more time...
 library(glmmADMB)
@@ -162,6 +165,10 @@ wzinb4.i0 <- glmmTMB(Wolf~Treatment + low500 + SnowDays + (1| Site)-1, zi = ~1, 
 summary(wzinb4.i0)
 summary(wzinb5)
 summary(wzinb6)
+
+modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500" )
+wolftab <- ICtab(wzinb0,wzinb1, wzinb2,wzinb3,wzinb4,wzinb5,wzinb6,wzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+wolftab
 
 
 
@@ -398,6 +405,12 @@ lrtest(b4, b5)
 
 summary(b4)
 
+modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500" )
+bbtab <- ICtab(b0,b1,b2,b3,b4,b5,b6,b7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+bbtab
+
+
+
 
 #### Caribou Model 0: null glmm with neg. binomial distribution ####
 m0.Caribou <- glmer.nb(Caribou~1 + (1|Site), data = dat)
@@ -475,7 +488,10 @@ lrtest(cabzinb4,cabzinb2)
 summary(cabzinb4)
 summary(cabzinb2)
 
-ICtab(cabzinb0,cabzinb1, cabzinb2,cabzinb3,cabzinb4,cabzinb5,cabzinb6,cabzinb7, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500" )
+cabtab <- ICtab(cabzinb0,cabzinb1, cabzinb2,cabzinb3,cabzinb4,cabzinb5,cabzinb6,cabzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+cabtab
+
 
 ##Zero-inflation model doesn't appear to be significant. Run glmmTMB with zi = 0 and compare
 cabnb4 <- glmmTMB(Caribou~Treatment + low500 + SnowDays + (1|Site), data = dat, family = nbinom2)
@@ -625,6 +641,11 @@ lrtest(WTDzinb4, WTDzinb5)
 
 summary(WTDzinb4)
 
+modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500" )
+WTDtab <- ICtab(WTDzinb0,WTDzinb1, WTDzinb2,WTDzinb3,WTDzinb4,WTDzinb5,WTDzinb6,WTDzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+WTDtab
+
+
 #### Moose modelling (glmmTMB only) ####
 ## Model 0: Null, Moose detections best predicted by themselves
 MOOzinb0 <- glmmTMB(Moose~1 + (1|Site), zi = ~1, data = dat, family = nbinom2)
@@ -676,3 +697,6 @@ lrtest(MOOzinb6, MOOzinb7)
 
 summary(MOOzinb0)
 summary(MOOzinb6)
+
+MOOtab <- ICtab(MOOzinb0,MOOzinb1, MOOzinb2,MOOzinb3,MOOzinb4,MOOzinb5,MOOzinb6,MOOzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+MOOtab
