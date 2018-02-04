@@ -163,6 +163,8 @@ summary(wzinb4.i0)
 summary(wzinb5)
 summary(wzinb6)
 
+
+
 ##### Black bear Models: zero-inflated NB glmms ####
 library(glmmADMB) # if not already loaded
 # Need to first omit NAs from data
@@ -472,6 +474,8 @@ lrtest(cabzinb4,cabzinb2)
 
 summary(cabzinb4)
 summary(cabzinb2)
+
+ICtab(cabzinb0,cabzinb1, cabzinb2,cabzinb3,cabzinb4,cabzinb5,cabzinb6,cabzinb7, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 
 ##Zero-inflation model doesn't appear to be significant. Run glmmTMB with zi = 0 and compare
 cabnb4 <- glmmTMB(Caribou~Treatment + low500 + SnowDays + (1|Site), data = dat, family = nbinom2)
