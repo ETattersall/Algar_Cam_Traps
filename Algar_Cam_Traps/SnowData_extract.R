@@ -250,6 +250,10 @@ plot(x = dep1$SnowDays, y = dep1$Wolf) # No clear trends
 plot(x = dep1$SnowDays, y = dep1$Caribou) # More with less snow
 plot(x = dep1$Treatment, y = dep1$SnowDays) #same same - good
 
+## Feb.5 - plotting SnowDays per month for Nov. 2015 - Apr. 2017 (read in as dat)
+
+plot(x = dat$Yr_Month, y = dat$SnowDays) # Shows 2 winters, 1 summer, as expected. Nov. and April are more variable
+
 #### Daily detection data ####
 day1 <- read.csv("2016.01_detections_day.csv")
 
