@@ -34,6 +34,7 @@ MOOzinb0 <- glmmTMB(Moose~1 + (1|Site), zi = ~1, data = dat, family = nbinom2)
 
 #### Wolves: Estimating ####
 ## Saving coefficients
+summary(wzinb4)
 wzinb4.coeff <- summary(wzinb4)$coefficients ## divided into cond and zi. Subsetting these returns individual coefficients
 
 wzinb4.coeff$cond[1] # Estimate term for Intercept
@@ -43,13 +44,14 @@ wzinb4.coeff$cond[3,2] #Std. error for NatRegen
 wzinb4.cond <- wzinb4.coeff$cond
 wzinb4.cond[3,2] #Matches std. error for NatRegen
 wzinb4.cond[1] # Matches est. for intercept
+wzinb4.cond
 
-## Estimates for wolf detections per treatment (Treatment as a discrete variable)
+## Estimates for wolf detections per treatment (Treatment as a discrete variable), low500 and SnowDays
 ## List of empty vectors to feed into loop
-wolf.log = numeric(4) ## log(monthly detections)
-wolf.mean = numeric(4) ## mean detections per month
-UCI = numeric(4) ## Upper confidence (mean + 1.96*SE)
-LCI = numeric(4) ## Lower confidence (mean - 1.96*SE)
+wolf.log = numeric(6) ## log(monthly detections)
+wolf.mean = numeric(6) ## mean detections per month
+UCI = numeric(6) ## Upper confidence (mean + 1.96*SE)
+LCI = numeric(6) ## Lower confidence (mean - 1.96*SE)
 
 ### Filling vectors for Control treatments
 ## Models used a neg.binom. distrib., with log link function
@@ -59,10 +61,10 @@ UCI[1] = exp(wzinb4.cond[1] + 1.96*wzinb4.cond[1,2])
 LCI[1] = exp(wzinb4.cond[1] - 1.96*wzinb4.cond[1,2])
 
 ## Vector of Treatments
-Treatment = row.names(wzinb4.cond[2:4,])
+Treatment = row.names(wzinb4.cond[2:6,])
 
 ## For loop adding elements to above vectors for other 3 treatments
-for (i in 2:4){
+for (i in 2:6){
   wolf.log[i] = wolf.log[1] + wzinb4.cond[Treatment[i-1],1] ## adding estimate per treatment to vector
   wolf.mean[i] = exp(wolf.log[i]) ## adding mean per year to vector
   Var.U <- wzinb4.cond['(Intercept)', 2]^2 ## SE of the intercept
@@ -73,9 +75,14 @@ for (i in 2:4){
 }
 
 ## Entering in data.frame
-CI.wzinb4 = as.data.frame(cbind(wolf.log,wolf.mean, LCI, UCI), row.names = c("Control", "HumanUse", "NatRegen", "SPP"))
+CI.wzinb4 = as.data.frame(cbind(wolf.log,wolf.mean, LCI, UCI), row.names = c("Control", "HumanUse", "NatRegen", "SPP", "Low500", "SnowDays"))
 
-## Estimating mean and CI for low500 and Snow covariates
+## Rudimentary plots comparing detections, Lowland habitat, and SnowDays
+plot(x = dat$low500, y = dat$Wolf) #difficult to visualize, but looks like slightly more zeros at higher %low
+
+plot(x=dat$SnowDays, y = dat$Wolf) # Looks like more detections with fewer SnowDays
+
+
 
 
 
