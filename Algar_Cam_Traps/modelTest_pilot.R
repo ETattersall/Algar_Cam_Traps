@@ -166,6 +166,14 @@ summary(wzinb4.i0)
 summary(wzinb5)
 summary(wzinb6)
 
+# Test a second random effect of Yr_Month on top model
+wzinb8 <- glmmTMB(Wolf~SnowDays + (1|Site) + (1|Yr_Month), zi = ~1, data = dat, family = nbinom2)
+AICctab(wzinb6, wzinb8)
+lrtest(wzinb6, wzinb8) #identical LogLik
+summary(wzinb8) #Yr_Month has tiiiiiny effect on variance (5.09e-09)
+
+
+
 modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500" )
 wolftab <- ICtab(wzinb0,wzinb1, wzinb2,wzinb3,wzinb4,wzinb5,wzinb6,wzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 wolftab
