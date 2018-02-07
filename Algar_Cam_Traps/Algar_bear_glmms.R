@@ -155,6 +155,7 @@ lrtest(b2.NB, b4.NB)
 # 2   5 -206.97 -3 7.4729    0.05826 .
 
 summary(b2.NB)
+summary(b4.NB)
 
 # Comparing %lowland and bear detections
 plot(x = bear$low500, y = bear$Blackbear) #Pretty clear that detections decrease with ince in %lowland
@@ -163,5 +164,22 @@ plot(x = bear$low500, y = bear$Blackbear) #Pretty clear that detections decrease
 bbear <- ggplot(data = bear, aes(x = Treatment, y = Blackbear, fill = Treatment)) + geom_boxplot()
 bbear + theme_classic() + xlab("Sampling Strata") + ylab("Black bear detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
 
-bear.low <- ggplot(data = bear, aes(x = low500, y = Blackbear)) + geom_point() + theme_classic() + xlab("Proportion lowland habitat (500m buffer") + ylab("Black bear detections/month")
+bear.low <- ggplot(data = bear, aes(x = low500, y = Blackbear)) + geom_point() + theme_classic() + xlab("Proportion lowland habitat (500m buffer)") + ylab("Black bear detections/month")
 bear.low
+
+plot(Blackbear~low500,
+     data = bear,
+     col = alpha("azure4", 1),
+     pch = 16, cex = 1.0,
+     xlab = "Snow Days/month",
+     ylab = "Wolf detections/month")
+
+
+#### Box plot for restricted bear season, updated
+updat <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
+
+bear2 <- updat %>% filter(Yr_Month == "2016-04" | Yr_Month == "2016-05" | Yr_Month == "2016-06"| Yr_Month == "2016-07"| Yr_Month == "2016-08"| Yr_Month == "2016-09"| Yr_Month == "2016-10"| Yr_Month == "2017-04" | Yr_Month == "2017-05" | Yr_Month == "2017-06"| Yr_Month == "2017-07"| Yr_Month == "2017-08"| Yr_Month == "2017-09"| Yr_Month == "2017-10") %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear)
+unique(bear2$Yr_Month)
+
+bbear <- ggplot(data = bear2, aes(x = Treatment, y = Blackbear, fill = Treatment)) + geom_boxplot()
+bbear + theme_classic() + xlab("Sampling Strata") + ylab("Black bear detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
