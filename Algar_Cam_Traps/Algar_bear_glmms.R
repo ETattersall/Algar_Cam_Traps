@@ -4,11 +4,11 @@
 # Started Feb 5., 2018
 #################################
 
-library(dplyr)
-library(tidyr)
-library(lmtest)
-library(glmmTMB)
-library(bbmle)
+require(dplyr)
+require(tidyr)
+require(lmtest)
+require(glmmTMB)
+require(bbmle)
 
 
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
