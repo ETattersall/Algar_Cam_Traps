@@ -192,6 +192,18 @@ S7$det.rate <- (S7$Sp.detect/S7$trapdays)*1000
 
 ggplot(data = S7, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", "lightgreen", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species, nrow=3, scales = "free_y") + theme(legend.position = "none") +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + theme(aspect.ratio=1)
 
+
+#### Without Black bears
+S6 <- gather(S, Species, Sp.detect, 2:20) #Confirm which columns correspond to species
+S6 <- S6 %>% filter(S6$Species == "Moose" | S6$Species =="Coyote" | S6$Species =="Wolf"| S6$Species =="Lynx" | S6$Species =="WT deer" | S6$Species =="Caribou") ## dataframe for 6 species and their detections
+
+### Add detection rate to S6
+S6$trapdays <- TD_treat$trapdays[match(S6$Treatment,TD_treat$Treatment)]
+S6$det.rate <- (S6$Sp.detect/S6$trapdays)*1000
+
+ggplot(data = S6, aes(x = Treatment, y = det.rate, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", "lightgreen", "purple")) + guides(fill = guide_legend(title = NULL)) + facet_wrap( ~ Species, nrow=3, scales = "free_y") + theme(legend.position = "none") +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + theme(aspect.ratio=1)
+
+
 #### Simple lms and ANOVA for each target species ####
 fix(S) #species names can't have spaces
 
