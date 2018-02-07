@@ -32,4 +32,39 @@ plot(Wolf~SnowDays,
      xlab = "Snow Days/month",
      ylab = "Wolf detections/month")
 
+wolf.snow <- ggplot(data = dat, aes(x = SnowDays, y = Wolf)) + geom_point() + theme_classic() + xlab("Snow Days/month") + ylab("Wolf detections/month")
+wolf.snow
 
+
+#### Caribou ####
+CA <- ggplot(data = dat, aes(x = Treatment, y = Caribou, fill = Treatment)) + geom_boxplot()
+CA + theme_classic() + xlab("Sampling Strata") + ylab("Caribou detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+ca.low <- ggplot(data = dat, aes(x = low500, y = Caribou)) + geom_point() + theme_classic() + xlab("Proportion lowland habitat (500m buffer)") + ylab("Caribou detections/month")
+ca.low
+
+
+#### WTDeer ####
+WTD <- ggplot(data = dat, aes(x = Treatment, y = WTDeer, fill = Treatment)) + geom_boxplot()
+WTD + theme_classic() + xlab("Sampling Strata") + ylab("WTDeer detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+WTD.low <- ggplot(data = dat, aes(x = low500, y = WTDeer)) + geom_point() + theme_classic() + xlab("Proportion lowland habitat (500m buffer)") + ylab("WTDeer detections/month")
+WTD.low
+
+WTD.snow <- ggplot(data = dat, aes(x = SnowDays, y = WTDeer)) + geom_point() + theme_classic() + xlab("Snow Days/month") + ylab("WTDeer detections/month")
+WTD.snow
+
+#### Updated individual species plots
+updat <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
+
+## Wolf
+ggplot(data = updat, aes(x = Treatment, y = Wolf, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Wolf detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+# Caribou
+ggplot(data = updat, aes(x = Treatment, y = Caribou, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Caribou detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+# WTDeer
+ggplot(data = updat, aes(x = Treatment, y = WTDeer, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("WT deer detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+# Moose
+ggplot(data = updat, aes(x = Treatment, y = Moose, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Moose detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
