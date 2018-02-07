@@ -68,3 +68,9 @@ ggplot(data = updat, aes(x = Treatment, y = WTDeer, fill = Treatment)) + geom_bo
 
 # Moose
 ggplot(data = updat, aes(x = Treatment, y = Moose, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Moose detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+
+### Practice plots
+# Add up total detections
+dat$Total <- apply(dat[ , 5:11], 1, sum)
+ggplot(data = dat, aes(x = low500, y = Total, fill = Treatment)) + geom_point()
