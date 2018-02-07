@@ -28,6 +28,10 @@ tapply(S$Total, S$Treatment, median)
 # Control HumanUse NatRegen  OffLine      SPP 
 # 39.0     30.0     15.5       NA     31.5
 
+# Distribution of data
+hist(S$Total) #Poisson or NB
+hist(S$Richness) ## Essentially normal
+
 Tot.lm <-  lm(Total ~ Treatment, data = S)
 summary(Tot.lm) ##Need to make HumanUse the intercept?
 
@@ -62,6 +66,10 @@ confint(Tot.lm)
 # TreatmentHumanUse -67.50033 14.910590
 # TreatmentNatRegen -88.10482 -4.061843
 # TreatmentSPP      -46.49956 27.378346
+
+## Intercept free lm
+Tot.lm.IF <- lm(Total ~ Treatment -1, data = S)
+summary(Tot.lm.IF)
 
 ggplot(data = S, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Species Richness") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red","lightgreen", "purple")) +theme(legend.position = "none") +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
 
