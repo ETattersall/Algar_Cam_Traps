@@ -21,3 +21,15 @@ dat$low500 <- low$Prop500[match(dat$Site, low$CamStation)]
 
 w <- ggplot(data = dat, aes(x = Treatment, y = Wolf, fill = Treatment)) + geom_boxplot()
 w + theme_classic() + xlab("Sampling Strata") + ylab("Wolf detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+wsnow <- ggplot(data = dat, aes(x=SnowDays, y = Wolf)) +geom_point()+ theme_classic() + xlab("Snow Days/month") + ylab("Wolf detections/month")
+wsnow
+
+plot(Wolf~SnowDays,
+     data = dat,
+     col = alpha("azure4", 1),
+     pch = 16, cex = 1.0,
+     xlab = "Snow Days/month",
+     ylab = "Wolf detections/month")
+
+
