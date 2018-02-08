@@ -708,3 +708,21 @@ summary(MOOzinb6)
 
 MOOtab <- ICtab(MOOzinb0,MOOzinb1, MOOzinb2,MOOzinb3,MOOzinb4,MOOzinb5,MOOzinb6,MOOzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 MOOtab
+
+#### Modelling effect on TOTAL detections
+dat$Total <- apply(dat[ , 5:11], 1, sum)
+#NBglmm
+TOT.glmm <- glmmTMB(Total~Treatment + (1|Site), data = dat, family = nbinom2)
+TOT.ZINB <- glmmTMB(Total~Treatment + (1|Site), zi = ~1, data = dat, family = nbinom2)
+AICtab(TOT.glmm, TOT.ZINB)
+lrtest(TOT.glmm, TOT.ZINB) #No added benefit of ZI
+
+summary(TOT.glmm)
+summary(TOT.ZINB)
+
+## Poisson?
+TOT.pois <- glmmTMB(Total~Treatment + (1|Site), data = dat, family = genpois)
+summary(TOT.pois)
+ICtab(TOT.glmm, TOT.pois, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+
+lrtest(TOT.glmm, TOT.pois)
