@@ -15,7 +15,18 @@ library(camtrapR)
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data") #dataframes and csvs
 S <- read.csv("detectionsByStation.csv")
 
-sum(S$Grus.canadensis)
+## Remove bird species and humans
+
+S$Bird.spp. <- NULL
+S$Grus.canadensis <- NULL
+S$Homo.sapiens <- NULL
+str(S)
+
+## Re-assign Total and richness
+# 
+S$Total <- apply(S[ , 2:17],1,sum)
+
+S$Richness <- apply(S[,2:17],1,function(x) sum(ifelse(x>0,1,0)))
 
 ## Boxplot comparing total detections by treatment
 ggplot(data = S, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Total Detections") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", "lightgreen", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
