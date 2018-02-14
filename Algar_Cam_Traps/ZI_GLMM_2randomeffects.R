@@ -179,22 +179,19 @@ bbzinb9 <- glmmTMB(Blackbear~Treatment + VegHt + (1|Site) + (1|Month), zi = ~1, 
 ## Model 10: Blackbear detections best predicted by Veg Height, Treatment, and %lowland
 bbzinb10 <- glmmTMB(Blackbear~Treatment + VegHt + low500 + (1|Site) + (1|Month), zi = ~1, data = bear, family = nbinom2)
 
-## Model 11: Blackbear detections best predicted by Veg Height, Treatment, and %lowland
-bbzinb11 <- glmmTMB(Blackbear~Treatment + VegHt + low500 + SnowDays + (1|Site) + (1|Month), zi = ~1, data = bear, family = nbinom2)
 
-modnames <- c("Null", "Treat", "Treat + Low500", "Low500", "VegHt", "Treat + VegHt", "Treat+low500+VegHt", "Treat+low500+SnowDays+VegHt") #exclude interaction model
-beartab <- ICtab(bbzinb0,bbzinb1, bbzinb2, bbzinb7,bbzinb8, bbzinb9,bbzinb10,bbzinb11, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+modnames <- c("Null", "Treat", "Treat + Low500", "Low500", "VegHt", "Treat + VegHt", "Treat+low500+VegHt") #exclude interaction model
+beartab <- ICtab(bbzinb0,bbzinb1, bbzinb2, bbzinb7,bbzinb8, bbzinb9,bbzinb10, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 beartab
 
-#               dLogLik dAIC  df weight
-# Treat+low500+SnowDays+VegHt 12.0     0.0 11 0.7650
-# Treat+low500+VegHt           9.3     3.4 10 0.1381
-# Treat + Low500               7.6     4.9 9  0.0659
-# Low500                       3.2     7.6 6  0.0172
-# Treat + VegHt                5.4     9.3 9  0.0072
-# VegHt                        1.7    10.7 6  0.0036
-# Null                         0.0    12.1 5  0.0018
-# Treat                        2.5    13.0 8  0.0011
+#                   dLogLik dAIC  df weight
+# Treat+low500+VegHt  9.3     0.0 10 0.5874
+# Treat + Low500      7.6     1.5 9  0.2805
+# Low500              3.2     4.2 6  0.0732
+# Treat + VegHt       5.4     5.9 9  0.0307
+# VegHt               1.7     7.3 6  0.0155
+# Null                0.0     8.6 5  0.0078
+# Treat               2.5     9.6 8  0.0048
 
 summary(bbzinb0) ## zero-inflation makes no difference
 summary(bbzinb1)
@@ -223,7 +220,9 @@ lrtest(bbzinb2, bbzinb10)
 # 1   9 -202.56                       
 # 2  10 -200.82  1 3.4785    0.06217 .
 
-summary(bbzinb11) #Very slight  positive effect of VegHt
+
+
+summary(bbzinb10) #Very slight  positive effect of VegHt
 summary(bbzinb2)
 
 
