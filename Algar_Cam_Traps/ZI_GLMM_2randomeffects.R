@@ -36,6 +36,15 @@ dat$Yr_Month2 <- dat$Yr_Month #replicating Yr_Month for separation
 dat <- cbind(dat[,1:15],
       colsplit(dat$Yr_Month2, "[-]", names=c("Year", "Month")))
 
+## Including mean VegHt (measured in Nov 2017)
+nov <- read.csv("Algar_CameraStationData_Nov2017.csv")
+#Subset nov for 60 cams on lines
+nov <- nov[1:60,]
+#### Veg. Height - from Nov. 2017 ####
+## Avg. Veg Height measured 
+nov$LineVeg_Ht_avg <- rowMeans(nov[ , 24:26], na.rm = TRUE)
+dat$VegHt <- nov$LineVeg_Ht_avg[match(dat$Site, nov$SiteID)]
+
 
 #### Wolf models ####
 ## Top wolf models with 1 random effect
@@ -70,7 +79,19 @@ wzinb6 <- glmmTMB(Wolf~SnowDays + (1|Site) + (1|Month), zi = ~1, data = dat, fam
 ## Model 7: Wolf detections best predicted by %lowland
 wzinb7 <- glmmTMB(Wolf~low500 + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
 
-## Model selection with AICctab (bbmle)
+## Model 8: Wolf detections best predicted by Veg Height
+wzinb8 <- glmmTMB(Wolf~VegHt + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 9: Wolf detections best predicted by Veg Height and Treatment
+wzinb9 <- glmmTMB(Wolf~Treatment + VegHt + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 10: Wolf detections best predicted by Veg Height, Treatment, and %lowland
+wzinb10 <- glmmTMB(Wolf~Treatment + VegHt + low500 + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 11: Wolf detections best predicted by Veg Height, Treatment, and %lowland
+wzinb11 <- glmmTMB(Wolf~Treatment + VegHt + low500 + SnowDays + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
 modnames <- c("1RE Snow", "1RE all cov", "Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500" )
 wolftab <- ICtab(wolf6, wolf4, wzinb0,wzinb1, wzinb2,wzinb3,wzinb4,wzinb5,wzinb6,wzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 wolftab
@@ -91,19 +112,25 @@ summary(wolf6)
 summary(wzinb6) ## accounts for a tiiiiny amount of variance
 summary(wzinb4) ## Same
 
-modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500")
-wolftab <- ICtab(wzinb0,wzinb1, wzinb2,wzinb3,wzinb4,wzinb5,wzinb6,wzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500", "VegHt", "Treat + VegHt", "Treat+low500+VegHt", "Treat+low500+SnowDays+VegHt")
+wolftab <- ICtab(wzinb0,wzinb1, wzinb2,wzinb3,wzinb4,wzinb5,wzinb6,wzinb7,wzinb8, wzinb9, wzinb10, wzinb11, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 wolftab
 
 #                       dLogLik dAIC df weight
-# Snow                   5.0     0.0 6  0.4015
-# Treat + Low500 + Snow  8.8     0.5 10 0.3186
-# Treat + Snow           7.6     0.9 9  0.2588
-# Null                   0.0     8.1 5  0.0071
-# Treat + Low500         3.8     8.5 9  0.0057
-# Treat                  2.5     9.0 8  0.0044
-# Low500                 0.2     9.7 6  0.0031
-# Treat*Low500           4.8    12.4 12 <0.001
+# Treat + Low500 + Snow        8.8     0.5 10 0.2834
+# Treat + Snow                 7.6     0.9 9  0.2303
+# Treat+low500+SnowDays+VegHt  8.8     2.5 11 0.1043
+# Null                         0.0     8.1 5  0.0064
+# Treat + Low500               3.8     8.5 9  0.0051
+# Treat                        2.5     9.0 8  0.0039
+# Low500                       0.2     9.7 6  0.0028
+# VegHt                        0.1     9.8 6  0.0027
+# Treat+low500+VegHt           3.8    10.5 10 0.0019
+# Treat + VegHt                2.5    11.0 9  0.0015
+# Treat*Low500                 4.8    12.4 12 <0.001
+
+summary(wzinb8)
+summary(wzinb11) ## VegHt adds next to nothing to predictions
 
 lrtest(wzinb6,wzinb4)
 # Model 1: Wolf ~ SnowDays + (1 | Site) + (1 | Month)
@@ -122,7 +149,7 @@ lrtest(wzinb6, wzinb5)
 
 #### Bear models ####
 ## Bear dataset
-bear <- dat %>% filter(Yr_Month == "2016-04" | Yr_Month == "2016-05" | Yr_Month == "2016-06"| Yr_Month == "2016-07"| Yr_Month == "2016-08"| Yr_Month == "2016-09"| Yr_Month == "2016-10"| Yr_Month == "2017-04") %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, SnowDays, low250,low500, Month)
+bear <- dat %>% filter(Yr_Month == "2016-04" | Yr_Month == "2016-05" | Yr_Month == "2016-06"| Yr_Month == "2016-07"| Yr_Month == "2016-08"| Yr_Month == "2016-09"| Yr_Month == "2016-10"| Yr_Month == "2017-04") %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, SnowDays, low250,low500, Month, VegHt)
 
 ## Model 0: Null, Blackbear detections best predicted by themselves
 bbzinb0 <- glmmTMB(Blackbear~1 + (1|Site) + (1|Month), zi = ~1, data = bear, family = nbinom2)
@@ -143,15 +170,31 @@ bbzinb3 <- glmmTMB(Blackbear~Treatment*low500 + (1| Site) + (1|Month), zi = ~1, 
 ## Model 7: Blackbear detections best predicted by %lowland
 bbzinb7 <- glmmTMB(Blackbear~low500 + (1|Site) + (1|Month), zi = ~1, data = bear, family = nbinom2)
 
-modnames <- c("Null", "Treat", "Treat + Low500", "Low500") #exclude interaction model
-beartab <- ICtab(bbzinb0,bbzinb1, bbzinb2, bbzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+## Model 8: Blackbear detections best predicted by Veg Height
+bbzinb8 <- glmmTMB(Blackbear~VegHt + (1|Site) + (1|Month), zi = ~1, data = bear, family = nbinom2)
+
+## Model 9: Blackbear detections best predicted by Veg Height and Treatment
+bbzinb9 <- glmmTMB(Blackbear~Treatment + VegHt + (1|Site) + (1|Month), zi = ~1, data = bear, family = nbinom2)
+
+## Model 10: Blackbear detections best predicted by Veg Height, Treatment, and %lowland
+bbzinb10 <- glmmTMB(Blackbear~Treatment + VegHt + low500 + (1|Site) + (1|Month), zi = ~1, data = bear, family = nbinom2)
+
+## Model 11: Blackbear detections best predicted by Veg Height, Treatment, and %lowland
+bbzinb11 <- glmmTMB(Blackbear~Treatment + VegHt + low500 + SnowDays + (1|Site) + (1|Month), zi = ~1, data = bear, family = nbinom2)
+
+modnames <- c("Null", "Treat", "Treat + Low500", "Low500", "VegHt", "Treat + VegHt", "Treat+low500+VegHt", "Treat+low500+SnowDays+VegHt") #exclude interaction model
+beartab <- ICtab(bbzinb0,bbzinb1, bbzinb2, bbzinb7,bbzinb8, bbzinb9,bbzinb10,bbzinb11, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 beartab
 
 #               dLogLik dAIC  df weight
-# Treat + Low500 7.6     0.0  9  0.766 
-# Low500         3.2     2.7  6  0.200 
-# Null           0.0     7.2  5  0.021 
-# Treat          2.5     8.1  8  0.013 
+# Treat+low500+SnowDays+VegHt 12.0     0.0 11 0.7650
+# Treat+low500+VegHt           9.3     3.4 10 0.1381
+# Treat + Low500               7.6     4.9 9  0.0659
+# Low500                       3.2     7.6 6  0.0172
+# Treat + VegHt                5.4     9.3 9  0.0072
+# VegHt                        1.7    10.7 6  0.0036
+# Null                         0.0    12.1 5  0.0018
+# Treat                        2.5    13.0 8  0.0011
 
 summary(bbzinb0) ## zero-inflation makes no difference
 summary(bbzinb1)
@@ -164,6 +207,24 @@ lrtest(bbzinb2,bbzinb7)
 # #Df  LogLik Df  Chisq Pr(>Chisq)  
 #  1   9 -202.56                       
 #  2   6 -206.90 -3 8.6864    0.03376 *
+
+lrtest(bbzinb10,bbzinb11)
+# Model 1: Blackbear ~ Treatment + VegHt + low500 + (1 | Site) + (1 | Month)
+# Model 2: Blackbear ~ Treatment + VegHt + low500 + SnowDays + (1 | Site) + 
+#   (1 | Month)
+#   #Df  LogLik Df  Chisq Pr(>Chisq)  
+# 1  10 -200.82                       
+# 2  11 -198.11  1 5.4241    0.01986 *
+
+lrtest(bbzinb2, bbzinb10)
+# Model 1: Blackbear ~ Treatment + low500 + (1 | Site) + (1 | Month)
+# Model 2: Blackbear ~ Treatment + VegHt + low500 + (1 | Site) + (1 | Month)
+#   #Df  LogLik Df  Chisq Pr(>Chisq)  
+# 1   9 -202.56                       
+# 2  10 -200.82  1 3.4785    0.06217 .
+
+summary(bbzinb11) #Very slight  positive effect of VegHt
+summary(bbzinb2)
 
 
 ##### Caribou models ####
@@ -200,6 +261,18 @@ cabzinb6 <- glmmTMB(Caribou~SnowDays + (1|Site)+ (1|Month), zi = ~1, data = dat,
 ## Model 7: Caribou detections best predicted by %lowland
 cabzinb7 <- glmmTMB(Caribou~low500 + (1|Site)+ (1|Month), zi = ~1, data = dat, family = nbinom2)
 
+## Model 8: Caribou detections best predicted by Veg Height
+cabzinb8 <- glmmTMB(Caribou~VegHt + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 9: Caribou detections best predicted by Veg Height and Treatment
+cabzinb9 <- glmmTMB(Caribou~Treatment + VegHt + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 10: Caribou detections best predicted by Veg Height, Treatment, and %lowland
+cabzinb10 <- glmmTMB(Caribou~Treatment + VegHt + low500 + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 11: Caribou detections best predicted by Veg Height, Treatment, and %lowland
+cabzinb11 <- glmmTMB(Caribou~Treatment + VegHt + low500 + SnowDays + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
 ### Comparing difference from adding time random effect
 modnames <- c("1RE", "Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500")
 cabtab <- ICtab(cab4, cabzinb0,cabzinb1, cabzinb2,cabzinb3,cabzinb4,cabzinb5,cabzinb6,cabzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
@@ -217,25 +290,32 @@ cabtab
 # Null                   0.0    17.6 5  <0.001
 
 ## Excluding 1RE and interaction model
-modnames <- c("Null", "Treat", "Treat + Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500")
-cabtab <- ICtab(cabzinb0,cabzinb1, cabzinb2,cabzinb4,cabzinb5,cabzinb6,cabzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+modnames <- c("Null", "Treat", "Treat + Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500", "VegHt", "Treat + VegHt", "Treat+low500+VegHt", "Treat+low500+SnowDays+VegHt")
+cabtab <- ICtab(cabzinb0,cabzinb1, cabzinb2,cabzinb4,cabzinb5,cabzinb6,cabzinb7,cabzinb8,cabzinb9,cabzinb10,cabzinb11, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 cabtab
 
 #                      dLogLik dAIC df weight
-# Low500                 9.8     0.0 6  0.42  
-# Treat + Low500 + Snow 13.6     0.3 10 0.35  
-# Treat + Low500        12.2     1.2 9  0.23  
-# Treat + Snow           6.2    13.1 9  <0.001
-# Treat                  4.5    14.6 8  <0.001
-# Snow                   2.1    15.4 6  <0.001
-# Null                   0.0    17.6 5  <0.001
+# Low500                       9.8     0.0 6  0.30  
+# Treat + Low500 + Snow       13.6     0.3 10 0.25  
+# Treat+low500+SnowDays+VegHt 14.3     1.0 11 0.18  
+# Treat + Low500              12.2     1.2 9  0.16  
+# Treat+low500+VegHt          12.8     2.0 10 0.11  
+# Treat + VegHt                7.0    11.5 9  <0.001
+# VegHt                        3.2    13.1 6  <0.001
+# Treat + Snow                 6.2    13.1 9  <0.001
+# Treat                        4.5    14.6 8  <0.001
+# Snow                         2.1    15.4 6  <0.001
+# Null                         0.0    17.6 5  <0.001
 
 lrtest(cabzinb7,cabzinb4)
 lrtest(cabzinb2,cabzinb4)
 lrtest(cabzinb7, cabzinb2)
+lrtest(cabzinb4, cabzinb11) #no sig. diff.
+
 
 summary(cabzinb7)
 summary(cabzinb4)
+summary(cabzinb11)
 
 #### WT Deer ####
 
@@ -263,18 +343,35 @@ WTDzinb6 <- glmmTMB(WTDeer~SnowDays + (1|Site) + (1|Month), zi = ~1, data = dat,
 ## Model 7: WTDeer detections best predicted by %lowland
 WTDzinb7 <- glmmTMB(WTDeer~low500 + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
 
-modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500")
-WTDtab <- ICtab(WTDzinb0,WTDzinb1, WTDzinb2, WTDzinb3,WTDzinb4,WTDzinb5,WTDzinb6,WTDzinb7, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+## Model 8: WTDeer detections best predicted by Veg Height
+WTDzinb8 <- glmmTMB(WTDeer~VegHt + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 9: WTDeer detections best predicted by Veg Height and Treatment
+WTDzinb9 <- glmmTMB(WTDeer~Treatment + VegHt + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 10: WTDeer detections best predicted by Veg Height, Treatment, and %lowland
+WTDzinb10 <- glmmTMB(WTDeer~Treatment + VegHt + low500 + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 11: WTDeer detections best predicted by Veg Height, Treatment, and %lowland
+WTDzinb11 <- glmmTMB(WTDeer~Treatment + VegHt + low500 + SnowDays + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500", "VegHt", "Treat + VegHt", "Treat+low500+VegHt", "Treat+low500+SnowDays+VegHt")
+WTDtab <- ICtab(WTDzinb0,WTDzinb1, WTDzinb2, WTDzinb3,WTDzinb4,WTDzinb5,WTDzinb6,WTDzinb7, WTDzinb8, WTDzinb9, WTDzinb10, WTDzinb11, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 WTDtab
 
 #                      dLogLik dAIC df weight
-# Treat + Low500 + Snow 15.1     0.0 10 0.49  
-# Low500                10.5     1.2 6  0.26  
-# Treat + Low500        13.4     1.4 9  0.24  
-# Treat + Snow           7.7    12.9 9  <0.001
-# Treat                  5.9    14.4 8  <0.001
-# Snow                   1.7    18.8 6  <0.001
-# Null                   0.0    20.2 5  <0.001
+# Treat + Low500 + Snow       15.1     0.0 10 0.368 
+# Low500                      10.5     1.2 6  0.198 
+# Treat + Low500              13.4     1.4 9  0.181 
+# Treat+low500+SnowDays+VegHt 15.3     1.7 11 0.160 
+# Treat+low500+VegHt          13.6     3.0 10 0.081 
+# Treat*Low                   13.6     7.0 12 0.011 
+# Treat + Snow                 7.7    12.9 9  <0.001
+# Treat                        5.9    14.4 8  <0.001
+# Treat + VegHt                6.4    15.4 9  <0.001
+# Snow                         1.7    18.8 6  <0.001
+# Null                         0.0    20.2 5  <0.001
+# VegHt                        1.0    20.3 6  <0.001
 
 lrtest(WTDzinb7, WTDzinb4)
 # Model 1: WTDeer ~ low500 + (1 | Site) + (1 | Month)
@@ -292,6 +389,7 @@ lrtest(WTDzinb2, WTDzinb4)
 
 summary(WTDzinb4)
 summary(WTDzinb7)
+summary(WTDzinb11)
 
 #### Moose models ####
 
