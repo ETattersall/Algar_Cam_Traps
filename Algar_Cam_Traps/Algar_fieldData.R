@@ -34,3 +34,43 @@ width.diff <- ifelse(apr$Line_Width_m==nov$Line_Width_m,"Y", apr$Line_Width_m - 
 # Line veg height: Increase in veg height decreases pred. detections (movement barrier)
 # Line width: Increase in line width increases pred. detections, dec. caribou detections
 # Dom. tree species
+
+
+#### Veg. Height - from Nov. 2017 ####
+## Avg. Veg Height measured 
+nov$LineVeg_Ht_avg <- rowMeans(nov[ , 24:26], na.rm = TRUE)
+
+### Line Veg data frame
+
+LineVeg <- cbind.data.frame(nov$SiteID, nov$TreatmentType, nov$LineVeg_GS,nov$LineVeg_M, nov$LineVeg_S, nov$LineVeg_T, nov$Seedlings, nov$LineVeg_Ht_avg)
+colnames(LineVeg) <- c("SiteID", "TreatmentType", "Grasses.Sedges", "Mosses", "Shrubs", "Trees", "Seedlings", "Avg_VegHt")
+
+### Add lowland data
+#Loading % lowland data
+low <- read.csv("Lowlandcover_9buffersizes.csv")
+##Add 250m and 500m to monthly detections
+
+LineVeg$Low500 <- low$Prop500[match(LineVeg$SiteID, low$CamStation)]
+LineVeg$Low250 <- low$Prop250[match(LineVeg$SiteID, low$CamStation)]
+
+## Line Veg now contains available site-specific covariates
+
+### Collinearities between Veg height and treatment?
+plot(LineVeg$TreatmentType, LineVeg$Avg_VegHt)
+Veg.Treat <- lm(data = LineVeg, formula = Avg_VegHt~TreatmentType - 1)
+summary(Veg.Treat) ## Line Veg not significantly different
+
+### Plot against response variables
+dat <- read.csv("monthlydetections_nov2015-apr2017.csv") # First 2 deployments monthly detection data + snow days
+head(dat)
+dat$X <- NULL
+head(dat)
+
+dat$VegHt <- LineVeg$Avg_VegHt[match(dat$Site, LineVeg$SiteID)]
+
+plot(dat$VegHt,dat$Wolf)
+plot(dat$VegHt, dat$Caribou) 
+plot(dat$VegHt, dat$Blackbear)
+plot(dat$VegHt, dat$WTDeer)
+plot(dat$VegHt, dat$Moose)
+## declines with veght for wolf, caribou, not for blackbear and deer. Moose less clear
