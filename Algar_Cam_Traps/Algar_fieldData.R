@@ -60,6 +60,11 @@ plot(LineVeg$TreatmentType, LineVeg$Avg_VegHt)
 Veg.Treat <- lm(data = LineVeg, formula = Avg_VegHt~TreatmentType - 1)
 summary(Veg.Treat) ## Line Veg not significantly different
 
+### Collinearities between Ht and %low
+plot(LineVeg$Low500, LineVeg$Avg_VegHt)
+Veg.low <- lm(data = LineVeg, formula = Avg_VegHt~Low500)
+summary(Veg.low)
+
 ### Plot against response variables
 dat <- read.csv("monthlydetections_nov2015-apr2017.csv") # First 2 deployments monthly detection data + snow days
 head(dat)
@@ -74,3 +79,7 @@ plot(dat$VegHt, dat$Blackbear)
 plot(dat$VegHt, dat$WTDeer)
 plot(dat$VegHt, dat$Moose)
 ## declines with veght for wolf, caribou, not for blackbear and deer. Moose less clear
+
+plot(dat$SnowDays, dat$VegHt)
+Sno.veg <- lm(data = dat, VegHt~SnowDays)
+summary(Sno.veg) # As expected, no relationship
