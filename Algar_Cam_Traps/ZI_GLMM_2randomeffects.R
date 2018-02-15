@@ -111,12 +111,13 @@ wolftab
 summary(wolf6)
 summary(wzinb6) ## accounts for a tiiiiny amount of variance
 summary(wzinb4) ## Same
+summary(wzinb5)
 
 modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low500", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500", "VegHt", "Treat + VegHt", "Treat+low500+VegHt", "Treat+low500+SnowDays+VegHt")
 wolftab <- ICtab(wzinb0,wzinb1, wzinb2,wzinb3,wzinb4,wzinb5,wzinb6,wzinb7,wzinb8, wzinb9, wzinb10, wzinb11, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 wolftab
 
-#                       dLogLik dAIC df weight
+#                             dLogLik dAIC df weight
 # Treat + Low500 + Snow        8.8     0.5 10 0.2834
 # Treat + Snow                 7.6     0.9 9  0.2303
 # Treat+low500+SnowDays+VegHt  8.8     2.5 11 0.1043
@@ -145,6 +146,40 @@ lrtest(wzinb6, wzinb5)
 #   #Df  LogLik Df  Chisq Pr(>Chisq)
 # 1   6 -361.64                     
 # 2   9 -359.08  3 5.1217     0.1631
+
+sigma(wzinb4) #returns the dispersion parameter for that particular family of distribution
+# For nbinom2 family, larger sigma = LOWER VARIANCE
+
+wzinb4$fit$objective## neg. logLik
+wzinb4$fit$par ##parameters
+
+#### Analyzing residuals for top models, comparing to lower models
+## Pearson residuals not used in ZI models
+
+## Visualising patterns using predict function (predicting new data, given the best-fit model)
+newdat <-  dat[ , c("Site", "Month", "Treatment", "low500", "SnowDays")] #Naming columns in df
+newdat <- na.omit(newdat) ## Exluding NA rows
+temp<- predict(wzinb4, newdata = newdat, se.fit = TRUE, zitype = "response") #putting predictions in  a temp df
+length(temp$fit) #627
+length(newdat$Site) #627 after removing NAs
+
+newdat$predFE <- temp$fit # mean prediction added to new data frame
+newdat$predFE.min <- temp$fit - 1.98*temp$se.fit # min limit
+newdat$predFE.max = temp$fit + 1.98*temp$se.fit # max limit
+
+
+library(plyr)
+library(digest)
+real=ddply(dat, ~Site+Month+Treatment+low500+SnowDays, summarize, m=mean(Wolf)) # real data (haven't figured out how to add)
+
+
+ggplot(newdat, aes(Treatment, predFE, fill=Treatment)) + geom_boxplot(aes(ymin=predFE.min, ymax=predFE.max)) +theme_classic() + xlab("Sampling Strata") + ylab("Wolf detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+### Adding real data?
+# + geom_boxplot(data=real, aes(x=Treatment, y= m))
+# + ylab("Wolf Detections/month")
+
+
 
 
 #### Bear models ####
