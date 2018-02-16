@@ -5,6 +5,8 @@
 ##############################################
 
 library(ggplot2)
+library(dplyr)
+library(tidyr)
 
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 dat <- read.csv("monthlydetections_nov2015-apr2017.csv") # First 2 deployments monthly detection data + snow days
@@ -74,3 +76,105 @@ ggplot(data = updat, aes(x = Treatment, y = Moose, fill = Treatment)) + geom_box
 # Add up total detections
 dat$Total <- apply(dat[ , 5:11], 1, sum)
 ggplot(data = dat, aes(x = low500, y = Total, fill = Treatment)) + geom_point()
+
+
+
+
+
+
+## Box plots of detection per month have too many zeros --> log transform for graphical purposes
+## log(0) is non-finite, which is dropped --> okay for graphing?
+## Wolf
+ggplot(data = updat, aes(x = Treatment, y = log(Wolf), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(Wolf detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+# Caribou
+ggplot(data = updat, aes(x = Treatment, y = log(Caribou), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(Caribou detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+# WTDeer
+ggplot(data = updat, aes(x = Treatment, y = log(WTDeer), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(WT deer detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+# Moose
+ggplot(data = updat, aes(x = Treatment, y = log(Moose), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(Moose detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+# Blackbear (using truncated bear dataset (summer 2016, April 2017))
+ggplot(data = bear, aes(x = Treatment, y = log(Blackbear), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(Blackbear detections/month)") + scale_x_discrete(limits=c("Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+
+
+### Plotting all updated data as detections/1000 trap days
+## Can't use for presentation because it uses data I am not presenting
+## From ANOVAs_2years.R
+S <- read.csv("detectionsByStation.csv")
+
+## First need trap days by treatment type
+##Active days by station:
+library(camtrapR)
+
+StatData <- read.csv("Station_data/AlgarStations60.csv")
+S <- read.csv("detectionsByStation.csv")
+
+
+##Active days by station:
+camEff <- as.data.frame(cameraOperation(StatData, 
+                                        stationCol = "CamStation", 
+                                        setupCol = "SetupDay", 
+                                        retrievalCol = "Session4Start",
+                                        hasProblems = TRUE,
+                                        dateFormat = "%d/%m/%Y", 
+                                        writecsv = FALSE))
+camEff$Treatment <- StatData$Treatment[match(row.names(camEff),StatData$CamStation)] ## Adding treatment to each station
+camEff$Treatment
+
+camEff$Total <- apply(camEff[, 1:737],1,sum, na.rm = T)
+camEff$Total[32] #Algar32 only active for 8 days
+
+TD_treat <- camEff %>% select(Total, Treatment) 
+TD.con <- filter(TD_treat, Treatment== "Control")
+### camera days by treatment
+sum(TD.con$Total) #8072
+TD.con$trapdays <- rep(8072, length(12))
+
+TD.HU <- filter(TD_treat, Treatment== "HumanUse")
+sum(TD.HU$Total) #3825
+TD.HU$trapdays <- rep(3825, length(14))
+
+TD.NR <- filter(TD_treat, Treatment== "NatRegen")
+sum(TD.NR$Total) #3456
+TD.NR$trapdays <- rep(3456, length(12))
+
+TD.SPP <- filter(TD_treat, Treatment== "SPP")
+sum(TD.SPP$Total) #10202
+TD.SPP$trapdays <- rep(10202, length(22))
+
+TD_treat <- rbind(TD.con,TD.HU,TD.NR, TD.SPP, deparse.level = 0) ## Each site now has trapdays for that treatment
+
+fix(S) # Convert to common names
+
+S7 <- gather(S, Species, Sp.detect, 2:20) #Confirm which columns correspond to species
+S7 <- S7[(S7$Species == "Moose") | (S7$Species =="Coyote") | (S7$Species =="Wolf")| (S7$Species =="Lynx") | (S7$Species =="WT deer") | (S7$Species =="Caribou") | (S7$Species == "Black bear"), ] ## dataframe for 7 species and their detections
+
+
+
+### Add detection rates to S7
+S7$trapdays <- TD_treat$trapdays[match(S7$Treatment,TD_treat$Treatment)]
+# Per 1000 days
+S7$det1000 <- (S7$Sp.detect/S7$trapdays)*1000
+# Per 100 days
+S7$det100 <- (S7$Sp.detect/S7$trapdays)*100
+
+## Detection rates for Wolves
+WolfDR <- S7 %>% filter(Species == "Wolf") %>% select(X, Treatment, Species, Sp.detect, trapdays, det1000, det100)
+#1000 camtrap days
+ggplot(data = WolfDR, aes(Treatment, y = det1000, fill = Treatment)) + geom_boxplot() +theme_classic() + xlab("Sampling Strata") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", "lightgreen", "purple")) + guides(fill = guide_legend(title = NULL)) + theme(legend.position = "none") +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + theme(aspect.ratio=1)
+
+#100 camtrap days
+ggplot(data = WolfDR, aes(Treatment, y = det100, fill = Treatment)) + geom_boxplot() +theme_classic() + xlab("Sampling Strata") + ylab("Detections/100 Trap Days") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", "lightgreen", "purple")) + guides(fill = guide_legend(title = NULL)) + theme(legend.position = "none") +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + theme(aspect.ratio=1)
+
+##100 and 1000 CT day plots are identical, just different scales. Will use 1000 so det rate is >1
+
+
+## Detection rates for Black bears (detection rates will not be accurate b/c they include active days in winter)
+## Will need to do something different for black bears to restrict active days?
+BearDR <- S7 %>% filter(Species == "Black bear") %>% select(X, Treatment, Species, Sp.detect, trapdays, det1000, det100)
+#1000 camtrap days
+ggplot(data = BearDR, aes(Treatment, y = det1000, fill = Treatment)) + geom_boxplot() +theme_classic() + xlab("Sampling Strata") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", "lightgreen", "purple")) + guides(fill = guide_legend(title = NULL)) + theme(legend.position = "none") +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + theme(aspect.ratio=1)
