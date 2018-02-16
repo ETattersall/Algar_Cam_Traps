@@ -158,7 +158,7 @@ wzinb4$fit$par ##parameters
 
 ## Visualising patterns using predict function (predicting new data, given the best-fit model)
 newdat <-  dat[ , c("Site", "Month", "Treatment", "low500", "SnowDays")] #Naming columns in df
-newdat <- na.omit(newdat) ## Exluding NA rows
+newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
 temp<- predict(wzinb4, newdata = newdat, se.fit = TRUE, zitype = "response") #putting predictions in  a temp df
 length(temp$fit) #627
 length(newdat$Site) #627 after removing NAs
@@ -179,6 +179,38 @@ ggplot(newdat, aes(Treatment, predFE, fill=Treatment)) + geom_boxplot(aes(ymin=p
 # + geom_boxplot(data=real, aes(x=Treatment, y= m))
 # + ylab("Wolf Detections/month")
 
+### Plotting residuals
+op <- par(mfrow = c(1, 2))
+## Residuals vs. fitted plots
+plot(fitted(wzinb4), residuals(wzinb4), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")  
+abline(h = 0, lty = 2)  
+lines(smooth.spline(fitted(wzinb4), residuals(wzinb4)))  
+### Clearly shows patterns in the residuals
+
+plot(newdat$Treatment, residuals(wzinb4), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+## Median residuals is slightly different across treatments, but basically zero
+
+## Suggested to plot residuals vs predicted instead
+op <- par(mfrow = c(1,1))
+pred <- predict(wzinb4, se.fit = TRUE, zitype = "response")
+resid <- residuals(wzinb4)
+plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")# Error: x and y lengths differ
+
+length(pred$fit) #627
+length(resid)#627
+length(fitted(wzinb4))#627
+
+#Try na.omit?
+plot(na.omit(pred), na.omit(resid), main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals") #same error
+#na.exclude?
+plot(na.exclude(pred), na.exclude(resid), main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")#same error
+
+## Removing se.fit from predict --> works
+pred <- predict(wzinb4, zitype = "response")
+resid <- residuals(wzinb4)
+plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)  
+lines(smooth.spline(pred, resid))
 
 
 
