@@ -118,6 +118,7 @@ wolftab <- ICtab(wzinb0,wzinb1, wzinb2,wzinb3,wzinb4,wzinb5,wzinb6,wzinb7,wzinb8
 wolftab
 
 #                             dLogLik dAIC df weight
+# Snow                         5.0     0.0 6  0.3572
 # Treat + Low500 + Snow        8.8     0.5 10 0.2834
 # Treat + Snow                 7.6     0.9 9  0.2303
 # Treat+low500+SnowDays+VegHt  8.8     2.5 11 0.1043
@@ -213,6 +214,22 @@ abline(h = 0, lty = 2)
 lines(smooth.spline(pred, resid))
 
 
+#### Plotting coefficients for top model
+## Run top model as intercept free
+wolfIF <- glmmTMB(Wolf~Treatment + low500 + SnowDays + (1| Site) + (1|Month) -1, zi = ~1, data = dat, family = nbinom2)
+summary(wolfIF) ## Control estimate is same as intercept, proceed with original model
+wolfcoeffs <- wzinb4$fit$par[1:6]
+## SE? Can't figure out how to call from output, will enter manually
+wolfSE <- c(0.806879, 0.607718, 0.685087, 0.547692, 1.069428, 0.006722) #for estimates in the conditional model
+COVnames <- (c("Intercept", "HumanUse", "NatRegen", "SPP", "Low", "Snow")) #Covariate names
+
+WCoef <- cbind.data.frame(COVnames, wolfcoeffs,wolfSE)
+colnames(WCoef) <- c("Covariates","Coefficients", "SE")
+str(WCoef)
+
+ggplot(data = WCoef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0)  + scale_x_discrete(limits=c("Intercept","NatRegen","SPP", "HumanUse", "Low", "Snow"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14))
+
+
 
 #### Bear models ####
 ## Bear dataset
@@ -292,6 +309,42 @@ lrtest(bbzinb2, bbzinb10)
 summary(bbzinb10) #Very slight  positive effect of VegHt
 summary(bbzinb2)
 
+## Plotting bbzinb10 residuals
+op <- par(mfrow = c(1,2))
+pred <- predict(bbzinb10, zitype = "response")
+resid <- residuals(bbzinb10)
+plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)  
+lines(smooth.spline(pred, resid))
+plot(bear$Treatment, residuals(bbzinb10), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+length(bear$Treatment) #480
+length(residuals(bbzinb10)) #224
+length(na.omit(bear$Treatment)) #No NAs
+
+##New data frame with NA rows omitted
+newbear <-  bear[ , c("Site", "Month", "Treatment", "low500", "SnowDays")] #Naming columns in df
+newbear <- na.omit(newbear) ## Exluding NA rows, which causes lengths to differ
+
+op <- par(mfrow = c(1,2))
+pred <- predict(bbzinb10, zitype = "response")
+resid <- residuals(bbzinb10)
+plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)  
+lines(smooth.spline(pred, resid))
+plot(newbear$Treatment, residuals(bbzinb10), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+
+#### Plotting coefficients for top model bbzinb10
+bearcoeffs <- bbzinb10$fit$par[1:6]
+## SE? Can't figure out how to call from output, will enter manually
+bearSE <- c(0.8311,1830,1.258,0.3643,0.2122,0.9797) #for estimates in the conditional model
+COVnames <- (c("Intercept", "HumanUse", "NatRegen", "SPP", "VegHt", "Low")) #Covariate names
+
+BCoef <- cbind.data.frame(COVnames, bearcoeffs,bearSE)
+colnames(BCoef) <- c("Covariates","Coefficients", "SE")
+str(BCoef)
+
+## Removed HumanUse - no data, so inflated scale
+ggplot(data = BCoef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("Intercept", "NatRegen","SPP", "VegHt", "Low")) +theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + ylim(-5,5)
 
 ##### Caribou models ####
 
@@ -383,6 +436,53 @@ summary(cabzinb7)
 summary(cabzinb4)
 summary(cabzinb11)
 
+## Residual plots for cabzinb7 and cabzin4
+## cabzinb7
+op <- par(mfrow = c(1,2))
+pred <- predict(cabzinb7, zitype = "response")
+resid <- residuals(cabzinb7)
+plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)  
+lines(smooth.spline(pred, resid))
+plot(newdat$low500, residuals(cabzinb7), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+
+## cabzinb4
+op <- par(mfrow = c(1,2))
+pred <- predict(cabzinb4, zitype = "response")
+resid <- residuals(cabzinb4)
+plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)  
+lines(smooth.spline(pred, resid))
+plot(newdat$Treatment, residuals(cabzinb4), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+
+#### Plotting coefficients for top models: cabzinb7 and cabzinb4
+## cabzinb7
+cab7coeffs <- cabzinb7$fit$par[2]
+## SE? Can't figure out how to call from output, will enter manually
+cab7SE <- c(2.180) #for estimates in the conditional model
+COVnames <- "Low" #Covariate names
+
+cab7Coef <- cbind.data.frame(COVnames, cab7coeffs,cab7SE)
+colnames(cab7Coef) <- c("Covariates","Coefficients", "SE")
+str(cab7Coef)
+
+ggplot(data = cab7Coef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) +theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) 
+
+##cabzinb4
+cab4coeffs <- cabzinb4$fit$par[1:6]
+## SE? Can't figure out how to call from output, will enter manually
+cab4SE <- c(2.15396,1.10735,7597.85406,0.81296,2.44822,0.02138) #for estimates in the conditional model
+COVnames <- c("Intercept", "HumanUse", "NatRegen","SPP","Low", "Snow") #Covariate names
+
+cab4Coef <- cbind.data.frame(COVnames, cab4coeffs,cab4SE)
+colnames(cab4Coef) <- c("Covariates","Coefficients", "SE")
+str(cab4Coef)
+
+## Removed NatRegen - 1 data point, so inflated scale
+ggplot(data = cab4Coef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("Intercept","SPP", "HumanUse", "Low", "Snow"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + ylim(-10,10) 
+
+
+
 #### WT Deer ####
 
 ## Model 0: Null, WTDeer detections best predicted by themselves
@@ -457,6 +557,29 @@ summary(WTDzinb4)
 summary(WTDzinb7)
 summary(WTDzinb11)
 
+## Residuals for WTDzinb4
+op <- par(mfrow = c(1,2))
+pred <- predict(WTDzinb4, zitype = "response")
+resid <- residuals(WTDzinb4)
+plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)  
+lines(smooth.spline(pred, resid))
+plot(newdat$Treatment, residuals(WTDzinb4), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+
+
+## Plotting coefficients for top model: WTDzinb4
+WTD4coeffs <- WTDzinb4$fit$par[1:6]
+## SE? Can't figure out how to call from output, will enter manually
+WTD4SE <- c(1.04140, 0.77584, 0.74029, 0.70341, 1.45937, 0.01510) #for estimates in the conditional model
+COVnames <- c("Intercept", "HumanUse", "NatRegen","SPP","Low", "Snow") #Covariate names
+
+WTD4Coef <- cbind.data.frame(COVnames, WTD4coeffs,WTD4SE)
+colnames(WTD4Coef) <- c("Covariates","Coefficients", "SE")
+str(WTD4Coef)
+
+## Removed NatRegen - 1 data point, so inflated scale
+ggplot(data = WTD4Coef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("Intercept","NatRegen", "SPP", "HumanUse", "Low", "Snow"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14))
+
 #### Moose models ####
 
 ## Model 0: Null, Moose detections best predicted by themselves
@@ -482,6 +605,24 @@ MOOzinb6 <- glmmTMB(Moose~SnowDays + (1|Site) + (1|Month), zi = ~1, data = dat, 
 
 ## Model 7: Moose detections best predicted by %lowland
 MOOzinb7 <- glmmTMB(Moose~low500 + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 8: Moose detections best predicted by Veg Height
+MOOzinb8 <- glmmTMB(Moose~VegHt + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 9: Moose detections best predicted by Veg Height and Treatment
+MOOzinb9 <- glmmTMB(Moose~Treatment + VegHt + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 10: Moose detections best predicted by Veg Height, Treatment, and %lowland
+MOOzinb10 <- glmmTMB(Moose~Treatment + VegHt + low500 + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 11: Moose detections best predicted by Veg Height, Treatment, and %lowland
+MOOzinb11 <- glmmTMB(Moose~Treatment + VegHt + low500 + SnowDays + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500", "VegHt", "Treat + VegHt", "Treat+low500+VegHt")
+MOOtab <- ICtab(MOOzinb0,MOOzinb1, MOOzinb2, MOOzinb3,MOOzinb4,MOOzinb5,MOOzinb6,MOOzinb7, MOOzinb8, MOOzinb9, MOOzinb10, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+MOOtab
+
+MOOzinb3$fit$message
 
 
 #### Coyote models ####
@@ -547,3 +688,10 @@ LYNtab
 
 lrtest(LYNzinb0, LYNzinb6)
 summary(LYNzinb0)
+
+### Total number of detections across 2 deployments
+detect <- na.omit(dat[ ,5:11])
+detect <- as.data.frame(t(detect))
+detect$Total <- apply(detect[ , 1:627], 1, sum)
+SpSums <- cbind.data.frame(rownames(detect), detect$Total)
+
