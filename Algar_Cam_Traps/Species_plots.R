@@ -56,6 +56,11 @@ WTD.low
 WTD.snow <- ggplot(data = dat, aes(x = SnowDays, y = WTDeer)) + geom_point() + theme_classic() + xlab("Snow Days/month") + ylab("WTDeer detections/month")
 WTD.snow
 
+## Moose
+MOO <- ggplot(data = dat, aes(x = Treatment, y = Moose, fill = Treatment)) + geom_boxplot()
+MOO + theme_classic() + xlab("Sampling Strata") + ylab("Moose detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+
 #### Updated individual species plots
 updat <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
 
@@ -85,6 +90,28 @@ ggplot(data = dat, aes(x = low500, y = Total, fill = Treatment)) + geom_point()
 ## Box plots of detection per month have too many zeros --> log transform for graphical purposes
 ## log(0) is non-finite, which is dropped --> okay for graphing?
 ## Wolf
+w <- ggplot(data = dat, aes(x = Treatment, y = log(Wolf), fill = Treatment)) + geom_boxplot()
+w + theme_classic() + xlab("Sampling Strata") + ylab("log(Wolf detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+## Caribou
+CA <- ggplot(data = dat, aes(x = Treatment, y = log(Caribou), fill = Treatment)) + geom_boxplot()
+CA + theme_classic() + xlab("Sampling Strata") + ylab("log(Caribou detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP")) + scale_fill_manual(values=c("orange", "red", "purple")) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+#### WTDeer ####
+WTD <- ggplot(data = dat, aes(x = Treatment, y = log(WTDeer), fill = Treatment)) + geom_boxplot()
+WTD + theme_classic() + xlab("Sampling Strata") + ylab("log(WTDeer detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+
+## Moose
+MOO <- ggplot(data = dat, aes(x = Treatment, y = log(Moose), fill = Treatment)) + geom_boxplot()
+MOO + theme_classic() + xlab("Sampling Strata") + ylab("log(Moose detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+# Blackbear (using truncated bear dataset (summer 2016, April 2017))
+ggplot(data = bear, aes(x = Treatment, y = log(Blackbear), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(Blackbear detections/month)") + scale_x_discrete(limits=c("Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+
+### Updat = 2 years of data nov 2015-2017
+## Wolf
 ggplot(data = updat, aes(x = Treatment, y = log(Wolf), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(Wolf detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
 
 # Caribou
@@ -96,8 +123,15 @@ ggplot(data = updat, aes(x = Treatment, y = log(WTDeer), fill = Treatment)) + ge
 # Moose
 ggplot(data = updat, aes(x = Treatment, y = log(Moose), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(Moose detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
 
-# Blackbear (using truncated bear dataset (summer 2016, April 2017))
-ggplot(data = bear, aes(x = Treatment, y = log(Blackbear), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(Blackbear detections/month)") + scale_x_discrete(limits=c("Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+## Black bear - truncating full data set (for plot only - doesnt have all the covariates for modelling)
+bear2 <- updat %>% filter(Yr_Month == "2016-04" | Yr_Month == "2016-05" | Yr_Month == "2016-06"| Yr_Month == "2016-07"| Yr_Month == "2016-08"| Yr_Month == "2016-09"| Yr_Month == "2016-10"| Yr_Month == "2017-04" |Yr_Month == "2017-05" |Yr_Month == "2017-06" |Yr_Month == "2017-07" |Yr_Month == "2017-08" |Yr_Month == "2017-09" |Yr_Month == "2017-10") %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear)
+
+## Boxplot
+ggplot(data = bear2, aes(x = Treatment, y = log(Blackbear), fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("log(Blackbear detections/month)") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
+## not log scale
+ggplot(data = bear2, aes(x = Treatment, y = Blackbear, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Sampling Strata") + ylab("Blackbear detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
 
 
 
@@ -178,3 +212,4 @@ ggplot(data = WolfDR, aes(Treatment, y = det100, fill = Treatment)) + geom_boxpl
 BearDR <- S7 %>% filter(Species == "Black bear") %>% select(X, Treatment, Species, Sp.detect, trapdays, det1000, det100)
 #1000 camtrap days
 ggplot(data = BearDR, aes(Treatment, y = det1000, fill = Treatment)) + geom_boxplot() +theme_classic() + xlab("Sampling Strata") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", "lightgreen", "purple")) + guides(fill = guide_legend(title = NULL)) + theme(legend.position = "none") +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + theme(aspect.ratio=1)
+
