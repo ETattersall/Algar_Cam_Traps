@@ -164,6 +164,9 @@ plot(x = bear$low500, y = bear$Blackbear) #Pretty clear that detections decrease
 bbear <- ggplot(data = bear, aes(x = Treatment, y = Blackbear, fill = Treatment)) + geom_boxplot()
 bbear + theme_classic() + xlab("Sampling Strata") + ylab("Black bear detections/month") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
 
+## Without HumanUse (no detections)
+bbear + theme_classic() + xlab("Sampling Strata") + ylab("Black bear detections/month") + scale_x_discrete(limits=c("Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange",  "light green", "purple" )) +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 0, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14))
+
 bear.low <- ggplot(data = bear, aes(x = low500, y = Blackbear)) + geom_point() + theme_classic() + xlab("Proportion lowland habitat (500m buffer)") + ylab("Black bear detections/month")
 bear.low
 
