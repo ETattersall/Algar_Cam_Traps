@@ -638,6 +638,55 @@ MOOtab
 
 MOOzinb3$fit$message
 
+## Moose models without zero inflation
+
+## Model 0: Null, Moose detections best predicted by themselves
+MOO0 <- glmmTMB(Moose~1 + (1|Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 1: Moose detections best predicted by Treatment
+MOO1 <- glmmTMB(Moose~Treatment + (1| Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 2: Moose detections best predicted by Treatment and %lowland
+MOO2 <- glmmTMB(Moose~Treatment + low500 + (1| Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 3: Moose detections best predicted by an interaction between Treatment and %lowland
+MOO3 <- glmmTMB(Moose~Treatment*low500 + (1| Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 4: Moose detections best predicted by Treatment, %lowland, and SnowDays
+MOO4 <- glmmTMB(Moose~Treatment + low500 + SnowDays + (1| Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 5: Moose detections best predicted by Treatment and SnowDays
+MOO5 <- glmmTMB(Moose~Treatment + SnowDays + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+## Model 6: Moose detections best predicted by SnowDays
+MOO6 <- glmmTMB(Moose~SnowDays + (1|Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 7: Moose detections best predicted by %lowland
+MOO7 <- glmmTMB(Moose~low500 + (1|Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 8: Moose detections best predicted by Veg Height
+MOO8 <- glmmTMB(Moose~VegHt + (1|Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 9: Moose detections best predicted by Veg Height and Treatment
+MOO9 <- glmmTMB(Moose~Treatment + VegHt + (1|Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 10: Moose detections best predicted by Veg Height, Treatment, and %lowland
+MOO10 <- glmmTMB(Moose~Treatment + VegHt + low500 + (1|Site) + (1|Month), data = dat, family = nbinom2)
+
+## Model 11: Moose detections best predicted by Veg Height, Treatment, and %lowland
+MOO11 <- glmmTMB(Moose~Treatment + VegHt + low500 + SnowDays + (1|Site) + (1|Month), data = dat, family = nbinom2)
+
+modnames <- c("Null", "Treat", "Treat + Low500", "Treat*Low", "Treat + Low500 + Snow", "Treat + Snow", "Snow", "Low500", "VegHt", "Treat + VegHt", "Treat+low500+VegHt", "Treat+low500+VegHt+Snow")
+MOOtab <- ICtab(MOO0,MOO1, MOO2, MOO3,MOO4,MOO5,MOO6,MOO7, MOO8, MOO9, MOO10, MOO11,  mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+MOOtab ## Everything except MOO10 and MOO3 result in NAs
+
+AICctab()
+
+summary(MOO10) 
+summary(MOO0)
+
+
+
 
 #### Coyote models ####
 ## Model 0: Null, Coyote detections best predicted by themselves
