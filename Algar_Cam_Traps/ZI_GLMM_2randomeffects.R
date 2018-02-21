@@ -436,6 +436,20 @@ summary(cabzinb7)
 summary(cabzinb4)
 summary(cabzinb11)
 
+
+##Changing the intercept for canzinb4
+str(dat$Treatment)
+dat$Treatment <- factor(dat$Treatment, levels = c("HumanUse", "Control", "SPP", "NatRegen"))
+str(dat$Treatment)
+## Re-running model with HumanUse as intercept
+cabzinb4.INT <- glmmTMB(Caribou~Treatment + low500 + SnowDays + (1| Site)+ (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+summary(cabzinb4.INT) ## No real difference between Control and SPP
+
+## Returning Treatment to original levels
+dat$Treatment <- factor(dat$Treatment, levels = c("Control", "HumanUse", "SPP", "NatRegen"))
+str(dat$Treatment)
+
 ## Residual plots for cabzinb7 and cabzin4
 ## cabzinb7
 op <- par(mfrow = c(1,2))
