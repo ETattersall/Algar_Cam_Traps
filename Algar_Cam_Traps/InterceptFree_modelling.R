@@ -46,7 +46,8 @@ cabIF <- glmmTMB(Caribou~Treatment + low500 + SnowDays + (1| Site)+ (1|Month) - 
 summary(cabzinb4) # Model with intercept compares all categorical treatments to reference (control), all continuous to 0
 summary(cabIF)  # Model without intercept gives true effect estimate of all categorical treatments. Control = Intercept = same estimate, but all other categorical treatments have true estimates rather than differences from control
 
-## When plotting estimates for categorical variables, the reference category (the constant, the intercept) is, for all intents and purposes, valued at estimate = 0, allowing other categories to compare
+## When plotting estimates for categorical variables, the reference category (the constant, the intercept) is, for all intents and purposes, valued at estimate = 0, allowing other categories to compare. It therefore does not make sense to compare the intercept estimate directly to estimates for other categories.
+## When plotting estimates as intercept free, all categories can be directly compared. However, keep in mind that without a reference category it may be difficult to determine how meaningful the effect size is.
 
 ## Changing the intercept
 str(dat$Treatment)
