@@ -229,6 +229,9 @@ str(WCoef)
 
 ggplot(data = WCoef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0)  + scale_x_discrete(limits=c("Intercept","NatRegen","SPP", "HumanUse", "Low", "Snow"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14))
 
+### Removing intercept and changing font and point sizes
+ggplot(data = WCoef, aes( x = Covariates, y = Coefficients)) + geom_point(size = 4) + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0)  + scale_x_discrete(limits=c("NatRegen","SPP", "HumanUse", "Low", "Snow"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 14)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 16)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 16)) + theme(axis.text.y = element_text(colour = "black", size = 14))
+
 
 
 #### Bear models ####
@@ -345,6 +348,9 @@ str(BCoef)
 
 ## Removed HumanUse - no data, so inflated scale
 ggplot(data = BCoef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("Intercept", "NatRegen","SPP", "VegHt", "Low")) +theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + ylim(-5,5)
+
+### Removing intercept and changing font and point sizes
+ggplot(data = BCoef, aes( x = Covariates, y = Coefficients)) + geom_point(size = 4) + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("NatRegen","SPP", "VegHt", "Low")) +theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 14)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 16)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 16)) + theme(axis.text.y = element_text(colour = "black", size = 14)) + ylim(-5,5)
 
 ##### Caribou models ####
 
@@ -495,6 +501,8 @@ str(cab4Coef)
 ## Removed NatRegen - 1 data point, so inflated scale
 ggplot(data = cab4Coef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("Intercept","SPP", "HumanUse", "Low", "Snow"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + ylim(-10,10) 
 
+## Removed intercept, changing font and point sizes
+ggplot(data = cab4Coef, aes(x = Covariates, y = Coefficients)) + geom_point(size = 4) + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("SPP", "HumanUse", "Low", "Snow"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 14)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 16)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 16)) + ylim(-10,10) + theme(axis.text.y = element_text(colour = "black", size = 14))
 
 
 #### WT Deer ####
@@ -593,6 +601,9 @@ str(WTD4Coef)
 
 ## Removed NatRegen - 1 data point, so inflated scale
 ggplot(data = WTD4Coef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("Intercept","NatRegen", "SPP", "HumanUse", "Low", "Snow"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14))
+
+## Removed intercept, changed font and point sizes
+ggplot(data = WTD4Coef, aes( x = Covariates, y = Coefficients)) + geom_point(size = 4) + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("NatRegen", "SPP", "HumanUse", "Low", "Snow"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 14)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 16)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 16)) + theme(axis.text.y = element_text(colour = "black", size = 14))
 
 #### Moose models ####
 
