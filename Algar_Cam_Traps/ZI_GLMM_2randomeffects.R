@@ -684,6 +684,22 @@ AICctab()
 
 summary(MOO10) 
 summary(MOO0)
+summary(MOO8)
+summary(MOO7)
+summary(MOO9)
+
+## Plotting coefficients for top model with treatment: MOO9
+MOO9coeffs <- MOO9$fit$par[1:5]
+## SE? Can't figure out how to call from output, will enter manually
+MOO9SE <- c(0.57846,0.64451,0.52775,0.70757,0.22893) #for estimates in the conditional model
+COVnames <- c("Intercept", "HumanUse", "NatRegen","SPP","VegHt") #Covariate names
+
+MOO9Coef <- cbind.data.frame(COVnames, MOO9coeffs,MOO9SE)
+colnames(MOO9Coef) <- c("Covariates","Coefficients", "SE")
+str(MOO9Coef)
+
+
+ggplot(data = MOO9Coef, aes( x = Covariates, y = Coefficients)) + geom_point() + geom_errorbar(aes(ymin=Coefficients - SE, ymax = Coefficients + SE))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("Intercept","NatRegen", "SPP", "HumanUse", "VegHt"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14))
 
 
 
