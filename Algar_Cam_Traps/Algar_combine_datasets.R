@@ -63,6 +63,10 @@ unique(All.rec$Species)
 ## Remove unknowns (here, just mustelid spp.)
 All.rec <- All.rec[!All.rec$Species == "Mustelid spp", ]
 
+str(All.rec)
+
+write.csv(All.rec, "recordTable_nov2015-apr2017.csv")
+
 ## Change known birds to bird spp in 2017
 rec.2017$Species <- gsub("Perisoreus canadensis", "Bird spp.", rec.2017$Species)
 rec.2017$Species <- gsub("Colaptes auratus", "Bird spp.", rec.2017$Species)
