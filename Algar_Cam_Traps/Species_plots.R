@@ -9,6 +9,7 @@ library(dplyr)
 library(tidyr)
 
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+
 dat <- read.csv("monthlydetections_nov2015-apr2017.csv") # First 2 deployments monthly detection data + snow days
 head(dat)
 dat$X <- NULL
@@ -213,3 +214,12 @@ BearDR <- S7 %>% filter(Species == "Black bear") %>% select(X, Treatment, Specie
 #1000 camtrap days
 ggplot(data = BearDR, aes(Treatment, y = det1000, fill = Treatment)) + geom_boxplot() +theme_classic() + xlab("Sampling Strata") + ylab("Detections/1000 Trap Days") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", "lightgreen", "purple")) + guides(fill = guide_legend(title = NULL)) + theme(legend.position = "none") +theme(legend.position = "none") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + theme(aspect.ratio=1)
 
+
+### Bar graph of species detections for 5 target species (original code from Algar_report(Erin).R)
+All.rec <- read.csv("recordTable_nov2015-apr2017.csv")
+sp.1 <- All.rec$Species
+sp.plot1 <- rev(sort(table(sp.1)))
+sp.plot1 <- as.data.frame(sp.plot1) ##data frame summing detections --> fix scientific names to common
+fix(sp.plot1)
+
+ggplot(data = sp.plot1, aes(x = sp.1, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 25, hjust = 1, colour = "black", size = 24)) + scale_x_discrete(limits = c("White-tailed deer", "Grey wolf", "Black bear", "Moose", "Woodland caribou"))  + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 24)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 24)) + theme(axis.text.y = element_text(colour = "black", size = 16))
