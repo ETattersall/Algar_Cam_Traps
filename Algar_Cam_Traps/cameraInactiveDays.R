@@ -31,8 +31,6 @@ prob2017 <- stat %>% filter(Problem2_from != "") %>% select(CamStation, Session2
 
 #### Adding in inactive months of 3rd deployment, starting from camtrapR record table and camera effort table ####
 
-rec2017 <- read.csv("2017.01_recordTable.csv") #record Table, Apr- Nov 2017
-
 ####Compare to Jo's example matrix in script 'ACTWS_CameraData.R'
 ACTWS <- read.csv("Station_data/cameff_ACTWSexample.csv") #matrix where rows = cameras, columns = study day
 glimpse(ACTWS)
@@ -51,6 +49,8 @@ colnames(setupdates2) <- c("CamStation", "setupDate")
 setupCol <- bind_rows(setupdates1,setupdates2)
 
 stat1$setupCol <- setupCol$setupDate[match(stat1$CamStation, setupCol$CamStation)] #Deployment data now has setupCol indicating initial deployment date
+
+class(stat1$Session4Start)
 
 camEff <- as.data.frame(cameraOperation(stat1, 
                           stationCol = "CamStation", 
@@ -73,11 +73,48 @@ glimpse(camEff) # check for correct loading of data - to see data classes and in
 summary(camEff) # overview of data and check for NAs
 View(camEff)
 
-###--- Add columns for the Date/Time in POSIX format:
-camEff$DateStartp <- as.POSIXct(strptime(camEff$DateStart, format = "%d/%m/%Y"))
+
+###--- Add columns for the Date/Time in POSIX format (using setupCol from stat1 - deployment data):
+## Converting dates to POSIX format
+str(stat1)
+stat1$Session1Start <- as.POSIXct(strptime(stat1$Session1Start, format = "%d/%m/%Y"))
+stat1$Session2Start <- as.POSIXct(strptime(stat1$Session2Start, format = "%d/%m/%Y"))
+stat1$Problem1_from <- as.POSIXct(strptime(stat1$Problem1_from, format = "%d/%m/%Y"))
+stat1$Problem1_to <- as.POSIXct(strptime(stat1$Problem1_to, format = "%d/%m/%Y"))
+stat1$Session3Start <- as.POSIXct(strptime(stat1$Session3Start, format = "%d/%m/%Y"))
+stat1$Problem2_from <- as.POSIXct(strptime(stat1$Problem2_from, format = "%d/%m/%Y"))
+stat1$Problem2_to <- as.POSIXct(strptime(stat1$Problem2_to, format = "%d/%m/%Y"))
+stat1$Session4Start <- as.POSIXct(strptime(stat1$Session4Start, format = "%d/%m/%Y"))
+stat1$setupCol <- as.POSIXct(strptime(stat1$setupCol, format = "%d/%m/%Y"))
+str(stat1) ## NAs for Problem from/to
+
+## Start Date
+camEff$DateStartp <- as.POSIXct(strptime(stat1$setupCol, format = "%d/%m/%Y"))
+
+#Last working day..need to create column for this in stat1
+
+#LastActiveDay will be Problem2_to or Session4End
+stat1$LastActiveDay <- ifelse(stat1$Problem2_to == "", stat1$Session4Start, stat1$Problem2_to) ## returns integers 1-4
+stat1$LastActiveDay <- ifelse(stat1$Problem2_to == "", as.factor(stat1$Session4Start), as.factor(stat1$Problem2_to)) #same result
+
+LastActiveDay <- numeric(60) #empty vector to receive Last active day for each camera
+LastActiveDay[1] <- stat1$Session4Start[1] #returns a 1
+stat1$Session4Start[1]
+
+for(i in 1:60){
+  if(stat1$Problem2_to[i] == ""){
+    LastActiveDay[i] == stat1$Session4Start[i]
+  } else LastActiveDay[i] == stat1$Problem2_to[i]
+}
+
+LastActiveDay
+
+
 camEff$DateLWp <- as.POSIXct(strptime(camEff$DateLastWorking, format = "%d/%m/%Y"))
 
 ##### Create a station summary data frame for Apr- Nov 2017 deployment ####
+rec2017 <- read.csv("2017.01_recordTable.csv") #record Table, Apr- Nov 2017
+
 stat2 <- stat[1:60,] %>% select(CamStation, utmE, utmN, Treatment, Session3Start, Problem2_from, Problem2_to,Session4Start)
 
 ## Calculating camera effort (camtrapR)
