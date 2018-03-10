@@ -50,7 +50,7 @@ setupCol <- bind_rows(setupdates1,setupdates2)
 
 stat1$setupCol <- setupCol$setupDate[match(stat1$CamStation, setupCol$CamStation)] #Deployment data now has setupCol indicating initial deployment date
 
-class(stat1$Session4Start)
+str(stat1)
 
 camEff <- as.data.frame(cameraOperation(stat1, 
                           stationCol = "CamStation", 
@@ -73,44 +73,46 @@ glimpse(camEff) # check for correct loading of data - to see data classes and in
 summary(camEff) # overview of data and check for NAs
 View(camEff)
 
+dim(camEff) # 60 Sites x 737 days
 
-###--- Add columns for the Date/Time in POSIX format (using setupCol from stat1 - deployment data):
-## Converting dates to POSIX format
-str(stat1)
-stat1$Session1Start <- as.POSIXct(strptime(stat1$Session1Start, format = "%d/%m/%Y"))
-stat1$Session2Start <- as.POSIXct(strptime(stat1$Session2Start, format = "%d/%m/%Y"))
-stat1$Problem1_from <- as.POSIXct(strptime(stat1$Problem1_from, format = "%d/%m/%Y"))
-stat1$Problem1_to <- as.POSIXct(strptime(stat1$Problem1_to, format = "%d/%m/%Y"))
-stat1$Session3Start <- as.POSIXct(strptime(stat1$Session3Start, format = "%d/%m/%Y"))
-stat1$Problem2_from <- as.POSIXct(strptime(stat1$Problem2_from, format = "%d/%m/%Y"))
-stat1$Problem2_to <- as.POSIXct(strptime(stat1$Problem2_to, format = "%d/%m/%Y"))
-stat1$Session4Start <- as.POSIXct(strptime(stat1$Session4Start, format = "%d/%m/%Y"))
-stat1$setupCol <- as.POSIXct(strptime(stat1$setupCol, format = "%d/%m/%Y"))
-str(stat1) ## NAs for Problem from/to
+camEff[camEff == 0] <- NA # changes all 0 to NA, as 0 is not operational
+
+###camEff now = matrix of 1's and NAs for active Days of entire study
+
+
+##### Aggregate into active months? Or easier to do manually for monthly detection data?
+# Edit ~31 inactive months within study period + Nov.2017 for all stations (currently partial month)
+# will edit manually, but before removing Nov. 2017s, save copy of 2017.01 monthly detection data (no current copy for only this deployment)
+
+## dep3 does not contain any inactive periods - not for Algar25-60 during Nov2015-2016, nor for camera failures
+## Will extract Apr-Nov2017 detection data from dep 3, add in inactive months, then add this to Nov2015 - Apr2017 dataset
+
+## monthly detections for Nov 2015- Apr 2017
+## When combining with Apr-Nov 2017 data, remove April-2017 from dep2 (included in dep3)
+dep2 <- read.csv("monthlydetections_nov2015-apr2017.csv")
+
+
+month2017 <- dep3 %>% filter(Yr_Month == "2017-04" | Yr_Month ==  "2017-05" | Yr_Month ==  "2017-06" | Yr_Month == "2017-07" | Yr_Month == "2017-08" | Yr_Month == "2017-09" | Yr_Month == "2017-10" | Yr_Month == "2017-11")
+
+## 1. Exchange NA's for 0's for Algar 35 and 41 --> Inactive between Apr-Nov 2017
+
+
+
+
+
+
+
+
+###--- Add columns for the Date/Time in POSIX format (to deployment data):
 
 ## Start Date
-camEff$DateStartp <- as.POSIXct(strptime(stat1$setupCol, format = "%d/%m/%Y"))
+stat1$DateStartp <- as.POSIXct(strptime(stat1$setupCol, format = "%d/%m/%Y"))
 
-#Last working day..need to create column for this in stat1
-
-#LastActiveDay will be Problem2_to or Session4End
-stat1$LastActiveDay <- ifelse(stat1$Problem2_to == "", stat1$Session4Start, stat1$Problem2_to) ## returns integers 1-4
-stat1$LastActiveDay <- ifelse(stat1$Problem2_to == "", as.factor(stat1$Session4Start), as.factor(stat1$Problem2_to)) #same result
-
-LastActiveDay <- numeric(60) #empty vector to receive Last active day for each camera
-LastActiveDay[1] <- stat1$Session4Start[1] #returns a 1
-stat1$Session4Start[1]
-
-for(i in 1:60){
-  if(stat1$Problem2_to[i] == ""){
-    LastActiveDay[i] == stat1$Session4Start[i]
-  } else LastActiveDay[i] == stat1$Problem2_to[i]
-}
-
-LastActiveDay
+#Last working day = Retrieval day (or most current check date)
+stat1$DateLWp <- as.POSIXct(strptime(stat1$Session4Start, format = "%d/%m/%Y"))
 
 
-camEff$DateLWp <- as.POSIXct(strptime(camEff$DateLastWorking, format = "%d/%m/%Y"))
+
 
 ##### Create a station summary data frame for Apr- Nov 2017 deployment ####
 rec2017 <- read.csv("2017.01_recordTable.csv") #record Table, Apr- Nov 2017
