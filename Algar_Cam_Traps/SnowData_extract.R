@@ -6,26 +6,29 @@
 # Collect monthly average, add to monthly detection data
 # Started Jan. 19, 2018 by Erin T.
 # Updated Jan. 30 for 2016-2017 Winter deployment
+# Updated March 13 for Apr-Nov2017 deployment
 ################################
 
 library(dplyr)
 library(tidyr)
 
 # working directory for Nisha's csvs
-setwd('C:/Users/ETattersall/OneDrive/ALGAR/Snow_csvs(Nisha)/CSV 2016-2017 snow data')
-list.files() #24 csvs
+setwd('C:/Users/ETattersall/OneDrive/ALGAR/Snow_csvs(Nisha)/2017-2017 CSV Snow data')
+list.files() #57 csvs --> Missing Algar06 (file too large), Algar21 (stolen), Algar43 (nothing on card) --> NAs will be added
 
 
 csv.names <- list.files() #vector of all file names
 
 
-#### Attempt 1: Merge all csvs and fix discrepancies (Date is easier to standaradize separately) ####
+#### Attempt 1: Merge all csvs and fix discrepancies (Date is easier to standaradize on separate CSVs first) ####
 #Read csv files into a list
 csv.list <- lapply(csv.names, read.csv, sep = ",")
 summary(csv.list) # All have 30 variables
 str(csv.list) # Appear to all be the same. Check possible problem variables?
 head(csv.list) # Each element is a data frame, one from each station
 tail(csv.list)
+
+## All dates appear to be standard
 
 # Try using bind_rows. Missing columns should be filled by NA
 all <- bind_rows(csv.list) # Generates error: column (x) can't be converted from logical to factor
@@ -66,7 +69,7 @@ Date <- as.character(all$Date)
 Date <- as.Date(Date, format = c("%d-%b-%y", "%d-%b-%Y")) # dates formatted as 01-Apr-15 are now 0015-04-01 
 head(Date)
 
-#### Attempt 2: Revising dat format before merging into one csv ####
+#### Attempt 2: Revising date format before merging into one csv ####
 first <- csv.names[1:11]
 first.list <- lapply(first, read.csv, sep = ",")
 str(first.list) #Date has 370 levels, %d-%b-%y format (15, not 2015)
