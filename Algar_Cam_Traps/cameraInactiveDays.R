@@ -94,8 +94,31 @@ dep2 <- read.csv("monthlydetections_nov2015-apr2017.csv")
 
 month2017 <- dep3 %>% filter(Yr_Month == "2017-04" | Yr_Month ==  "2017-05" | Yr_Month ==  "2017-06" | Yr_Month == "2017-07" | Yr_Month == "2017-08" | Yr_Month == "2017-09" | Yr_Month == "2017-10" | Yr_Month == "2017-11")
 
-## 1. Exchange NA's for 0's for Algar 35 and 41 --> Inactive between Apr-Nov 2017
+## Manually change with fix (do so stepwise according to inactive periods to avoid mistakes)
+## 1. Exchange NA's for 0's for Algar 35 and 41 --> Inactive between Apr-Nov 2017 (2017-04 - 2017-11)
+fix(month2017) #Completed 13/03/2018, 10:21am
 
+##2. Algar07,13,14,21,43,51 --> Inactive between May-Nov 2017
+fix(month2017) #Completed 13/03/2018, 10:29am
+
+##3. Algar 09,11,12,18,19,23,42,44,48,52,55,60 --> June-Nov2017
+fix(month2017) # Completed 10:41am
+
+##4. Algar 30,40,57,59
+fix(month2017) # Completed 10:45am
+
+##5. Algar 58 - Aug- Nov2017
+fix(month2017) #10:46am
+
+##6. Algar 06,27 --> Oct -Nov 2017
+fix(month2017) ## 10:49am
+
+month2017$var13 <- NULL
+
+##Save month2017 as 2017.01_monthlydetections.csv
+write.csv(month2017, "2017.01_monthlydetections.csv")
+
+## Add month2017 to dep2 --> Will need to aggregate duplicate April 2017, remove partial month Nov. 2017
 
 
 
