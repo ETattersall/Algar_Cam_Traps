@@ -119,7 +119,11 @@ month2017$var13 <- NULL
 write.csv(month2017, "2017.01_monthlydetections.csv")
 
 ## Add month2017 to dep2 --> Will need to aggregate duplicate April 2017, remove partial month Nov. 2017
+## Also need to save new complete dataset over current MonthlyDetections_nov2015-2017.csv
+dep2$X <- NULL
+month2017$X <- NULL
 
+## Different # of columns --> dep2 already contains SnowDays. Combine Nov 2015-Apr2017 to Apr-Nov2017 after SnowDays has been added
 
 
 
