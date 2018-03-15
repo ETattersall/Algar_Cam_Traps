@@ -359,6 +359,29 @@ m.snow <- rbind.data.frame(NAmonths,m.snow)
 m.snow <- with(m.snow, m.snow[order(as.factor(as.character(Station)), Yr_Month), ])
 
 
+### Need to add Algar32 (included in other dataset, so should be here as well)
+dep1 <- read.csv("2017.01_monthlydetections.csv")
+# Vectors of data for Algar32
+Site <- rep("Algar32", 8)
+Alg32 <- as.data.frame(Site)
+Alg32$Treatment <- rep("HumanUse", 8)
+Alg32$Yr_Month <- c("2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11")
+Alg32$Site_ym <- paste("Algar32", Yr_Month)
+
+#NAs for detections and SnowDays
+detections <- as.data.frame(matrix(NA, nrow = 8, ncol = 8))
+colnames(detections) <- c("Blackbear", "Wolf", "Coyote", "Lynx", "Caribou", "WTDeer", "Moose", "SnowDays")
+head(detections)
+
+Alg32 <- cbind.data.frame(Alg32, detections)
+
+## Combine with rest of data
+dep1$X <- NULL
+dep1 <- rbind.data.frame(Alg32,dep1)
+dep1 <- with(dep1, dep1[order(as.factor(as.character(Site)), Yr_Month), ])
+write.csv(dep1, "2017.01_monthlydetections.csv")
+
+
 
 ################
 #(2nd deployment)m.snow has 6 months of data for 52 and 56, which do not have detections
