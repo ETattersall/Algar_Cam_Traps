@@ -123,7 +123,7 @@ write.csv(month2017, "2017.01_monthlydetections.csv")
 dep2$X <- NULL
 month2017$X <- NULL
 
-## Different # of columns --> dep2 already contains SnowDays. Combine Nov 2015-Apr2017 to Apr-Nov2017 after SnowDays has been added
+## Different # of columns --> dep2 already contains SnowDays. Combine Nov 2015-Apr2017 to Apr-Nov2017 after SnowDays has been added --> code in Algar_combine_datasets.R
 
 
 
