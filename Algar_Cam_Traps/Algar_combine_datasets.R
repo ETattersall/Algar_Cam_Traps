@@ -8,6 +8,7 @@
 library(plyr)
 library(dplyr) #only load after using revalue function
 
+
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 
 #### Combining record tables for three deployments ####
@@ -379,3 +380,61 @@ fix(b)#fix manually
 Alg.data$SnowDays <- b$SnowDays[match(Alg.data$Site_ym, b$Site_ym)]
 
 write.csv(Alg.data, "monthlydetections_nov2015-apr2017.csv")
+
+
+######### Combining monthlydetections for Nov2015 - Apr2017 with Apr-Nov2017 (both including SnowData) #######
+dep2 <- read.csv("monthlydetections_nov2015-apr2017.csv")
+dep2017 <- read.csv("2017.01_monthlydetections.csv")
+dep3 <- read.csv("MonthlyDetections_nov2015-nov2017.csv") #will be saved over, but needed for comparison
+
+## Need to think about what I want to do when adding together the April counts from each dataset...
+#Cameras inactive in April from first dataset: Algar18, Algar32, Algar49, Algar50
+#Cameras inactive in April from second dataset: Algar18, Algar32, Algar41
+# Desired value: Algar18,32, 49, 50 = NA, Algar41 =  (0's for detections, sum for Snow = 8)
+# When adding duplicates, if either is NA, return NA --> fix Algar41 manually
+#Snow Data can be summed (see comment on line 332)
+
+all <- rbind.data.frame(dep2, dep2017) 
+all <- with(all, all[order(as.factor(as.character(Site)), Yr_Month), ])
+
+## April 2017 is duplicated, need to be combined
+apr17 <- all %>% filter(Yr_Month == "2017-04") ##120 observations --> 2 rows for apr2017 per station
+
+## Use aggregate function. Tested on data frame with only duplicated months
+apr17 <- aggregate(. ~ Site + Treatment + Yr_Month + Site_ym, data = apr17, sum, na.action = na.pass) #na.pass ensures NA values are kept
+
+apr17$X <- NULL
+
+## Fixing Algar41 as desired
+fix(apr17)
+
+
+### Remove all Apr2017 rows from dataset
+all <- all[!all$Yr_Month == "2017-04", ]
+all$X <- NULL
+
+all <- rbind(all,apr17) #Combine fixed 2017-04 data to other months
+all <- all[with(all, order(Site, Yr_Month)), ] ## Ordering by Site and Yr_month
+
+table(all$Site)
+
+### all now = monthly detections and snow data between Nov 2015-Nov2017
+## "2017-11" detection data should be NA for all sites, as activedays in this period < 15 days
+# Exclude 2017-11
+#Duplicate data in case of screw up
+all2 <- all
+
+all2[which(all2$Yr_Month=="2017-11"), 5:12] <- NA
+#Compare the all2 to all
+all2[which(all2$Yr_Month=="2017-11"), ]
+all[which(all$Yr_Month=="2017-11"), ] ## all2 converted detections and SnowDays to NA for all end months
+
+#Compare all2 to dep3 - 1500 obs. vs 1475
+unique(dep3$Yr_Month) #25 levels
+unique(all2$Yr_Month) #25 levels
+unique(dep3$Site) #missing Algar32 --> No detections
+unique(all2$Site)
+
+## Save all2 as 3-deployment detection data, overwriting MonthlyDetections
+write.csv(all2, "MonthlyDetections_nov2015-nov2017.csv")
+
