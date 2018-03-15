@@ -88,7 +88,7 @@ camEff[camEff == 0] <- NA # changes all 0 to NA, as 0 is not operational
 ## Will extract Apr-Nov2017 detection data from dep 3, add in inactive months, then add this to Nov2015 - Apr2017 dataset
 
 ## monthly detections for Nov 2015- Apr 2017
-## When combining with Apr-Nov 2017 data, remove April-2017 from dep2 (included in dep3)
+
 dep2 <- read.csv("monthlydetections_nov2015-apr2017.csv")
 
 
