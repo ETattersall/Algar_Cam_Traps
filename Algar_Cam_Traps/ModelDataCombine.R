@@ -78,3 +78,16 @@ plot(det$Treatment, det$LineWidth, ylab = "LineWidth (m)", xlab = "Treatments") 
 
 wid.lm <- lm(LineWidth ~ Treatment, data = det)
 summary(wid.lm) ## LineWidth differences across treatments are <1m. Significant differences between treatments BUT given the low-precision of measurement method, small differences are acceptable
+
+# Line Width with VegHt
+plot(det$LineWidth, det$VegHt, ylab = "VegHt (m)", xlab = "LineWidth (m)")
+abline(a = 0.165, b = 0.013, col = "red")
+vegwid.lm <- lm(VegHt ~ LineWidth, data = det)
+summary(vegwid.lm)
+
+# Coefficients:
+#               Estimate Std. Error t value   Pr(>|t|)    
+#  (Intercept)  0.01278    0.12339   0.104    0.918    
+#  LineWidth    0.16527    0.01798   9.190   <2e-16 ***
+
+
