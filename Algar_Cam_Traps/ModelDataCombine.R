@@ -44,6 +44,8 @@ hist(nov$Line_Width_m)
 
 det$LineWidth <- nov$Line_Width_m[match(det$Site, nov$SiteID)]
 
+write.csv(det, "GLMMdata_3deployments.csv")
+
 ## Checking collinearities between covariates measured in field and treatment
 hist(det$VegHt)
 plot(det$Treatment, det$VegHt)
