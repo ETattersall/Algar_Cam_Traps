@@ -38,6 +38,7 @@ dat <- cbind(dat[,1:15],
 
 ## Including mean VegHt (measured in Nov 2017)
 nov <- read.csv("Algar_CameraStationData_Nov2017.csv")
+
 #Subset nov for 60 cams on lines
 nov <- nov[1:60,]
 #### Veg. Height - from Nov. 2017 ####
