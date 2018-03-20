@@ -1,4 +1,4 @@
-########
+##############
 # Landcover_data_explore.R
 # Exploring ABMI's landcover data
 # Jan. 4, 2018
@@ -63,18 +63,20 @@ writeOGR(int15000, dsn = "GIS", layer = "AlgarSites_HF_15kmbuffer", driver = "ES
 
 
 
-##### Read in ABMI landcover data (TOO BIG, R has trouble clipping)
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
-lndcov <- readOGR("2010LanCoverShapeFiles", "Lancover_Polygons_2010")
+##### Read in ABMI landcover data (clipped in ArcGIS)
+lndcov <- readOGR("GIS", "ABMI_2010Landcover_Algar10kClip")
 
 summary(lndcov) #4 attributes: Landcover class codes (see data overview)
 # [+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992
 # +x_0=500000 +y_0=0 +datum=NAD83 +units=m
 # +no_defs +ellps=GRS80 +towgs84=0,0,0]
 ### converting projection to NAD83 UTM (same as Algcoord)
+str(lndcov@data) ##LC_class = factor, not integer
+
 lndcov_UTM <- spTransform(lndcov, CRSobj = CRS(proj4string(Algcoord)))
 proj4string(lndcov_UTM)
 lndcov <- lndcov_UTM #Overwrite original CRS
+proj4string(lndcov)
 
 plot(lndcov)
 lnd_data <- lndcov@data
@@ -94,5 +96,22 @@ unique(lnd_data$LC_class)
 # 220 = Broadleaf forest
 # 230 = Mixed forest
 
-##Isolate ESAR region of interest
-# Need coordinates of area of interest in UTM
+### Use for distance to water, where water is LC_class = 20
+## Calculate minimum distance between camera stations (Algcoord, SpatialPoints) and landcover polygons (lndcov, SpatialPolygons)
+
+#1. Try subsetting spatialpolygons dataframe for water only (LC_class == 20)
+water <- lndcov[lndcov$LC_class == "20",]
+str(water@data) #91 observations of 6 variables
+summary(water) #still in utm (units = metres), only LC_class==20
+
+#2. Calculate minimum distance with rgeos gDistance
+Algcoord$Dist2Water_m <- apply(gDistance(Algcoord, water,byid=TRUE), 2, min)
+summary(Algcoord)
+
+##3. Add distance to water to detection data
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+dat <- read.csv("monthlydetections_nov2015-nov2017.csv")
+
+dat$Dist2water_m <- Algcoord$Dist2Water_m[match(dat$Site, Algcoord$CamStation)]
+
+write.csv(dat, "monthlydetections_nov2015-nov2017.csv")
