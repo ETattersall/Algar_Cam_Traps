@@ -786,3 +786,41 @@ detect <- as.data.frame(t(detect))
 detect$Total <- apply(detect[ , 1:627], 1, sum)
 SpSums <- cbind.data.frame(rownames(detect), detect$Total)
 
+
+#### Comparing modelling results between old AVIE prop.low calculations and new ####
+## Will re-do top models for caribou and deer to examine effect of using new lowland habitat estimations from new AVIE (larger buffer around study site)
+
+## New AVIE low500 calculations
+NEWlow <- read.csv("proplowland_500mbuffer_newAVIE.csv")
+dat$NEWlow500 <- NEWlow$Percent_cover[match(dat$Site, NEWlow$CamStation)]
+
+## Caribou models
+# Old top model
+cab.old <- glmmTMB(Caribou~low500 + (1|Site)+ (1|Month), zi = ~1, data = dat, family = nbinom2)
+summary(cab.old)
+
+## New caribou model (substituting old prop.low500 for new)
+cab.new <- glmmTMB(Caribou~NEWlow500 + (1|Site)+ (1|Month), zi = ~1, data = dat, family = nbinom2)
+summary(cab.new)
+
+## New estimate for low500 = 6.278 +/-2.017 compared to old 7.816 +/-2.180
+
+# WTD
+WTD.old <- glmmTMB(WTDeer~Treatment + low500 + SnowDays + (1| Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+WTD.new <- glmmTMB(WTDeer~Treatment + NEWlow500 + SnowDays + (1| Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+
+summary(WTD.old)
+summary(WTD.new)
+
+## New estimate for low500 = -4.135 +/- 1.420 compared to old -5.434 +/- 1.459
+
+## Still a strong predictor in both cases. Test in model where low500 was not as strong a predictor (Moose)
+## Moose models (low500 only, no zero inflation)
+MOO.old <- glmmTMB(Moose~low500 + (1| Site) + (1|Month), data = dat, family = nbinom2)
+
+MOO.new <- glmmTMB(Moose~NEWlow500 + (1| Site) + (1|Month), data = dat, family = nbinom2)
+
+summary(MOO.old)
+summary(MOO.new)
+## New estimate for low500 = -0.1087 +/- 1.1441 compared to old 0.8436 +/- 1.1053 (p = 0.924 vs. p = 0.445)
