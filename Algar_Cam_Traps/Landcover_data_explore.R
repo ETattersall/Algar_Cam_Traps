@@ -115,3 +115,33 @@ dat <- read.csv("monthlydetections_nov2015-nov2017.csv")
 dat$Dist2water_m <- Algcoord$Dist2Water_m[match(dat$Site, Algcoord$CamStation)]
 
 write.csv(dat, "monthlydetections_nov2015-nov2017.csv")
+
+
+#### Scale Dist2Water_m to km? may be easier to model ####
+## Test modelling with metres
+require(glmmTMB)
+
+## Adding dat column for month only
+require(reshape)
+str(dat) #Yr_Month is a factor
+dat$Month <- as.Date(dat$Yr_Month, format = "%Y-%m") #NAs
+dat$Month <- as.factor(format(as.Date(dat$Yr_Month, format = "%Y-%m-%d"), "%b")) #NAs
+dat$Month <- NULL
+
+## Separating elements from Yr_Month
+dat$Yr_Month2 <- dat$Yr_Month #replicating Yr_Month for separation
+dat <- cbind(dat[,1:15],
+             colsplit(dat$Yr_Month2, "[-]", names=c("Year", "Month")))
+
+## Start with WTdeer (lots of data), simple model (without month random effect -- not yet in)
+WTD.water <- glmmTMB(WTDeer~ Dist2water_m + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+summary(WTD.water)
+
+## Compare to results if Dist2water is scaled to km
+dat$Dist2water_km <- dat$Dist2water_m/1000
+WTD.KMwater <- glmmTMB(WTDeer~ Dist2water_km + (1|Site) + (1|Month), zi = ~1, data = dat, family = nbinom2)
+summary(WTD.KMwater) ## p value same, estimate makes more sense.
+
+### Save detection data with Dist2water in km only
+dat$Dist2water_m <- NULL
+write.csv(dat, "monthlydetections_nov2015-nov2017.csv")
