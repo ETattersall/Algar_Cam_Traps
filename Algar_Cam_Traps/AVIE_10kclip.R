@@ -233,3 +233,5 @@ write.csv(lowland, "proplowland_500mbuffer.csv")
 #### Calculating other buffer areas and prop. lowland (NOT YET DONE- Mar.19, 2018 @12:45pm)####
 ## Need data frame for proportion lowland habitat calculated at each buffer size
 prop.low <- as.data.frame(lowland$CamStation)
+
+
