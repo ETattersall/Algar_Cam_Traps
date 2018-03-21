@@ -14,6 +14,10 @@ require(rgeos)
 
 require(dplyr) # for glimpse function
 
+require(tidyr) #for gather function
+
+require(ggplot2) #for plotting data across scales
+
 # Spatial data for Algar located on Algar Project Google Drive
 setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/GIS data")
 
@@ -228,10 +232,96 @@ summary(compare$DIFF)
 ## -0.40562  0.00000  0.01361  0.05876  0.15611  0.65768 
 
 ## Export new prop.low at 500m buffer for modelling to compare results to old AVIE data
-write.csv(lowland, "proplowland_500mbuffer.csv")
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+write.csv(lowland, "proplowland_500mbuffer_newAVIE.csv")
 
-#### Calculating other buffer areas and prop. lowland (NOT YET DONE- Mar.19, 2018 @12:45pm)####
+## Given that I know the decisions going into creating new Veg_Simple and am aware of its' flaws (whereas I know neither for old Veg_Simple), I will continue to use new Veg_Simple
+
+#### Mar. 21, 2018: Calculating other buffer areas and prop. lowland ####
 ## Need data frame for proportion lowland habitat calculated at each buffer size
-prop.low <- as.data.frame(lowland$CamStation)
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+#Start with 500mVegSimple already created
+low500 <- read.csv("proplowland_500mbuffer_newAVIE.csv")
+low500 <- low500 %>% select(CamStation, Treatment, Percent_cover)
+colnames(low500) <- c("CamStation", "Treatment", "low500")
+# Spatial data for Algar located on Algar Project Google Drive
+setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/GIS data")
+AVIE <- readOGR("AVIE_InnotechMar2018", "Algar10k_VegSimple")
+summary(AVIE)
+proj4string(AVIE) #tmerc
 
+# Converting AVIE to UTM
+AVIE_UTM <- spTransform(AVIE, CRSobj = CRS(proj4string(Algcoord)))
+proj4string(AVIE_UTM)
+AVIE <- AVIE_UTM #Overwrite original AVIE CRS
+
+## Starting dataframe to hold all lowland props
+prop.low <- as.data.frame(low500$CamStation)
+colnames(prop.low) <- "CamStation"
+
+## Function for extracting AVIE at various buffer scales (m) around camera sites and calculating proportion of lowland habitat
+#Req. packages: rgeos, raster, dplyr
+propLow <- function(buffer){
+  a <- gBuffer(Algcoord, width = buffer, byid = TRUE) #Create buffer
+  b <- raster::intersect(AVIE, a)#Clip AVIE data
+  data <- b@data #Isolate dataframe
+  data <- data %>% select(CamStation, utmE,utmN, Treatment, lat_decdeg,lon_decdeg, Veg_Simple)#Select relevant columns
+  data$Area <- gArea(b, byid=TRUE) #Calculate area
+  data <- aggregate(.~ CamStation + utmE + utmN + Treatment + lat_decdeg + lon_decdeg + Veg_Simple, data = data, sum) #Aggregate same landcover polygons at each site
+  data <- data[with(data, order(Veg_Simple, CamStation)), ] #Order by Veg_Simple and CamStation
+  data$BufferArea <- bufferArea(buffer) #bufferArea function created above
+  data$Percent_cover <- data$Area/data$BufferArea
+  data <- data %>% select(CamStation, Treatment,Percent_cover)
+  data <- data[1:60, ] #Only want Lowland habitat
+}
+
+## Calculating lowland habitat at various scales
+low250 <- propLow(250)
+colnames(low250) <- c("CamStation", "Treatment", "low250")
+low750 <- propLow(750)
+colnames(low750) <- c("CamStation", "Treatment", "low750")
+low1000 <- propLow(1000)
+colnames(low1000) <- c("CamStation", "Treatment", "low1000")
+low1250 <- propLow(1250)
+colnames(low1250) <- c("CamStation", "Treatment", "low1250")
+low1500 <- propLow(1500)
+colnames(low1500) <- c("CamStation", "Treatment", "low1500")
+low1750 <- propLow(1750)
+colnames(low1750) <- c("CamStation", "Treatment", "low1750")
+low2000 <- propLow(2000)
+colnames(low2000) <- c("CamStation", "Treatment", "low2000")
+
+prop.low$low250 <- low250$low250
+prop.low$low500 <- low500$low500
+prop.low$low750 <- low750$low750
+prop.low$low1000 <- low1000$low1000
+prop.low$low1250 <- low1250$low1250
+prop.low$low1500 <- low1500$low1500
+prop.low$low1750 <- low1750$low1750
+prop.low$low2000 <- low2000$low2000
+
+write.csv(prop.low, "newAVIE_lowland8buffersizes.csv")
+
+# Rename Proportion columns (need to be numeric before plotting)
+colnames(prop.low) <- c("CamStation", "250", "500", "750", "1000", "1250", "1500", "1750", "2000")
+
+#Gather Scales into one colum
+P1 <- gather(data = prop.low, key = Scale, value = Prop_low, 2:9)
+str(P1) #Scale is character class, convert to numeric
+P1$Scale <- as.numeric(P1$Scale)
+str(P1)
+
+## Plotting lowland proportions
+hist(P1$Prop_low) #Skewed to higher %, but not as much as previously
+
+#Plotting %lowland against scale
+fig.a <- ggplot(data = P1, aes(x = Scale, y = Prop_low, fill = Scale)) + geom_point()
+fig.a + geom_smooth(method = "lm")
+
+## Checking R-sq. in linear model
+library(lme4)
+low.scale <- lm(formula = Prop_low~Scale, data = P1)
+summary(low.scale) # R-squared: 0.005 --> 
+
+### Little change in prop.lowland across scales: stick with 500m
 
