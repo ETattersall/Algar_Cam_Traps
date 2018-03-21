@@ -117,7 +117,8 @@ data2000 <- data2000[with(data2000, order(CamStation, Length_m)), ] ## Number of
 
 
 ##### Now have linear data clipped to 8 buffer sizes and length calculated for each segment within that buffer.
-## Still need to 1) add up length of segments around each camera b) Calculate line density by dividing total length by buffer area 3) Compare across scales
+#### Line Density #### 
+## 1) add up length of segments around each camera b) Calculate line density by dividing total length by buffer area 3) Compare across scales
 
 ## Line density unit = m/m^2
 
@@ -207,4 +208,43 @@ hist(Density_8scales$LineDensity) ##Skewed to lower densities
 require(ggplot2)
 fig.a <- ggplot(data = Density_8scales, aes(x = Scale, y = LineDensity, fill = Scale)) + geom_point()
 fig.a + geom_smooth(method = "auto") #Line density seems to exponentially decrease with increasing scale
+
+
+#### Number of intersections ####
+## Figure out how to find line intersections, count within buffer
+
+## Take 1: (did not work) Use raster::intersect() to isolate intersections of lines
+# Try with entire Lines layer (prior to clipping for camera stations) --> contains much more linear feature data than I need here--> File too big (3.1)
+## Try with int500
+#1. To avoid duplicating attribute data, copy layer and remove data from copy
+int5001 <- int500
+int5001 <- as(int5001,'SpatialPolygons')
+summary(int5001)
+plot(int5001)
+
+Intersections <- raster::intersect(int500, int5001)
+plot(int500, axes = T, xlab = "utmE", ylab = "utmN")
+plot(Intersections, add= T,col = "red")
+summary(Intersections)
+Intdata500 <- Intersections@data
+Intdata500 <- Intdata500[with(Intdata500, order(CamStation, Length_m)), ] ##240 observations, compared to 200 lines in 500m buffered data --> should be fewer observations (not every line intersects with another within the buffer)
+
+###Take2: (worked) Try with gIntersects (no attribute data necessary)
+Intersections <- gIntersects(int500, byid=T) #returns logical vector: TRUE if polygons have points in common
+#Cannot add directly to data500 b/c it has been re-ordered
+#Return to original order and visually validate Intersections
+data500 <- int500@data
+data500$Intersections <- gIntersects(int500, byid=T) 
+## Now order
+data500 <- data500[with(data500, order(CamStation, Length_m)), ]
+## Check Intersections for stations that are easy to find: Algar01, 02, 46 --> does not indicate where intersections are
+
+## Export lines with 500m buffer as shp file and explore in Arc
+writeOGR(int500, dsn = "GIS", layer = "AlgarLines_500mbuffer", driver = "ESRI Shapefile")
+## Problem could be that line segments aren't strictly linear; some polygons include intersecting segments --> therefore overlapping them won't show intersections
+## Could count manually, but need to decide what scale to do this at....on hold
+
+
+##### Scale analysis: deciding which scale best predicts mammal detections with GLMs ####
+## Create models where Species~low[scale] and compare with model selection
 
