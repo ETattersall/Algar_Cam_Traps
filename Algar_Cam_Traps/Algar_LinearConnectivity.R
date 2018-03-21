@@ -96,7 +96,7 @@ data1250 <- int1250@data
 #Order by Station and Length
 data1250 <- data1250[with(data1250, order(CamStation, Length_m)), ]
 
-int1750 <- raster::intersect(Lines, b1500)
+int1500 <- raster::intersect(Lines, b1500)
 int1500$Length1500<- gLength(int1500, byid = TRUE)
 data1500 <- int1500@data
 #Order by Station and Length
@@ -205,5 +205,6 @@ str(Density_8scales)
 hist(Density_8scales$LineDensity) ##Skewed to lower densities
 
 require(ggplot2)
-fig.a <- ggplot(data = Density_8scales, aes(x = Scale, y = LineDensity, fill = Scale)) + geom_point() + 
+fig.a <- ggplot(data = Density_8scales, aes(x = Scale, y = LineDensity, fill = Scale)) + geom_point()
 fig.a + geom_smooth(method = "auto") #Line density seems to exponentially decrease with increasing scale
+
