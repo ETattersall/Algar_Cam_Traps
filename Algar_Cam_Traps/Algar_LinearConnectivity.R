@@ -204,10 +204,15 @@ str(Density_8scales)
 
 ## Plot LineDensity against Scale to compare
 hist(Density_8scales$LineDensity) ##Skewed to lower densities
+# Convert to km/km^2 (Multiply LineDensity by 1000)
+Density_8scales$LineDensity <- Density_8scales$LineDensity*1000
 
 require(ggplot2)
 fig.a <- ggplot(data = Density_8scales, aes(x = Scale, y = LineDensity, fill = Scale)) + geom_point()
 fig.a + geom_smooth(method = "auto") #Line density seems to exponentially decrease with increasing scale
+
+
+
 
 
 #### Number of intersections ####
@@ -260,6 +265,15 @@ det <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
 LineDens <- read.csv("AlgarStationLineDensity_8scales.csv")
 LineDens$X <- NULL
 
+## Densities are currently in m/m^2. Convert to km/km^2 (multiply by 1000)
+LineDens_km <- LineDens[ , 2:9]*1000
+LineDens_km <- cbind.data.frame(LineDens$CamStation, LineDens_km)
+colnames(LineDens_km) <- c("CamStation", "X250m", "X500m", "X750m", "X1000m", "X1250m", "X1500m", "X1750m", "X2000m")
+#Save LineDensities as km/km^2
+write.csv(LineDens_km, "AlgarStationLineDensity_8scales.csv")
+
+
+
 ## Combine datasets (only for 5 scales)
 det$LD250 <- LineDens$X250m[match(det$Site, LineDens$CamStation)]
 det$LD500 <- LineDens$X500m[match(det$Site, LineDens$CamStation)]
@@ -268,16 +282,16 @@ det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
 det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
 
 ### Wolf models
-W.0 <- glmmTMB(Wolf~1, data = det, family = nbinom2)
-W.250 <- glmmTMB(Wolf~LD250, data = det, family = nbinom2)
-W.500 <- glmmTMB(Wolf~LD500, data = det, family = nbinom2)
-W.750 <- glmmTMB(Wolf~LD750, data = det, family = nbinom2)
-W.1000 <- glmmTMB(Wolf~LD1000, data = det, family = nbinom2)
-W.1250 <- glmmTMB(Wolf~LD1250, data = det, family = nbinom2)
+Wolf.0 <- glmmTMB(Wolf~1, data = det, family = nbinom2)
+Wolf.250 <- glmmTMB(Wolf~LD250, data = det, family = nbinom2)
+Wolf.500 <- glmmTMB(Wolf~LD500, data = det, family = nbinom2)
+Wolf.750 <- glmmTMB(Wolf~LD750, data = det, family = nbinom2)
+Wolf.1000 <- glmmTMB(Wolf~LD1000, data = det, family = nbinom2)
+Wolf.1250 <- glmmTMB(Wolf~LD1250, data = det, family = nbinom2)
 
 ## Model selection with AICctab (bbmle) --> exluding VegHt
 modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
-wolftab <- ICtab(W.0,W.250,W.500,W.750,W.1000,W.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+wolftab <- ICtab(Wolf.0,Wolf.250,Wolf.500,Wolf.750,Wolf.1000,Wolf.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 wolftab
 
 #     dLogLik dAIC df weight
@@ -324,7 +338,7 @@ WTDeer.750 <- glmmTMB(WTDeer~LD750, data = det, family = nbinom2)
 WTDeer.1000 <- glmmTMB(WTDeer~LD1000, data = det, family = nbinom2)
 WTDeer.1250 <- glmmTMB(WTDeer~LD1250, data = det, family = nbinom2)
 
-## Model selection with AICctab (bbmle) --> exluding VegHt
+## Model selection with AICctab (bbmle) 
 modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
 WTDtab <- ICtab(WTDeer.0,WTDeer.250,WTDeer.500,WTDeer.750,WTDeer.1000,WTDeer.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 WTDtab
@@ -357,3 +371,46 @@ MOOSEtab
 # 1000m 0.4     1.2  3  0.15  
 # 500m  0.4     1.2  3  0.15  
 # 250m  0.0     2.0  3  0.10  
+
+
+### Bears: need truncated season
+# Check black bear detections by yr_month
+plot(x = det$Yr_Month, y = det$Blackbear) #Active April- November, both years
+#Check against Snow
+plot(x = det$SnowDays, y = det$Blackbear) # Predictably, more in months with fewer snow days
+
+hist(det$Blackbear)
+
+### Cropping data for active bear months only -- April - October -- use months rather than Yr_Months
+unique(det$Month)
+class(det$Month)
+
+
+
+bear <- det %>% filter(Month >= 4 & Month <= 10) %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, SnowDays, Year, Month, Dist2water_km, LD250,LD500,LD750,LD1000,LD1250)
+
+
+plot(bear$Yr_Month, bear$Blackbear)
+plot(bear$Month, bear$Blackbear)
+hist(bear$Month)
+hist(bear$Blackbear)
+
+## Bear models
+Blackbear.0 <- glmmTMB(Blackbear~1, data = bear, family = nbinom2)
+Blackbear.250 <- glmmTMB(Blackbear~LD250, data = bear, family = nbinom2)
+Blackbear.500 <- glmmTMB(Blackbear~LD500, data = bear, family = nbinom2)
+Blackbear.750 <- glmmTMB(Blackbear~LD750, data = bear, family = nbinom2)
+Blackbear.1000 <- glmmTMB(Blackbear~LD1000, data = bear, family = nbinom2)
+Blackbear.1250 <- glmmTMB(Blackbear~LD1250, data = bear, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+Blackbeartab <- ICtab(Blackbear.0,Blackbear.250,Blackbear.500,Blackbear.750,Blackbear.1000,Blackbear.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Blackbeartab
+#     dLogLik dAIC df weight
+# 500m  3.2     0.0  3  0.368 
+# 750m  3.1     0.2  3  0.334 
+# 1000m 2.1     2.2  3  0.120 
+# 250m  1.9     2.6  3  0.100 
+# NULL  0.0     4.4  2  0.041 
+# 1250m 0.9     4.6  3  0.037
