@@ -245,6 +245,115 @@ writeOGR(int500, dsn = "GIS", layer = "AlgarLines_500mbuffer", driver = "ESRI Sh
 ## Could count manually, but need to decide what scale to do this at....on hold
 
 
-##### Scale analysis: deciding which scale best predicts mammal detections with GLMs ####
+##### Scale analysis: deciding which linear density scale best predicts mammal detections with GLMs ####
 ## Create models where Species~low[scale] and compare with model selection
+## Focus on scales between 250m - 1250m (greatest differences)
+## Use glmmTMB, no random effects or ZI
+require(glmmTMB)
+require(bbmle)
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 
+#Load detection data
+det <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
+
+#Load linedensity data
+LineDens <- read.csv("AlgarStationLineDensity_8scales.csv")
+LineDens$X <- NULL
+
+## Combine datasets (only for 5 scales)
+det$LD250 <- LineDens$X250m[match(det$Site, LineDens$CamStation)]
+det$LD500 <- LineDens$X500m[match(det$Site, LineDens$CamStation)]
+det$LD750 <- LineDens$X750m[match(det$Site, LineDens$CamStation)]
+det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
+det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
+
+### Wolf models
+W.0 <- glmmTMB(Wolf~1, data = det, family = nbinom2)
+W.250 <- glmmTMB(Wolf~LD250, data = det, family = nbinom2)
+W.500 <- glmmTMB(Wolf~LD500, data = det, family = nbinom2)
+W.750 <- glmmTMB(Wolf~LD750, data = det, family = nbinom2)
+W.1000 <- glmmTMB(Wolf~LD1000, data = det, family = nbinom2)
+W.1250 <- glmmTMB(Wolf~LD1250, data = det, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+wolftab <- ICtab(W.0,W.250,W.500,W.750,W.1000,W.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+wolftab
+
+#     dLogLik dAIC df weight
+# NULL  0.0     0.0  2  0.30  
+# 1250m 0.6     0.9  3  0.19  
+# 750m  0.2     1.6  3  0.14  
+# 1000m 0.2     1.6  3  0.13  
+# 250m  0.1     1.9  3  0.12  
+# 500m  0.0     2.0  3  0.11
+
+summary(W.1250)
+summary(W.750)
+### No scale significantly better than others for wolves
+
+## Caribou models
+Caribou.0 <- glmmTMB(Caribou~1, data = det, family = nbinom2)
+Caribou.250 <- glmmTMB(Caribou~LD250, data = det, family = nbinom2)
+Caribou.500 <- glmmTMB(Caribou~LD500, data = det, family = nbinom2)
+Caribou.750 <- glmmTMB(Caribou~LD750, data = det, family = nbinom2)
+Caribou.1000 <- glmmTMB(Caribou~LD1000, data = det, family = nbinom2)
+Caribou.1250 <- glmmTMB(Caribou~LD1250, data = det, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+cabtab <- ICtab(Caribou.0,Caribou.250,Caribou.500,Caribou.750,Caribou.1000,Caribou.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+cabtab
+
+#     dLogLik dAIC df weight
+# 250m  2.9     0.0  3  0.661 
+# NULL  0.0     3.8  2  0.100 
+# 1250m 0.9     3.9  3  0.092 
+# 1000m 0.6     4.6  3  0.066 
+# 750m  0.1     5.5  3  0.042 
+# 500m  0.0     5.7  3  0.038 
+
+## 250m linear density strongest predictor
+summary(Caribou.250)
+
+## WTDeer models
+WTDeer.0 <- glmmTMB(WTDeer~1, data = det, family = nbinom2)
+WTDeer.250 <- glmmTMB(WTDeer~LD250, data = det, family = nbinom2)
+WTDeer.500 <- glmmTMB(WTDeer~LD500, data = det, family = nbinom2)
+WTDeer.750 <- glmmTMB(WTDeer~LD750, data = det, family = nbinom2)
+WTDeer.1000 <- glmmTMB(WTDeer~LD1000, data = det, family = nbinom2)
+WTDeer.1250 <- glmmTMB(WTDeer~LD1250, data = det, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+WTDtab <- ICtab(WTDeer.0,WTDeer.250,WTDeer.500,WTDeer.750,WTDeer.1000,WTDeer.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+WTDtab
+
+#      dLogLik dAIC df weight
+# 750m  11.0     0.0 3  0.9703
+# 1000m  7.4     7.3 3  0.0252
+# 500m   5.4    11.2 3  0.0037
+# 1250m  3.8    14.4 3  <0.001
+# NULL   0.0    20.0 2  <0.001
+# 250m   0.8    20.5 3  <0.001
+summary(WTDeer.750)
+
+## Moose models
+Moose.0 <- glmmTMB(Moose~1, data = det, family = nbinom2)
+Moose.250 <- glmmTMB(Moose~LD250, data = det, family = nbinom2)
+Moose.500 <- glmmTMB(Moose~LD500, data = det, family = nbinom2)
+Moose.750 <- glmmTMB(Moose~LD750, data = det, family = nbinom2)
+Moose.1000 <- glmmTMB(Moose~LD1000, data = det, family = nbinom2)
+Moose.1250 <- glmmTMB(Moose~LD1250, data = det, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+MOOSEtab <- ICtab(Moose.0,Moose.250,Moose.500,Moose.750,Moose.1000,Moose.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+MOOSEtab
+#     dLogLik dAIC df weight
+# NULL  0.0     0.0  2  0.27  
+# 750m  0.5     0.9  3  0.17  
+# 1250m 0.4     1.1  3  0.16  
+# 1000m 0.4     1.2  3  0.15  
+# 500m  0.4     1.2  3  0.15  
+# 250m  0.0     2.0  3  0.10  
