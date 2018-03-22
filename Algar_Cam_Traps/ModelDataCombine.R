@@ -90,4 +90,35 @@ summary(vegwid.lm)
 #  (Intercept)  0.01278    0.12339   0.104    0.918    
 #  LineWidth    0.16527    0.01798   9.190   <2e-16 ***
 
+######## March 22, 2018: Collinearity of covariates extracted so far --> using pairplots
+## det already contains Treatment, Line Densities for 250-1250m scales (currently; not saved together), dWater, and SnowDays
+## Need to add new lowland at 500m.
+## Also include random effects: Site and Month
 
+low500 <- read.csv("proplowland_500mbuffer_newAVIE.csv")
+
+## Data frame of covariates only
+covar <- det %>% select(Site, Treatment, SnowDays, Month, Dist2water_km, LD250,LD500, LD750, LD1000, LD1250)
+covar$low500 <- low500$Percent_cover[match(covar$Site, low500$CamStation)]
+
+## pairplot of covariates
+pairs(covar)
+
+### Add line width, veg height, plot spatial covariates only with spatial covariates
+sp.covar <- as.data.frame(unique(det$Site))
+colnames(sp.covar) <- "Site"
+sp.covar$Treatment <- nov$TreatmentType[match(sp.covar$Site, nov$SiteID)]
+sp.covar$VegHt <- nov$LineVeg_Ht_avg[match(sp.covar$Site, nov$SiteID)]
+sp.covar$LineWidth <- nov$Line_Width_m[match(sp.covar$Site, nov$SiteID)]
+sp.covar$Dist2Water_km <- det$Dist2water_km[match(sp.covar$Site, det$Site)]
+sp.covar$LD250 <- det$LD250[match(sp.covar$Site, det$Site)]
+sp.covar$LD500 <- det$LD500[match(sp.covar$Site, det$Site)]
+sp.covar$LD750 <- det$LD750[match(sp.covar$Site, det$Site)]
+sp.covar$LD1000 <- det$LD1000[match(sp.covar$Site, det$Site)]
+sp.covar$LD1250 <- det$LD1250[match(sp.covar$Site, det$Site)]
+sp.covar$low500 <- low500$Percent_cover[match(sp.covar$Site, low500$CamStation)]
+
+pairs(sp.covar)
+summary(sp.covar)
+
+write.csv(sp.covar, "Spatial_covariates.csv")
