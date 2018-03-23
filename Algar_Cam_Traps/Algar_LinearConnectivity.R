@@ -45,6 +45,10 @@ plot(ABMI_HF)
 ## Subset HF for seismic and pipe lines in Algar
 Lines <- ABMI_HF[ABMI_HF$PUBLIC_COD=="Seismic line" | ABMI_HF$PUBLIC_COD=="Pipeline" , ]
 summary(Lines)
+plot(Lines)
+
+######### HF needs to be polylines, not polygons. Try using LinearFeatEastNTS_Algar10kClip from LinearFeat folder
+
 
 ## Clip ABMI_HF to 8 scales around Algar cameras only
 # Creating the 8 buffers to be used (250-2000m)
