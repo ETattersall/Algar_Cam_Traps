@@ -10,6 +10,12 @@ library(sp)    # Functions for working with spatial data
 library(rgeos)
 library(raster) #For intersect function
 
+## Connectivity metric options:
+#1. Line density (total length of lines within buffer/buffer area)
+#2. Number of intersections
+#3. Distance to intersections
+#### All need to be measured at a few scales
+
 setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/GIS data")
 
 ## Algar camera sites
@@ -21,11 +27,93 @@ AlgarHF <- readOGR("GIS", "AlgarSites_HF_15kmbuffer")
 summary(AlgarHF)
 summary(AlgarHF$PUBLIC_COD) # Linear disturbances = Seismic lines (by far the most), pipelines, transmission lines, Road/Trail (Vegetated)
 
-## Connectivity metric options:
-#1. Line density (total length of lines within buffer/buffer area)
-#2. Number of intersections
-#3. Distance to intersections
-#### All need to be measured at a few scales
+#########Take 3: HF needs to be polylines, not polygons. Try using LinearFeatEastNTS_Algar10kClip from LinearFeat folder
+AlgLines <- readOGR("LinearFeat", "LinearFeatNTS_Algar10kClip")
+summary(AlgLines) #FeatureTyp = 3D, cutline, Electrical Transmission Line, Trail. Should keep all
+#In tmerc, units = m
+## Convert to UTM
+HF_UTM <- spTransform(AlgLines, CRSobj = CRS(proj4string(Algcoord)))
+proj4string(HF_UTM)
+AlgLines <- HF_UTM #Overwrite original HF CRS
+summary(AlgLines)
+plot(AlgLines)
+
+## Write function for calculating Line Density at desired buffer sizes, using rgeos, raster, and dplyr packages
+#Function for calculating total area of a buffer
+bufferArea <- function(r){
+  Area <- pi*(r)^2
+  print(Area)
+}
+LineDens <- function(buffer){
+  a <- gBuffer(Algcoord, width = buffer, byid = TRUE) #Create buffer
+  b <- raster::intersect(AlgLines, a)#Clip Line data
+  b$Length <- gLength(b, byid = TRUE)
+  data <- b@data #Isolate dataframe
+  data <- data[with(data, order(CamStation, Length)), ] #Order by CamStation and Length
+  Length <- cbind.data.frame(data$CamStation, data$Length)#Create dataframe for length & line density
+  colnames(Length) <- c("CamStation", "Length")
+  Length <- aggregate(.~CamStation, data = Length, sum) #Sum total length for each station
+  Length$BufferArea <- bufferArea(buffer)
+  Length$LineDensity <- Length[ ,2]/Length[ ,3] #LineDensity in m/m^2
+  Length$LineDensity_km <- Length$LineDensity*1000 #Converting to km/km^2
+  Length <- Length[1:60,]
+}
+
+### LineDensity at 250m buffer
+LD250 <- LineDens(250)
+LD500 <- LineDens(500)
+LD750 <- LineDens(750)
+LD1000 <- LineDens(1000)
+LD1250 <- LineDens(1250)
+LD1500 <- LineDens(1500)
+LD1750 <- LineDens(1750)
+LD2000 <- LineDens(2000)
+
+LD_Lines <- cbind.data.frame(LD250$CamStation, LD250$LineDensity_km, LD500$LineDensity_km,LD750$LineDensity_km,LD1000$LineDensity_km, LD1250$LineDensity_km, LD1500$LineDensity_km,LD1750$LineDensity_km, LD2000$LineDensity_km )
+colnames(LD_Lines) <- c("CamStation", "250m", "500m", "750m","1000m", "1250m", "1500m", "1750m", "2000m")
+
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+write.csv(LD_Lines, "AlgarStationsLD_Lines.csv")
+
+# Rename columns (need to be numeric for plotting)
+colnames(LD_Lines) <- c("CamStation", "250", "500", "750","1000", "1250", "1500", "1750", "2000")
+#Gather Scales into one colum
+LD_Lines <- gather(data = LD_Lines, key = Scale, value = LineDensity, 2:9)
+str(LD_Lines) #Scale is character class, convert to numeric
+LD_Lines$Scale <- as.numeric(LD_Lines$Scale)
+str(LD_Lines)
+
+## Plot LineDensity against Scale to compare
+hist(LD_Lines$LineDensity) ##Skewed to lower densities
+
+
+require(ggplot2)
+fig.a <- ggplot(data = LD_Lines, aes(x = Scale, y = LineDensity, fill = Scale)) + geom_point()
+fig.a + geom_smooth(method = "auto") #Line density seems to exponentially decrease with increasing scale
+
+#Compare to earlier calculations from polygons
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+LD_polygons <- read.csv("AlgarStationLineDensity_8scales.csv")
+LD_polygons$X <- NULL
+
+# Rename columns (need to be numeric for plotting)
+colnames(LD_polygons) <- c("CamStation", "250", "500", "750","1000", "1250", "1500", "1750", "2000")
+#Gather Scales into one colum
+LD_polygons <- gather(data = LD_polygons, key = Scale, value = LineDensity, 2:9)
+str(LD_polygons) #Scale is character class, convert to numeric
+LD_polygons$Scale <- as.numeric(LD_polygons$Scale)
+str(LD_polygons)
+
+## Plot LineDensity against Scale to compare
+hist(LD_polygons$LineDensity) ##Skewed to lower densities
+
+
+require(ggplot2)
+fig.a <- ggplot(data = LD_polygons, aes(x = Scale, y = LineDensity, fill = Scale)) + geom_point()
+fig.a + geom_smooth(method = "auto")
+
+#### Same pattern, just less length (absolute line density vs relative)
+
 
 
 #### Take 2: Re-clipping ABMI HF layer to desired scales ####
@@ -47,7 +135,7 @@ Lines <- ABMI_HF[ABMI_HF$PUBLIC_COD=="Seismic line" | ABMI_HF$PUBLIC_COD=="Pipel
 summary(Lines)
 plot(Lines)
 
-######### HF needs to be polylines, not polygons. Try using LinearFeatEastNTS_Algar10kClip from LinearFeat folder
+
 
 
 ## Clip ABMI_HF to 8 scales around Algar cameras only
