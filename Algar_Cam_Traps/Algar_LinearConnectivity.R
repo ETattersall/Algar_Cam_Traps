@@ -122,71 +122,46 @@ SpClip <- function(points, SpData, buffer){
   b <- raster::intersect(SpData, a) #Clipping data within the buffer
 }
 
-a750 <- SpClip(Algcoord, AlgLines, buffer = 750)
-plot(a750)
+a250 <- SpClip(Algcoord, AlgLines, buffer = 250)
+ogrDrivers()
+writeOGR(a250, dsn = "LinearFeat", driver= "ESRI Shapefile", "LinearFeat_250mbuffer")
+plot(a250)
 
 
 #Create unique identifiers for line segments at each camstations
-a750$LineID <- paste(a750$CamStation, a750$OBJECTID_1, sep = "_")
-summary(a750)
-data750 <- a750@data
+a250$LineID <- paste(a250$CamStation, a250$OBJECTID_1, sep = "_")
+summary(a250)
+data250 <- a250@data
 
-Intersections <- as.data.frame(gIntersects(a750, byid=T)) # matrix of all 283 lines indicating lines they intersect. BUT lines are not individually ID'd in a recognizable way
+Intersections <- as.data.frame(gIntersects(a250, byid=T)) # matrix of all 132 lines indicating lines they intersect. BUT lines are not individually ID'd in a recognizable way
 #Convert to numeric
 Intersections <- Intersections + 0 # + 0 converts logical into numeric
 
 #Name rows and columns with unique identifiers (can't be sure they are the same, but a 750 hasn't been re-ordered so there's no reason it shouldn't be)
-colnames(Intersections) <- data750$LineID
-row.names(Intersections) <- data750$LineID
-## Separate cells that are 1's
-Inter1 <- Intersections[which(Intersections == 1), ] #only pulled values for 1st row
+colnames(Intersections) <- data250$LineID
+row.names(Intersections) <- data250$LineID
+
+#Sum across Intersections
+sum(Intersections) #224 --> Subtract 132 duplicates = 92 intersections
 
 
-data750$Intersections <- Intersections
-## Select data order
-data750 <- data750 %>% select(OBJECTID_1, FeatureTyp, CamStation, Treatment, Intersections)
-data750 <- data750[with(data750, order(CamStation)), ]
-table(data750$Intersections) #79200 FALSE, 889 TRUE
-data750[which(data750$Intersections)]
+## Find cells that are 1's
+Inter1 <- as.data.frame(which(Intersections !=0, arr.ind = T)) #arr.ind = T --> each row gives row and column location of the non-zero value
+class(Inter1)
+## Remove if row value = column value (duplicate, line matched with itself)
+Inter2 <- Inter1[which(!Inter1$row == Inter1$col),]
+## Add CamStations to Inter2 using colsplit
+library(reshape)
+Inter2$CamsLines <- row.names(Inter2) #replicating LineID for separation
+Inter2 <- cbind(Inter2[,1:2],
+             colsplit(Inter2$CamsLines, "[_]", names=c("CamStation", "LineNo"))) #Prevents NAs from arising in CamStation when LineIDs were duplicated
+intLines250 <- as.data.frame(summary(Inter2$CamStation))# returns number of lines with intersections, not number of intersections--> Acceptable?
+colnames(intLines250) <- "NumIntLines"
+hist(intLines250$NumIntLines) #Double the number of intersections (counts overlap for both lines involved)
 
+intLines250$NumIntersections <- intLines250$NumIntLines/2
+## Still overestimates where multiple polylines were used to make up one line/trail
 
-
-
-
-
-#### Number of intersections using polygons ####
-## Figure out how to find line intersections, count within buffer
-
-## Take 1: (did not work) Use raster::intersect() to isolate intersections of lines
-# Try with entire Lines layer (prior to clipping for camera stations) --> contains much more linear feature data than I need here--> File too big (3.1)
-## Try with int500
-#1. To avoid duplicating attribute data, copy layer and remove data from copy
-int5001 <- int500
-int5001 <- as(int5001,'SpatialPolygons')
-summary(int5001)
-plot(int5001)
-
-Intersections <- raster::intersect(int500, int5001)
-plot(int500, axes = T, xlab = "utmE", ylab = "utmN")
-plot(Intersections, add= T,col = "red")
-summary(Intersections)
-Intdata500 <- Intersections@data
-Intdata500 <- Intdata500[with(Intdata500, order(CamStation, Length_m)), ] ##240 observations, compared to 200 lines in 500m buffered data --> should be fewer observations (not every line intersects with another within the buffer)
-
-###Take2: (worked) Try with gIntersects (no attribute data necessary)
-Intersections <- gIntersects(int500, byid=T) #returns logical vector: TRUE if polygons have points in common
-#Cannot add directly to data500 b/c it has been re-ordered
-#Return to original order and visually validate Intersections
-data500 <- int500@data
-data500$Intersections <- gIntersects(int500, byid=T) 
-## Now order
-data500 <- data500[with(data500, order(CamStation, Length_m)), ]
-## Check Intersections for stations that are easy to find: Algar01, 02, 46 --> does not indicate where intersections are
-
-## Export lines with 500m buffer as shp file and explore in Arc
-writeOGR(int500, dsn = "GIS", layer = "AlgarLines_500mbuffer", driver = "ESRI Shapefile")
-## Problem could be that line segments aren't strictly linear; some polygons include intersecting segments --> therefore overlapping them won't show intersections
-## Could count manually, but need to decide what scale to do this at....on hold
 
 
 ##### Scale analysis: deciding which linear density scale best predicts mammal detections with GLMs ####
