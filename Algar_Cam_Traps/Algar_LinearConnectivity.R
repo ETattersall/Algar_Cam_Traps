@@ -9,6 +9,7 @@ library(tidyr) # For data manipulation
 library(sp)    # Functions for working with spatial data 
 library(rgeos)
 library(raster) #For intersect function
+library(dplyr)
 
 ## Connectivity metric options:
 #1. Line density (total length of lines within buffer/buffer area)
@@ -114,9 +115,241 @@ fig.a + geom_smooth(method = "auto")
 
 #### Same pattern, just less length (absolute line density vs relative)
 
+#### Number of intersections using polylines ####
+#Function for creating a buffer around points and clipping spatial data around that buffer
+SpClip <- function(points, SpData, buffer){
+  a <- gBuffer(points, width = buffer, byid = TRUE) #Create buffer
+  b <- raster::intersect(SpData, a) #Clipping data within the buffer
+}
+
+a750 <- SpClip(Algcoord, AlgLines, buffer = 750)
+plot(a750)
 
 
-#### Take 2: Re-clipping ABMI HF layer to desired scales ####
+#Create unique identifiers for line segments at each camstations
+a750$LineID <- paste(a750$CamStation, a750$OBJECTID_1, sep = "_")
+summary(a750)
+data750 <- a750@data
+
+Intersections <- as.data.frame(gIntersects(a750, byid=T)) # matrix of all 283 lines indicating lines they intersect. BUT lines are not individually ID'd in a recognizable way
+#Convert to numeric
+Intersections <- Intersections + 0 # + 0 converts logical into numeric
+
+#Name rows and columns with unique identifiers (can't be sure they are the same, but a 750 hasn't been re-ordered so there's no reason it shouldn't be)
+colnames(Intersections) <- data750$LineID
+row.names(Intersections) <- data750$LineID
+## Separate cells that are 1's
+Inter1 <- Intersections[which(Intersections == 1), ] #only pulled values for 1st row
+
+
+data750$Intersections <- Intersections
+## Select data order
+data750 <- data750 %>% select(OBJECTID_1, FeatureTyp, CamStation, Treatment, Intersections)
+data750 <- data750[with(data750, order(CamStation)), ]
+table(data750$Intersections) #79200 FALSE, 889 TRUE
+data750[which(data750$Intersections)]
+
+
+
+
+
+
+#### Number of intersections using polygons ####
+## Figure out how to find line intersections, count within buffer
+
+## Take 1: (did not work) Use raster::intersect() to isolate intersections of lines
+# Try with entire Lines layer (prior to clipping for camera stations) --> contains much more linear feature data than I need here--> File too big (3.1)
+## Try with int500
+#1. To avoid duplicating attribute data, copy layer and remove data from copy
+int5001 <- int500
+int5001 <- as(int5001,'SpatialPolygons')
+summary(int5001)
+plot(int5001)
+
+Intersections <- raster::intersect(int500, int5001)
+plot(int500, axes = T, xlab = "utmE", ylab = "utmN")
+plot(Intersections, add= T,col = "red")
+summary(Intersections)
+Intdata500 <- Intersections@data
+Intdata500 <- Intdata500[with(Intdata500, order(CamStation, Length_m)), ] ##240 observations, compared to 200 lines in 500m buffered data --> should be fewer observations (not every line intersects with another within the buffer)
+
+###Take2: (worked) Try with gIntersects (no attribute data necessary)
+Intersections <- gIntersects(int500, byid=T) #returns logical vector: TRUE if polygons have points in common
+#Cannot add directly to data500 b/c it has been re-ordered
+#Return to original order and visually validate Intersections
+data500 <- int500@data
+data500$Intersections <- gIntersects(int500, byid=T) 
+## Now order
+data500 <- data500[with(data500, order(CamStation, Length_m)), ]
+## Check Intersections for stations that are easy to find: Algar01, 02, 46 --> does not indicate where intersections are
+
+## Export lines with 500m buffer as shp file and explore in Arc
+writeOGR(int500, dsn = "GIS", layer = "AlgarLines_500mbuffer", driver = "ESRI Shapefile")
+## Problem could be that line segments aren't strictly linear; some polygons include intersecting segments --> therefore overlapping them won't show intersections
+## Could count manually, but need to decide what scale to do this at....on hold
+
+
+##### Scale analysis: deciding which linear density scale best predicts mammal detections with GLMs ####
+## Create models where Species~low[scale] and compare with model selection
+## Focus on scales between 250m - 1250m (greatest differences)
+## Use glmmTMB, no random effects or ZI
+require(glmmTMB)
+require(bbmle)
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+
+#Load detection data
+det <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
+
+#Load linedensity data
+LineDens <- read.csv("AlgarStationsLD_Lines.csv")
+LineDens$X <- NULL
+
+
+
+
+## Combine datasets (only for 5 scales)
+det$LD250 <- LineDens$X250m[match(det$Site, LineDens$CamStation)]
+det$LD500 <- LineDens$X500m[match(det$Site, LineDens$CamStation)]
+det$LD750 <- LineDens$X750m[match(det$Site, LineDens$CamStation)]
+det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
+det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
+
+### Wolf models
+Wolf.0 <- glmmTMB(Wolf~1, data = det, family = nbinom2)
+Wolf.250 <- glmmTMB(Wolf~LD250, data = det, family = nbinom2)
+Wolf.500 <- glmmTMB(Wolf~LD500, data = det, family = nbinom2)
+Wolf.750 <- glmmTMB(Wolf~LD750, data = det, family = nbinom2)
+Wolf.1000 <- glmmTMB(Wolf~LD1000, data = det, family = nbinom2)
+Wolf.1250 <- glmmTMB(Wolf~LD1250, data = det, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+wolftab <- ICtab(Wolf.0,Wolf.250,Wolf.500,Wolf.750,Wolf.1000,Wolf.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+wolftab
+
+#     dLogLik dAIC df weight
+# NULL  0.0     0.0  2  0.34  
+# 1250m 0.2     1.6  3  0.15  
+# 250m  0.1     1.9  3  0.13  
+# 500m  0.0     1.9  3  0.13  
+# 750m  0.0     2.0  3  0.13  
+# 1000m 0.0     2.0  3  0.13
+
+summary(Wolf.1250)
+summary(Wolf.750)
+### No scale significantly better than others for wolves
+
+## Caribou models
+Caribou.0 <- glmmTMB(Caribou~1, data = det, family = nbinom2)
+Caribou.250 <- glmmTMB(Caribou~LD250, data = det, family = nbinom2)
+Caribou.500 <- glmmTMB(Caribou~LD500, data = det, family = nbinom2)
+Caribou.750 <- glmmTMB(Caribou~LD750, data = det, family = nbinom2)
+Caribou.1000 <- glmmTMB(Caribou~LD1000, data = det, family = nbinom2)
+Caribou.1250 <- glmmTMB(Caribou~LD1250, data = det, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+cabtab <- ICtab(Caribou.0,Caribou.250,Caribou.500,Caribou.750,Caribou.1000,Caribou.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+cabtab
+
+#      dLogLik dAIC df weight
+# 250m  1.9     0.0  3  0.431 
+# NULL  0.0     1.8  2  0.177 
+# 1250m 0.8     2.1  3  0.148 
+# 1000m 0.4     3.1  3  0.093 
+# 500m  0.3     3.2  3  0.085 
+# 750m  0.0     3.8  3  0.066 
+
+## 250m linear density strongest predictor
+summary(Caribou.250)
+
+## WTDeer models
+WTDeer.0 <- glmmTMB(WTDeer~1, data = det, family = nbinom2)
+WTDeer.250 <- glmmTMB(WTDeer~LD250, data = det, family = nbinom2)
+WTDeer.500 <- glmmTMB(WTDeer~LD500, data = det, family = nbinom2)
+WTDeer.750 <- glmmTMB(WTDeer~LD750, data = det, family = nbinom2)
+WTDeer.1000 <- glmmTMB(WTDeer~LD1000, data = det, family = nbinom2)
+WTDeer.1250 <- glmmTMB(WTDeer~LD1250, data = det, family = nbinom2)
+
+## Model selection with AICctab (bbmle) 
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+WTDtab <- ICtab(WTDeer.0,WTDeer.250,WTDeer.500,WTDeer.750,WTDeer.1000,WTDeer.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+WTDtab
+
+#      dLogLik dAIC df weight
+# 750m  13.7     0.0 3  0.986 
+# 1000m  9.4     8.6 3  0.014 
+# 500m   6.2    15.0 3  <0.001
+# 1250m  5.2    16.9 3  <0.001
+# NULL   0.0    25.4 2  <0.001
+# 250m   0.7    25.9 3  <0.001
+summary(WTDeer.750)
+
+## Moose models
+Moose.0 <- glmmTMB(Moose~1, data = det, family = nbinom2)
+Moose.250 <- glmmTMB(Moose~LD250, data = det, family = nbinom2)
+Moose.500 <- glmmTMB(Moose~LD500, data = det, family = nbinom2)
+Moose.750 <- glmmTMB(Moose~LD750, data = det, family = nbinom2)
+Moose.1000 <- glmmTMB(Moose~LD1000, data = det, family = nbinom2)
+Moose.1250 <- glmmTMB(Moose~LD1250, data = det, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+MOOSEtab <- ICtab(Moose.0,Moose.250,Moose.500,Moose.750,Moose.1000,Moose.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+MOOSEtab
+#     dLogLik dAIC df weight
+# NULL  0.0     0.0  2  0.29  
+# 1250m 0.4     1.2  3  0.16  
+# 1000m 0.3     1.3  3  0.15  
+# 750m  0.3     1.4  3  0.15  
+# 500m  0.3     1.5  3  0.14  
+# 250m  0.1     1.9  3  0.11  
+
+
+### Bears: need truncated season
+# Check black bear detections by yr_month
+plot(x = det$Yr_Month, y = det$Blackbear) #Active April- November, both years
+#Check against Snow
+plot(x = det$SnowDays, y = det$Blackbear) # Predictably, more in months with fewer snow days
+
+hist(det$Blackbear)
+
+### Cropping data for active bear months only -- April - October -- use months rather than Yr_Months
+unique(det$Month)
+class(det$Month)
+
+
+
+bear <- det %>% filter(Month >= 4 & Month <= 10) %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, SnowDays, Year, Month, Dist2water_km, LD250,LD500,LD750,LD1000,LD1250)
+
+
+plot(bear$Yr_Month, bear$Blackbear)
+plot(bear$Month, bear$Blackbear)
+hist(bear$Month)
+hist(bear$Blackbear)
+
+## Bear models
+Blackbear.0 <- glmmTMB(Blackbear~1, data = bear, family = nbinom2)
+Blackbear.250 <- glmmTMB(Blackbear~LD250, data = bear, family = nbinom2)
+Blackbear.500 <- glmmTMB(Blackbear~LD500, data = bear, family = nbinom2)
+Blackbear.750 <- glmmTMB(Blackbear~LD750, data = bear, family = nbinom2)
+Blackbear.1000 <- glmmTMB(Blackbear~LD1000, data = bear, family = nbinom2)
+Blackbear.1250 <- glmmTMB(Blackbear~LD1250, data = bear, family = nbinom2)
+
+## Model selection with AICctab (bbmle) --> exluding VegHt
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
+Blackbeartab <- ICtab(Blackbear.0,Blackbear.250,Blackbear.500,Blackbear.750,Blackbear.1000,Blackbear.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Blackbeartab
+#     dLogLik dAIC df weight
+# 750m  4.3     0.0  3  0.440 
+# 500m  3.9     0.8  3  0.299 
+# 1000m 3.2     2.2  3  0.149 
+# 250m  2.3     4.0  3  0.059 
+# 1250m 1.8     5.0  3  0.037 
+# NULL  0.0     6.6  2  0.017
+
+
+#### Linear density with ABMI HF: Re-clipping ABMI HF layer to desired scales (works, but wrong layer) ####
 ABMI_HF <- readOGR("GIS", "CameraArray_ABMI_HFI_2014")
 plot(ABMI_HF) ## HF for Christina Lakes, Algar, and Richardson
 summary(ABMI_HF)
@@ -302,207 +535,4 @@ Density_8scales$LineDensity <- Density_8scales$LineDensity*1000
 require(ggplot2)
 fig.a <- ggplot(data = Density_8scales, aes(x = Scale, y = LineDensity, fill = Scale)) + geom_point()
 fig.a + geom_smooth(method = "auto") #Line density seems to exponentially decrease with increasing scale
-
-
-
-
-
-#### Number of intersections ####
-## Figure out how to find line intersections, count within buffer
-
-## Take 1: (did not work) Use raster::intersect() to isolate intersections of lines
-# Try with entire Lines layer (prior to clipping for camera stations) --> contains much more linear feature data than I need here--> File too big (3.1)
-## Try with int500
-#1. To avoid duplicating attribute data, copy layer and remove data from copy
-int5001 <- int500
-int5001 <- as(int5001,'SpatialPolygons')
-summary(int5001)
-plot(int5001)
-
-Intersections <- raster::intersect(int500, int5001)
-plot(int500, axes = T, xlab = "utmE", ylab = "utmN")
-plot(Intersections, add= T,col = "red")
-summary(Intersections)
-Intdata500 <- Intersections@data
-Intdata500 <- Intdata500[with(Intdata500, order(CamStation, Length_m)), ] ##240 observations, compared to 200 lines in 500m buffered data --> should be fewer observations (not every line intersects with another within the buffer)
-
-###Take2: (worked) Try with gIntersects (no attribute data necessary)
-Intersections <- gIntersects(int500, byid=T) #returns logical vector: TRUE if polygons have points in common
-#Cannot add directly to data500 b/c it has been re-ordered
-#Return to original order and visually validate Intersections
-data500 <- int500@data
-data500$Intersections <- gIntersects(int500, byid=T) 
-## Now order
-data500 <- data500[with(data500, order(CamStation, Length_m)), ]
-## Check Intersections for stations that are easy to find: Algar01, 02, 46 --> does not indicate where intersections are
-
-## Export lines with 500m buffer as shp file and explore in Arc
-writeOGR(int500, dsn = "GIS", layer = "AlgarLines_500mbuffer", driver = "ESRI Shapefile")
-## Problem could be that line segments aren't strictly linear; some polygons include intersecting segments --> therefore overlapping them won't show intersections
-## Could count manually, but need to decide what scale to do this at....on hold
-
-
-##### Scale analysis: deciding which linear density scale best predicts mammal detections with GLMs ####
-## Create models where Species~low[scale] and compare with model selection
-## Focus on scales between 250m - 1250m (greatest differences)
-## Use glmmTMB, no random effects or ZI
-require(glmmTMB)
-require(bbmle)
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
-
-#Load detection data
-det <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
-
-#Load linedensity data
-LineDens <- read.csv("AlgarStationLineDensity_8scales.csv")
-LineDens$X <- NULL
-
-## Densities are currently in m/m^2. Convert to km/km^2 (multiply by 1000)
-LineDens_km <- LineDens[ , 2:9]*1000
-LineDens_km <- cbind.data.frame(LineDens$CamStation, LineDens_km)
-colnames(LineDens_km) <- c("CamStation", "X250m", "X500m", "X750m", "X1000m", "X1250m", "X1500m", "X1750m", "X2000m")
-#Save LineDensities as km/km^2
-write.csv(LineDens_km, "AlgarStationLineDensity_8scales.csv")
-
-
-
-## Combine datasets (only for 5 scales)
-det$LD250 <- LineDens$X250m[match(det$Site, LineDens$CamStation)]
-det$LD500 <- LineDens$X500m[match(det$Site, LineDens$CamStation)]
-det$LD750 <- LineDens$X750m[match(det$Site, LineDens$CamStation)]
-det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
-det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
-
-### Wolf models
-Wolf.0 <- glmmTMB(Wolf~1, data = det, family = nbinom2)
-Wolf.250 <- glmmTMB(Wolf~LD250, data = det, family = nbinom2)
-Wolf.500 <- glmmTMB(Wolf~LD500, data = det, family = nbinom2)
-Wolf.750 <- glmmTMB(Wolf~LD750, data = det, family = nbinom2)
-Wolf.1000 <- glmmTMB(Wolf~LD1000, data = det, family = nbinom2)
-Wolf.1250 <- glmmTMB(Wolf~LD1250, data = det, family = nbinom2)
-
-## Model selection with AICctab (bbmle) --> exluding VegHt
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
-wolftab <- ICtab(Wolf.0,Wolf.250,Wolf.500,Wolf.750,Wolf.1000,Wolf.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
-wolftab
-
-#     dLogLik dAIC df weight
-# NULL  0.0     0.0  2  0.30  
-# 1250m 0.6     0.9  3  0.19  
-# 750m  0.2     1.6  3  0.14  
-# 1000m 0.2     1.6  3  0.13  
-# 250m  0.1     1.9  3  0.12  
-# 500m  0.0     2.0  3  0.11
-
-summary(W.1250)
-summary(W.750)
-### No scale significantly better than others for wolves
-
-## Caribou models
-Caribou.0 <- glmmTMB(Caribou~1, data = det, family = nbinom2)
-Caribou.250 <- glmmTMB(Caribou~LD250, data = det, family = nbinom2)
-Caribou.500 <- glmmTMB(Caribou~LD500, data = det, family = nbinom2)
-Caribou.750 <- glmmTMB(Caribou~LD750, data = det, family = nbinom2)
-Caribou.1000 <- glmmTMB(Caribou~LD1000, data = det, family = nbinom2)
-Caribou.1250 <- glmmTMB(Caribou~LD1250, data = det, family = nbinom2)
-
-## Model selection with AICctab (bbmle) --> exluding VegHt
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
-cabtab <- ICtab(Caribou.0,Caribou.250,Caribou.500,Caribou.750,Caribou.1000,Caribou.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
-cabtab
-
-#     dLogLik dAIC df weight
-# 250m  2.9     0.0  3  0.661 
-# NULL  0.0     3.8  2  0.100 
-# 1250m 0.9     3.9  3  0.092 
-# 1000m 0.6     4.6  3  0.066 
-# 750m  0.1     5.5  3  0.042 
-# 500m  0.0     5.7  3  0.038 
-
-## 250m linear density strongest predictor
-summary(Caribou.250)
-
-## WTDeer models
-WTDeer.0 <- glmmTMB(WTDeer~1, data = det, family = nbinom2)
-WTDeer.250 <- glmmTMB(WTDeer~LD250, data = det, family = nbinom2)
-WTDeer.500 <- glmmTMB(WTDeer~LD500, data = det, family = nbinom2)
-WTDeer.750 <- glmmTMB(WTDeer~LD750, data = det, family = nbinom2)
-WTDeer.1000 <- glmmTMB(WTDeer~LD1000, data = det, family = nbinom2)
-WTDeer.1250 <- glmmTMB(WTDeer~LD1250, data = det, family = nbinom2)
-
-## Model selection with AICctab (bbmle) 
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
-WTDtab <- ICtab(WTDeer.0,WTDeer.250,WTDeer.500,WTDeer.750,WTDeer.1000,WTDeer.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
-WTDtab
-
-#      dLogLik dAIC df weight
-# 750m  11.0     0.0 3  0.9703
-# 1000m  7.4     7.3 3  0.0252
-# 500m   5.4    11.2 3  0.0037
-# 1250m  3.8    14.4 3  <0.001
-# NULL   0.0    20.0 2  <0.001
-# 250m   0.8    20.5 3  <0.001
-summary(WTDeer.750)
-
-## Moose models
-Moose.0 <- glmmTMB(Moose~1, data = det, family = nbinom2)
-Moose.250 <- glmmTMB(Moose~LD250, data = det, family = nbinom2)
-Moose.500 <- glmmTMB(Moose~LD500, data = det, family = nbinom2)
-Moose.750 <- glmmTMB(Moose~LD750, data = det, family = nbinom2)
-Moose.1000 <- glmmTMB(Moose~LD1000, data = det, family = nbinom2)
-Moose.1250 <- glmmTMB(Moose~LD1250, data = det, family = nbinom2)
-
-## Model selection with AICctab (bbmle) --> exluding VegHt
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
-MOOSEtab <- ICtab(Moose.0,Moose.250,Moose.500,Moose.750,Moose.1000,Moose.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
-MOOSEtab
-#     dLogLik dAIC df weight
-# NULL  0.0     0.0  2  0.27  
-# 750m  0.5     0.9  3  0.17  
-# 1250m 0.4     1.1  3  0.16  
-# 1000m 0.4     1.2  3  0.15  
-# 500m  0.4     1.2  3  0.15  
-# 250m  0.0     2.0  3  0.10  
-
-
-### Bears: need truncated season
-# Check black bear detections by yr_month
-plot(x = det$Yr_Month, y = det$Blackbear) #Active April- November, both years
-#Check against Snow
-plot(x = det$SnowDays, y = det$Blackbear) # Predictably, more in months with fewer snow days
-
-hist(det$Blackbear)
-
-### Cropping data for active bear months only -- April - October -- use months rather than Yr_Months
-unique(det$Month)
-class(det$Month)
-
-
-
-bear <- det %>% filter(Month >= 4 & Month <= 10) %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, SnowDays, Year, Month, Dist2water_km, LD250,LD500,LD750,LD1000,LD1250)
-
-
-plot(bear$Yr_Month, bear$Blackbear)
-plot(bear$Month, bear$Blackbear)
-hist(bear$Month)
-hist(bear$Blackbear)
-
-## Bear models
-Blackbear.0 <- glmmTMB(Blackbear~1, data = bear, family = nbinom2)
-Blackbear.250 <- glmmTMB(Blackbear~LD250, data = bear, family = nbinom2)
-Blackbear.500 <- glmmTMB(Blackbear~LD500, data = bear, family = nbinom2)
-Blackbear.750 <- glmmTMB(Blackbear~LD750, data = bear, family = nbinom2)
-Blackbear.1000 <- glmmTMB(Blackbear~LD1000, data = bear, family = nbinom2)
-Blackbear.1250 <- glmmTMB(Blackbear~LD1250, data = bear, family = nbinom2)
-
-## Model selection with AICctab (bbmle) --> exluding VegHt
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m")
-Blackbeartab <- ICtab(Blackbear.0,Blackbear.250,Blackbear.500,Blackbear.750,Blackbear.1000,Blackbear.1250, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
-Blackbeartab
-#     dLogLik dAIC df weight
-# 500m  3.2     0.0  3  0.368 
-# 750m  3.1     0.2  3  0.334 
-# 1000m 2.1     2.2  3  0.120 
-# 250m  1.9     2.6  3  0.100 
-# NULL  0.0     4.4  2  0.041 
-# 1250m 0.9     4.6  3  0.037
+#####
