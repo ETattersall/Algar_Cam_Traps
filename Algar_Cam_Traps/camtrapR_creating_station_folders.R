@@ -1,6 +1,26 @@
-# Working in camtrapR #
+###################################
+# camtrapR_creating_station_folders.R
+# Using createStationFolders to... create station folders :P
+# Started Oct. 2016, Modified April 2018
+###################################
+
 library(camtrapR)
 
+## Set WD
+setwd("D:/Algar_Nov2017-Apr2018")
+
+## List of station names
+Stations <- paste("Algar", formatC(1:73, width=2, flag="0"), sep="") #Formats numbers as fixed width of 2
+
+## Create station folders
+createStationFolders(inDir = "Raw_Images", 
+                     stations = Stations,
+                     createinDir = TRUE) #Creates Raw_Images folder
+
+
+
+
+###### Oct 2016 practice code ####
 ##Default working directory ##
 
 OriginalWD<-"C:/Users/ETattersall/Documents"
@@ -83,6 +103,6 @@ cams2016.01 <- cams2016$CamStation
 createStationFolders(inDir       = "2016.01", 
                      stations    = as.character(cams2016.01),
                      createinDir = FALSE)
-
+########
 
 
