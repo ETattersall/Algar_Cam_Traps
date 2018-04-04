@@ -28,7 +28,6 @@ AlgarHF <- readOGR("GIS", "AlgarSites_HF_15kmbuffer")
 summary(AlgarHF)
 summary(AlgarHF$PUBLIC_COD) # Linear disturbances = Seismic lines (by far the most), pipelines, transmission lines, Road/Trail (Vegetated)
 
-#########Take 3: HF needs to be polylines, not polygons. Try using LinearFeatEastNTS_Algar10kClip from LinearFeat folder
 AlgLines <- readOGR("LinearFeat", "LinearFeatNTS_Algar10kClip")
 summary(AlgLines) #FeatureTyp = 3D, cutline, Electrical Transmission Line, Trail. Should keep all
 #In tmerc, units = m
@@ -38,6 +37,9 @@ proj4string(HF_UTM)
 AlgLines <- HF_UTM #Overwrite original HF CRS
 summary(AlgLines)
 plot(AlgLines)
+
+#####Take 3: HF needs to be polylines, not polygons. Try using LinearFeatEastNTS_Algar10kClip from LinearFeat folder ####
+
 
 ## Write function for calculating Line Density at desired buffer sizes, using rgeos, raster, and dplyr packages
 #Function for calculating total area of a buffer
@@ -127,6 +129,8 @@ ogrDrivers()
 writeOGR(a250, dsn = "LinearFeat", driver= "ESRI Shapefile", "LinearFeat_250mbuffer")
 plot(a250)
 
+# Find coordinates for points where lines overlap at each station, then filter for unique points
+# gIntersection(), then unique()??
 
 #Create unique identifiers for line segments at each camstations
 a250$LineID <- paste(a250$CamStation, a250$OBJECTID_1, sep = "_")
@@ -150,17 +154,7 @@ Inter1 <- as.data.frame(which(Intersections !=0, arr.ind = T)) #arr.ind = T --> 
 class(Inter1)
 ## Remove if row value = column value (duplicate, line matched with itself)
 Inter2 <- Inter1[which(!Inter1$row == Inter1$col),]
-## Add CamStations to Inter2 using colsplit
-library(reshape)
-Inter2$CamsLines <- row.names(Inter2) #replicating LineID for separation
-Inter2 <- cbind(Inter2[,1:2],
-             colsplit(Inter2$CamsLines, "[_]", names=c("CamStation", "LineNo"))) #Prevents NAs from arising in CamStation when LineIDs were duplicated
-intLines250 <- as.data.frame(summary(Inter2$CamStation))# returns number of lines with intersections, not number of intersections--> Acceptable?
-colnames(intLines250) <- "NumIntLines"
-hist(intLines250$NumIntLines) #Double the number of intersections (counts overlap for both lines involved)
-
-intLines250$NumIntersections <- intLines250$NumIntLines/2
-## Still overestimates where multiple polylines were used to make up one line/trail
+## Add CamStations to In
 
 
 
