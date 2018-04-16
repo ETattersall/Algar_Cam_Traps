@@ -62,7 +62,7 @@ LineDens <- function(buffer){
   Length <- Length[1:60,]
 }
 
-### LineDensity at 250m buffer
+### LineDensity at 8 buffer sizes
 LD250 <- LineDens(250)
 LD500 <- LineDens(500)
 LD750 <- LineDens(750)
@@ -155,6 +155,7 @@ class(Inter1)
 ## Remove if row value = column value (duplicate, line matched with itself)
 Inter2 <- Inter1[which(!Inter1$row == Inter1$col),]
 ## Add CamStations to In
+
 
 
 
@@ -505,3 +506,37 @@ require(ggplot2)
 fig.a <- ggplot(data = Density_8scales, aes(x = Scale, y = LineDensity, fill = Scale)) + geom_point()
 fig.a + geom_smooth(method = "auto") #Line density seems to exponentially decrease with increasing scale
 #####
+
+#### Checking collinearity between intersections and LD ####
+## Manually extracting intersections for 12 camera stations
+summary(Algcoord)
+## Subsetting points for 12 stations (3 of each treatment, spread across landscape)
+s1 <- Algcoord[Algcoord$CamStation == "Algar01" | Algcoord$CamStation == "Algar54" | Algcoord$CamStation == "Algar32" | Algcoord$CamStation == "Algar28" | Algcoord$CamStation == "Algar12" | Algcoord$CamStation == "Algar59" | Algcoord$CamStation == "Algar31" | Algcoord$CamStation == "Algar24" | Algcoord$CamStation == "Algar08" | Algcoord$CamStation == "Algar34" | Algcoord$CamStation == "Algar47" | Algcoord$CamStation == "Algar16", ]
+summary(s1)
+plot(s1)
+
+### Clip AlgLines to 12 points for buffers between 250m -1250m
+b250 <- SpClip(s1, AlgLines, 250)
+b500 <- SpClip(s1, AlgLines, 500)
+b750 <- SpClip(s1, AlgLines, 750)
+b1000 <- SpClip(s1, AlgLines, 1000)
+b1250 <- SpClip(s1, AlgLines, 1250)
+
+## Plot each to count intersections
+plot(b250)
+plot(b500)
+plot(b750)
+plot(b1000)
+plot(b1250)
+
+## Recorded in Line_Int_Collinearities.csv (intersection count rough - difficult to determine at low resolution)
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+Col <- read.csv("Line_Int_Collinearities.csv")
+
+plot(Col$LD_250, Col$Int_250)
+plot(Col$LD_500, Col$Int_500)
+plot(Col$LD_750, Col$Int_750)
+plot(Col$LD_1000, Col$Int_1000)
+plot(Col$LD_1250, Col$Int_1250)
+
+## Positively correlated. Will therefore remove intersections from analysis
