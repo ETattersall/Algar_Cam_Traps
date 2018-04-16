@@ -59,7 +59,7 @@ rename.tab <- imageRename(inDir            = "Raw_images",
 
 #### Step 3: Copy images into new folder ####
 #outDir can't be same as inDir and can't be a subdirectory
-Algar.rename <- imageRename(inDir            =   "Raw_images",
+Rich.rename <- imageRename(inDir            =   "Raw_images",
                             outDir           =   "Renamed_Images",
                             hasCameraFolders =  FALSE,
                             copyImages       =  TRUE,
