@@ -71,17 +71,21 @@ LD1250 <- LineDens(1250)
 LD1500 <- LineDens(1500)
 LD1750 <- LineDens(1750)
 LD2000 <- LineDens(2000)
+LD2250 <- LineDens(2250)
+LD2500 <- LineDens(2500)
+LD2750 <- LineDens(2750)
+LD3000 <- LineDens(3000)
 
-LD_Lines <- cbind.data.frame(LD250$CamStation, LD250$LineDensity_km, LD500$LineDensity_km,LD750$LineDensity_km,LD1000$LineDensity_km, LD1250$LineDensity_km, LD1500$LineDensity_km,LD1750$LineDensity_km, LD2000$LineDensity_km )
-colnames(LD_Lines) <- c("CamStation", "250m", "500m", "750m","1000m", "1250m", "1500m", "1750m", "2000m")
+LD_Lines <- cbind.data.frame(LD250$CamStation, LD250$LineDensity_km, LD500$LineDensity_km,LD750$LineDensity_km,LD1000$LineDensity_km, LD1250$LineDensity_km, LD1500$LineDensity_km,LD1750$LineDensity_km, LD2000$LineDensity_km, LD2250$LineDensity_km, LD2500$LineDensity_km, LD2750$LineDensity_km, LD3000$LineDensity_km )
+colnames(LD_Lines) <- c("CamStation", "250m", "500m", "750m","1000m", "1250m", "1500m", "1750m", "2000m", "2250m", "2500m", "2750m", "3000m")
 
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 write.csv(LD_Lines, "AlgarStationsLD_Lines.csv")
 
 # Rename columns (need to be numeric for plotting)
-colnames(LD_Lines) <- c("CamStation", "250", "500", "750","1000", "1250", "1500", "1750", "2000")
+colnames(LD_Lines) <- c("CamStation", "250", "500", "750","1000", "1250", "1500", "1750", "2000", "2250", "2500", "2750", "3000")
 #Gather Scales into one colum
-LD_Lines <- gather(data = LD_Lines, key = Scale, value = LineDensity, 2:9)
+LD_Lines <- gather(data = LD_Lines, key = Scale, value = LineDensity, 2:13)
 str(LD_Lines) #Scale is character class, convert to numeric
 LD_Lines$Scale <- as.numeric(LD_Lines$Scale)
 str(LD_Lines)
@@ -186,6 +190,13 @@ det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
 det$LD1500 <- LineDens$X1500m[match(det$Site, LineDens$CamStation)]
 det$LD1750 <- LineDens$X1750m[match(det$Site, LineDens$CamStation)]
 det$LD2000 <- LineDens$X2000m[match(det$Site, LineDens$CamStation)]
+det$LD2250 <- LineDens$X2250m[match(det$Site, LineDens$CamStation)]
+det$LD2500 <- LineDens$X2500m[match(det$Site, LineDens$CamStation)]
+det$LD2750 <- LineDens$X2750m[match(det$Site, LineDens$CamStation)]
+det$LD3000 <- LineDens$X3000m[match(det$Site, LineDens$CamStation)]
+
+
+
 
 ### Wolf models
 Wolf.0 <- glmmTMB(Wolf~1, data = det, family = nbinom2)
@@ -197,28 +208,54 @@ Wolf.1250 <- glmmTMB(Wolf~LD1250, data = det, family = nbinom2)
 Wolf.1500 <- glmmTMB(Wolf~LD1500, data = det, family = nbinom2)
 Wolf.1750 <- glmmTMB(Wolf~LD1750, data = det, family = nbinom2)
 Wolf.2000 <- glmmTMB(Wolf~LD2000, data = det, family = nbinom2)
+Wolf.2250 <- glmmTMB(Wolf~LD2250, data = det, family = nbinom2)
+Wolf.2500 <- glmmTMB(Wolf~LD2500, data = det, family = nbinom2)
+Wolf.2750 <- glmmTMB(Wolf~LD2750, data = det, family = nbinom2)
+Wolf.3000 <- glmmTMB(Wolf~LD3000, data = det, family = nbinom2)
 
 ## Model selection with AICctab (bbmle) --> exluding VegHt
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500", "1750", "2000")
-wolftab <- ICtab(Wolf.0,Wolf.250,Wolf.500,Wolf.750,Wolf.1000,Wolf.1250, Wolf.1500, Wolf.1750, Wolf.2000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500m", "1750m", "2000m", "2250m", "2500m", "2750m", "3000m")
+wolftab <- ICtab(Wolf.0,Wolf.250,Wolf.500,Wolf.750,Wolf.1000,Wolf.1250, Wolf.1500, Wolf.1750, Wolf.2000, Wolf.2250, Wolf.2500, Wolf.2750, Wolf.3000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 wolftab
 
 #     dLogLik dAIC df weight
-# NULL  0.0     0.0  2  0.243 
-# 1250m 0.2     1.6  3  0.108 
-# 1500  0.1     1.8  3  0.096 
-# 250m  0.1     1.9  3  0.095 
-# 2000  0.0     1.9  3  0.092 
-# 500m  0.0     1.9  3  0.092 
-# 1750  0.0     1.9  3  0.092 
-# 750m  0.0     2.0  3  0.090 
-# 1000m 0.0     2.0  3  0.090 
+# NULL  0.0     0.0  2  0.177 
+# 1250m 0.2     1.6  3  0.079 
+# 2750m 0.1     1.8  3  0.071 
+# 1500m 0.1     1.8  3  0.070 
+# 250m  0.1     1.9  3  0.069 
+# 2500m 0.1     1.9  3  0.069 
+# 2000m 0.0     1.9  3  0.067 
+# 500m  0.0     1.9  3  0.067 
+# 1750m 0.0     1.9  3  0.067 
+# 3000m 0.0     1.9  3  0.067 
+# 2250m 0.0     2.0  3  0.066 
+# 750m  0.0     2.0  3  0.066 
+# 1000m 0.0     2.0  3  0.066 
+
 
 summary(Wolf.1250)
 summary(Wolf.750)
+
+# Plotting model weights for each scale to determine best scale
+
+class(wolftab) <- "data.frame"
+
+
+wolftab$scale <- c("NULL", 1250, 2750, 1500, 250, 2500, 2000, 500, 1750, 3000, 2250, 750, 1000) #ordered according to ICtab 
+
+#Remove NULL row
+tab <- wolftab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=range(tab$weight), pch=16)
+
 ### No scale significantly better than others for wolves
 
-## Caribou models
+### Caribou models
 Caribou.0 <- glmmTMB(Caribou~1, data = det, family = nbinom2)
 Caribou.250 <- glmmTMB(Caribou~LD250, data = det, family = nbinom2)
 Caribou.500 <- glmmTMB(Caribou~LD500, data = det, family = nbinom2)
@@ -228,27 +265,47 @@ Caribou.1250 <- glmmTMB(Caribou~LD1250, data = det, family = nbinom2)
 Caribou.1500 <- glmmTMB(Caribou~LD1500, data = det, family = nbinom2)
 Caribou.1750 <- glmmTMB(Caribou~LD1750, data = det, family = nbinom2)
 Caribou.2000 <- glmmTMB(Caribou~LD2000, data = det, family = nbinom2)
+Caribou.2250 <- glmmTMB(Caribou~LD2250, data = det, family = nbinom2)
+Caribou.2500 <- glmmTMB(Caribou~LD2500, data = det, family = nbinom2)
+Caribou.2750 <- glmmTMB(Caribou~LD2750, data = det, family = nbinom2)
+Caribou.3000 <- glmmTMB(Caribou~LD3000, data = det, family = nbinom2)
 
 ## Model selection with AICctab (bbmle) --> exluding VegHt
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500m", "1750m", "2000m")
-Cariboutab <- ICtab(Caribou.0,Caribou.250,Caribou.500,Caribou.750,Caribou.1000,Caribou.1250, Caribou.1500, Caribou.1750, Caribou.2000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500m", "1750m", "2000m", "2250m", "2500m", "2750m", "3000m")
+Cariboutab <- ICtab(Caribou.0,Caribou.250,Caribou.500,Caribou.750,Caribou.1000,Caribou.1250, Caribou.1500, Caribou.1750, Caribou.2000, Caribou.2250, Caribou.2500, Caribou.2750, Caribou.3000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 Cariboutab
 
 #      dLogLik dAIC df weight
-# 1750m 2.4     0.0  3  0.313 
-# 250m  1.9     1.0  3  0.190 
-# 2000m 1.5     1.7  3  0.135 
-# 1500m 1.4     2.1  3  0.112 
-# NULL  0.0     2.8  2  0.078 
-# 1250m 0.8     3.1  3  0.065 
-# 1000m 0.4     4.1  3  0.041 
-# 500m  0.3     4.2  3  0.038 
-# 750m  0.0     4.8  3  0.029 
+# 1750m 2.4     0.0  3  0.268 
+# 250m  1.9     1.0  3  0.163 
+# 2000m 1.5     1.7  3  0.116 
+# 1500m 1.4     2.1  3  0.096 
+# NULL  0.0     2.8  2  0.067 
+# 2250m 0.8     3.1  3  0.057 
+# 1250m 0.8     3.1  3  0.056 
+# 1000m 0.4     4.1  3  0.035 
+# 2500m 0.3     4.2  3  0.033 
+# 500m  0.3     4.2  3  0.032 
+# 2750m 0.1     4.6  3  0.027 
+# 750m  0.0     4.8  3  0.025 
+# 3000m 0.0     4.8  3  0.025
 
-## 250m linear density strongest predictor
-summary(Caribou.250)
+# Plotting model weights for each scale to determine best scale
+class(Cariboutab) <- "data.frame"
 
-## WTDeer models
+
+Cariboutab$scale <- c(1750,250,2000,1500,"NULL",2250,1250,1000,2500,500,2750,750,3000) #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Cariboutab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=range(tab$weight), pch=16)
+
+### WTDeer models
 WTDeer.0 <- glmmTMB(WTDeer~1, data = det, family = nbinom2)
 WTDeer.250 <- glmmTMB(WTDeer~LD250, data = det, family = nbinom2)
 WTDeer.500 <- glmmTMB(WTDeer~LD500, data = det, family = nbinom2)
@@ -258,26 +315,49 @@ WTDeer.1250 <- glmmTMB(WTDeer~LD1250, data = det, family = nbinom2)
 WTDeer.1500 <- glmmTMB(WTDeer~LD1500, data = det, family = nbinom2)
 WTDeer.1750 <- glmmTMB(WTDeer~LD1750, data = det, family = nbinom2)
 WTDeer.2000 <- glmmTMB(WTDeer~LD2000, data = det, family = nbinom2)
+WTDeer.2250 <- glmmTMB(WTDeer~LD2250, data = det, family = nbinom2)
+WTDeer.2500 <- glmmTMB(WTDeer~LD2500, data = det, family = nbinom2)
+WTDeer.2750 <- glmmTMB(WTDeer~LD2750, data = det, family = nbinom2)
+WTDeer.3000 <- glmmTMB(WTDeer~LD3000, data = det, family = nbinom2)
 
 ## Model selection with AICctab (bbmle) --> exluding VegHt
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500m", "1750m", "2000m")
-WTDeertab <- ICtab(WTDeer.0,WTDeer.250,WTDeer.500,WTDeer.750,WTDeer.1000,WTDeer.1250, WTDeer.1500, WTDeer.1750, WTDeer.2000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500m", "1750m", "2000m", "2250m", "2500m", "2750m", "3000m")
+WTDeertab <- ICtab(WTDeer.0,WTDeer.250,WTDeer.500,WTDeer.750,WTDeer.1000,WTDeer.1250, WTDeer.1500, WTDeer.1750, WTDeer.2000, WTDeer.2250, WTDeer.2500, WTDeer.2750, WTDeer.3000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 WTDeertab
 
 #      dLogLik dAIC df weight
-# 750m  13.7     0.0 3  0.985 
+# 750m  13.7     0.0 3  0.984 
 # 1000m  9.4     8.6 3  0.014 
 # 500m   6.2    15.0 3  <0.001
 # 1750m  6.1    15.2 3  <0.001
 # 2000m  6.0    15.3 3  <0.001
 # 1250m  5.2    16.9 3  <0.001
+# 2250m  4.4    18.6 3  <0.001
 # 1500m  4.2    18.9 3  <0.001
+# 2500m  3.3    20.8 3  <0.001
+# 2750m  3.1    21.2 3  <0.001
+# 3000m  2.2    22.9 3  <0.001
 # NULL   0.0    25.4 2  <0.001
 # 250m   0.7    25.9 3  <0.001
 
 summary(WTDeer.750)
+# Plotting model weights for each scale to determine best scale
+class(WTDeertab) <- "data.frame"
 
-## Moose models
+
+WTDeertab$scale <- c(750,1000,500,1750,2000,1250,2250,1500,2500,2750,3000, "NULL", 250) #ordered according to ICtab 
+
+#Remove NULL row
+tab <- WTDeertab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
+
+
+### Moose models
 Moose.0 <- glmmTMB(Moose~1, data = det, family = nbinom2)
 Moose.250 <- glmmTMB(Moose~LD250, data = det, family = nbinom2)
 Moose.500 <- glmmTMB(Moose~LD500, data = det, family = nbinom2)
@@ -287,22 +367,46 @@ Moose.1250 <- glmmTMB(Moose~LD1250, data = det, family = nbinom2)
 Moose.1500 <- glmmTMB(Moose~LD1500, data = det, family = nbinom2)
 Moose.1750 <- glmmTMB(Moose~LD1750, data = det, family = nbinom2)
 Moose.2000 <- glmmTMB(Moose~LD2000, data = det, family = nbinom2)
+Moose.2250 <- glmmTMB(Moose~LD2250, data = det, family = nbinom2)
+Moose.2500 <- glmmTMB(Moose~LD2500, data = det, family = nbinom2)
+Moose.2750 <- glmmTMB(Moose~LD2750, data = det, family = nbinom2)
+Moose.3000 <- glmmTMB(Moose~LD3000, data = det, family = nbinom2)
 
 ## Model selection with AICctab (bbmle) --> exluding VegHt
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500m", "1750m", "2000m")
-Moosetab <- ICtab(Moose.0,Moose.250,Moose.500,Moose.750,Moose.1000,Moose.1250, Moose.1500, Moose.1750, Moose.2000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500m", "1750m", "2000m", "2250m", "2500m", "2750m", "3000m")
+Moosetab <- ICtab(Moose.0,Moose.250,Moose.500,Moose.750,Moose.1000,Moose.1250, Moose.1500, Moose.1750, Moose.2000, Moose.2250, Moose.2500, Moose.2750, Moose.3000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 Moosetab
 
 #      dLogLik dAIC df weight
-# NULL  0.0     0.0  2  0.200 
-# 1250m 0.4     1.2  3  0.112 
-# 2000m 0.4     1.2  3  0.112 
-# 1000m 0.3     1.3  3  0.103 
-# 1750m 0.3     1.4  3  0.102 
-# 750m  0.3     1.4  3  0.100 
-# 1500m 0.3     1.4  3  0.098 
-# 500m  0.3     1.5  3  0.095 
-# 250m  0.1     1.9  3  0.078
+# NULL  0.0     0.0  2  0.131 
+# 2500m 0.7     0.5  3  0.100 
+# 2250m 0.6     0.7  3  0.090 
+# 2750m 0.5     0.9  3  0.083 
+# 3000m 0.4     1.1  3  0.075 
+# 1250m 0.4     1.2  3  0.073 
+# 2000m 0.4     1.2  3  0.073 
+# 1000m 0.3     1.3  3  0.067 
+# 1750m 0.3     1.4  3  0.066 
+# 750m  0.3     1.4  3  0.065 
+# 1500m 0.3     1.4  3  0.064 
+# 500m  0.3     1.5  3  0.062 
+# 250m  0.1     1.9  3  0.051 
+
+
+# Plotting model weights for each scale to determine best scale
+class(Moosetab) <- "data.frame"
+
+
+Moosetab$scale <- c("NULL", 2500,2250,2750,3000,1250,2000,1000,1750,750,1500,500,250) #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Moosetab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=range(tab$weight), xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=range(tab$weight), pch=16)
 
 
 
@@ -320,7 +424,7 @@ class(det$Month)
 
 
 
-bear <- det %>% filter(Month >= 4 & Month <= 10) %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, SnowDays, Year, Month, Dist2water_km, LD250,LD500,LD750,LD1000,LD1250, LD1500, LD1750, LD2000)
+bear <- det %>% filter(Month >= 4 & Month <= 10) %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, SnowDays, Year, Month, Dist2water_km, LD250,LD500,LD750,LD1000,LD1250, LD1500, LD1750, LD2000, LD2250, LD2500, LD2750, LD3000)
 
 
 plot(bear$Yr_Month, bear$Blackbear)
@@ -328,7 +432,7 @@ plot(bear$Month, bear$Blackbear)
 hist(bear$Month)
 hist(bear$Blackbear)
 
-## Bear models
+### Blackbear models
 Blackbear.0 <- glmmTMB(Blackbear~1, data = bear, family = nbinom2)
 Blackbear.250 <- glmmTMB(Blackbear~LD250, data = bear, family = nbinom2)
 Blackbear.500 <- glmmTMB(Blackbear~LD500, data = bear, family = nbinom2)
@@ -338,23 +442,46 @@ Blackbear.1250 <- glmmTMB(Blackbear~LD1250, data = bear, family = nbinom2)
 Blackbear.1500 <- glmmTMB(Blackbear~LD1500, data = bear, family = nbinom2)
 Blackbear.1750 <- glmmTMB(Blackbear~LD1750, data = bear, family = nbinom2)
 Blackbear.2000 <- glmmTMB(Blackbear~LD2000, data = bear, family = nbinom2)
+Blackbear.2250 <- glmmTMB(Blackbear~LD2250, data = bear, family = nbinom2)
+Blackbear.2500 <- glmmTMB(Blackbear~LD2500, data = bear, family = nbinom2)
+Blackbear.2750 <- glmmTMB(Blackbear~LD2750, data = bear, family = nbinom2)
+Blackbear.3000 <- glmmTMB(Blackbear~LD3000, data = bear, family = nbinom2)
 
 ## Model selection with AICctab (bbmle) --> exluding VegHt
-modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500m", "1750m", "2000m")
-Blackbeartab <- ICtab(Blackbear.0,Blackbear.250,Blackbear.500,Blackbear.750,Blackbear.1000,Blackbear.1250, Blackbear.1500, Blackbear.1750, Blackbear.2000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500m", "1750m", "2000m", "2250m", "2500m", "2750m", "3000m")
+Blackbeartab <- ICtab(Blackbear.0,Blackbear.250,Blackbear.500,Blackbear.750,Blackbear.1000,Blackbear.1250, Blackbear.1500, Blackbear.1750, Blackbear.2000, Blackbear.2250, Blackbear.2500, Blackbear.2750, Blackbear.3000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 Blackbeartab
 
 #     dLogLik dAIC df weight
-# 750m  4.3     0.0  3  0.353 
-# 500m  3.9     0.8  3  0.240 
-# 1000m 3.2     2.2  3  0.120 
-# 2000m 3.0     2.5  3  0.100 
-# 1750m 2.7     3.1  3  0.073 
-# 250m  2.3     4.0  3  0.048 
-# 1250m 1.8     5.0  3  0.029 
-# 1500m 1.6     5.4  3  0.023 
-# NULL  0.0     6.6  2  0.013
+# 750m  4.3     0.0  3  0.301 
+# 500m  3.9     0.8  3  0.204 
+# 1000m 3.2     2.2  3  0.102 
+# 2000m 3.0     2.5  3  0.085 
+# 1750m 2.7     3.1  3  0.062 
+# 2250m 2.5     3.5  3  0.052 
+# 250m  2.3     4.0  3  0.041 
+# 2750m 2.1     4.3  3  0.035 
+# 2500m 2.1     4.4  3  0.034 
+# 3000m 1.9     4.7  3  0.029 
+# 1250m 1.8     5.0  3  0.025 
+# 1500m 1.6     5.4  3  0.020 
+# NULL  0.0     6.6  2  0.011
 
+
+# Plotting model weights for each scale to determine best scale
+class(Blackbeartab) <- "data.frame"
+
+
+Blackbeartab$scale <- c(750,500,1000,2000,1750,2250,250,2750,2500,3000,1250,1500, "NULL") #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Blackbeartab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=range(tab$weight), xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=range(tab$weight), pch=16)
 
 
 #### Linear density with ABMI HF: Re-clipping ABMI HF layer to desired scales (works, but wrong layer) ####
