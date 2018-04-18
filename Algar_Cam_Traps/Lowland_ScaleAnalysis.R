@@ -53,6 +53,21 @@ wolftab
 # 1250m 0.5     8.2  3  0.0116
 # 250m  0.1     9.0  3  0.0077
 
+# Plotting model weights for each scale to determine best scale
+class(wolftab) <- "data.frame"
+
+
+wolftab$scale <- c(500,2000,750,1000,1750,"NULL",1500,1250,250) #ordered according to ICtab 
+
+#Remove NULL row
+tab <- wolftab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
+
 ### Caribou models
 Caribou.0 <- glmmTMB(Caribou~1, data = det, family = nbinom2)
 Caribou.250 <- glmmTMB(Caribou~low250, data = det, family = nbinom2)
@@ -79,6 +94,21 @@ Cariboutab
 # 500m  12.4    37.0 3  <0.001
 # 250m   3.1    55.5 3  <0.001
 # NULL   0.0    59.8 2  <0.001
+
+# Plotting model weights for each scale to determine best scale
+class(Cariboutab) <- "data.frame"
+
+
+Cariboutab$scale <- c(1750,2000,1500,1250,1000,750,500,250,"NULL") #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Cariboutab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
 
 ### WTDeer models
 WTDeer.0 <- glmmTMB(WTDeer~1, data = det, family = nbinom2)
@@ -107,6 +137,21 @@ WTDeertab
 # 750m  18.4    45.8 3  <0.001
 # NULL   0.0    80.6 2  <0.001
 
+# Plotting model weights for each scale to determine best scale
+class(WTDeertab) <- "data.frame"
+
+
+WTDeertab$scale <- c(200,1750,1500,500,1250,1000,250,750,"NULL") #ordered according to ICtab 
+
+#Remove NULL row
+tab <- WTDeertab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
+
 ### Moose models
 Moose.0 <- glmmTMB(Moose~1, data = det, family = nbinom2)
 Moose.250 <- glmmTMB(Moose~low250, data = det, family = nbinom2)
@@ -133,6 +178,22 @@ Moosetab
 # 1500  0.1     4.6  3  0.043 
 # 1750  0.0     4.7  3  0.041 
 # 2000  0.0     4.8  3  0.041
+
+# Plotting model weights for each scale to determine best scale
+class(Moosetab) <- "data.frame"
+
+
+Moosetab$scale <- c(250,500,"NULL",750,1000,1250,1500,1750,2000) #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Moosetab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
+
 
 ## Blackbear, truncated season
 bear <- det %>% filter(Month >= 4 & Month <= 10) %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, SnowDays, Year, Month, Dist2water_km, low250,low500,low750,low1000,low1250, low1500, low1750, low2000)
@@ -163,3 +224,19 @@ Blackbeartab
 # 750m  1.2     2.8  3  0.073 
 # 1250m 1.1     2.9  3  0.068 
 # NULL  0.0     3.2  2  0.059 
+
+
+# Plotting model weights for each scale to determine best scale
+class(Blackbeartab) <- "data.frame"
+
+
+Blackbeartab$scale <- c(500,2000,250,1000,1750,1500,750,1250, "NULL") #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Blackbeartab %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+# Plot weight for each scale
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
