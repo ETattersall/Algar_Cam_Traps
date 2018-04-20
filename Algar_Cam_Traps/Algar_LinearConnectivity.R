@@ -28,6 +28,7 @@ AlgarHF <- readOGR("GIS", "AlgarSites_HF_15kmbuffer")
 summary(AlgarHF)
 summary(AlgarHF$PUBLIC_COD) # Linear disturbances = Seismic lines (by far the most), pipelines, transmission lines, Road/Trail (Vegetated)
 
+
 AlgLines <- readOGR("LinearFeat", "LinearFeatNTS_Algar10kClip")
 summary(AlgLines) #FeatureTyp = 3D, cutline, Electrical Transmission Line, Trail. Should keep all
 #In tmerc, units = m
@@ -37,6 +38,51 @@ proj4string(HF_UTM)
 AlgLines <- HF_UTM #Overwrite original HF CRS
 summary(AlgLines)
 plot(AlgLines)
+
+## Algar study area
+Algar <- readOGR("GIS", "AVIE_Veg_simple")
+plot(Algar)
+summary(Algar)
+gArea(Algar)
+
+#### Linear density of total area
+# Clip AlgLines to Algar area
+AL1 <- raster::intersect(AlgLines, Algar)
+plot(AL1)
+summary(AL1)
+gLength(AL1)
+
+# Lengths of linear features
+Seismic <- gLength(AL1[AL1$FeatureTyp == "Cutline", ])/1000 #523.6 km
+Pipeline <- gLength(AL1[AL1$FeatureTyp == "Pipeline", ])/1000 #63.14 km
+Trail <- gLength(AL1[AL1$FeatureTyp == "Trail", ])/1000 #65.60 km
+plot(AL1[AL1$FeatureTyp=="Cutline", ])
+plot(AL1[AL1$FeatureTyp=="Trail", ])
+plot(AL1[AL1$FeatureTyp=="Pipeline", ])
+
+# Compare to other layer of lines
+AL2 <- readOGR("GIS", "Algar_StudyArea_Seismic_line")
+plot(AL2)
+summary(AL2)
+
+## Calculate linear density
+LDtotal <- (gLength(AL1)/gArea(Algar))*1000 ## 1.147 km/km^2
+
+# Compare to other layer of lines
+AL2 <- readOGR("GIS", "Algar_StudyArea_Seismic_line")
+plot(AL2)
+summary(AL2)
+gLength(AL2)
+LDtotal2 <- (gLength(AL2)/gArea(Algar))*1000 ## 2.01 km/km^2 --> higher because of overlap and line object fragmentation?
+
+
+## Convert AlgLines to UTM
+HF_UTM <- spTransform(AlgLines, CRSobj = CRS(proj4string(Algcoord)))
+proj4string(HF_UTM)
+AlgLines <- HF_UTM #Overwrite original HF CRS
+summary(AlgLines)
+plot(AlgLines)
+
 
 #####Take 3: HF needs to be polylines, not polygons. Try using LinearFeatEastNTS_Algar10kClip from LinearFeat folder ####
 
