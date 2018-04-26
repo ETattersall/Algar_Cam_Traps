@@ -122,3 +122,30 @@ pairs(sp.covar)
 summary(sp.covar)
 
 write.csv(sp.covar, "Spatial_covariates.csv")
+
+
+### Apr. 4, 2018: Spatial covariates are likely collinear with Wolf detections, which could affect their use as a covariate ####
+covar <- read.csv("Spatial_covariates.csv") 
+GLMMdata <- read.csv("GLMMdata_3deployments.csv") ## Only differs from MonthlyDetections by not have distance to Water
+
+###### LOS ####
+apr2018 <- read.csv("Station_data/Algar_CameraStationData_Apr2018.csv")
+str(apr2018)
+
+## LOS averages for both directions
+apr2018$Dir1_MaxMean <- rowMeans(apr2018[ , 29:31], na.rm = TRUE)
+summary(apr2018$Dir1_MaxMean)
+hist(apr2018$Dir1_MaxMean) #roughly poisson distributed
+
+apr2018$Dir2_MaxMean <- rowMeans(apr2018[ , 37:39], na.rm = TRUE)
+summary(apr2018$Dir2_MaxMean)
+hist(apr2018$Dir2_MaxMean)
+
+##Dir1 and Dir2 are arbitrarily assigned --> average those for an overall site score
+apr2018$LOS_mean <- rowMeans(apr2018[, 43:44], na.rm = TRUE)
+table(apr2018$LOS_mean) #4 sites have 600 as value --> indicates that rangefinder maxed out. How to address?
+summary(apr2018$LOS_mean)
+hist(apr2018$LOS_mean)
+
+### Save to csv
+write.csv(apr2018, "Station_data/Algar_CameraStationData_Apr2018.csv")
