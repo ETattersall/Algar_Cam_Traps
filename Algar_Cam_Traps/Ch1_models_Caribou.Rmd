@@ -12,8 +12,9 @@ Here I will:
 3. Build hypothesis models with line covariates + environmental  
 4. Perform model selection with AIC  
 5. Calculate evidence ratios (AICwt of Best Model/ AICwt of other models)  
-6. Model Averaging?
-7. Standardize parameter estimates for easy interpretation
+6. Checking residuals of Top Model
+7. Model Averaging?
+8. Standardize parameter estimates for easy interpretation
 
 ```{r, echo=FALSE, message=FALSE}
 library(glmmTMB)
@@ -225,7 +226,7 @@ dispfun(L9)
 
 E1 <- resid(L9, type = "pearson") #Pearson residuals
 F1 <- fitted(L9)
-op <- par(mfrow = c(3,2), mar = c(5,4,1,2))
+op <- par(mfrow = c(3,3), mar = c(5,4,1,2))
 plot(x = F1,
      y = E1,
      xlab = "Fitted values",
@@ -237,6 +238,8 @@ plot(newdat$Treatment, E1, xlab = "Treatment", ylab = "Residuals")
 plot(newdat$LineWidth, E1, xlab = "Line Width", ylab = "Residuals")
 plot(newdat$low1750, E1, xlab = "Proportion of Lowland habitat", ylab = "Residuals")
 plot(newdat$SnowDays, E1, xlab = "Snow Days per Month", ylab = "Residuals")
+plot(newdat$Site, E1, xlab = "Site", ylab = "Residuals")
+plot(newdat$Month, E1, xlab = "Month", ylab = "Residuals")
 par(op)
 
 
