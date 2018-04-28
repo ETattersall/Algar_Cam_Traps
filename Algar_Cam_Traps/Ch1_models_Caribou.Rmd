@@ -1,21 +1,20 @@
 ---
-title: "Ch1_models_Caribou"
+title: "Ch1_models_caribou"
 author: "Erin Tattersall"
-date: "April 26, 2018"
-output: word_document
+date: "April 27, 2018"
+output: html_document
 ---
 
-Modelling detections rates between November 2015 and November 2017 for caribou, wolves, black bears, white-tailed deer, and moose.
-Seismic line characteristic covariates: treatment, vegetation height, line connectivity, line width
-Environmental covariates: proportion of lowland habitat, SnowDays, Distance to water
+  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom1 distribution for caribou data (see Ch1_caribou_modelDistribution.Rmd)    
+Here I will:  
+1. Select random effects to model random structure  
+2. Build models with environmental covariates only  
+3. Build hypothesis models with line covariates + environmental  
+4. Perform model selection with AIC  
+5. Calculate evidence ratios (AICwt of Best Model/ AICwt of other models)  
+6. Model Averaging?
+7. Standardize parameter estimates for easy interpretation
 
-For full script, see Ch1_models.R
-
-1. Caribou
-
-a. Checked for data for 0's and overdispersion
-
-Proportion of zeros in data
 ```{r, echo=FALSE, message=FALSE}
 library(glmmTMB)
 library(bbmle) #AICtab function
@@ -23,6 +22,7 @@ library(ggplot2)
 library(lmtest)
 library(reshape)
 library(dplyr)
+library(AICcmodavg)
 
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 
@@ -71,103 +71,173 @@ det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
 ## Need to first remove NAs from explanatory variables
 newdat <-  det[ , c(1,2,12:34)] #Naming columns in df
 newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
+```
 
-#### Caribou models ####
-## Lowland measured at 1750m, LD measured at 1750m
-# Not including Dist2Water --> no corresponding hypothesis
-
-### Exploring distribution and overdispersion (code from Zuur & Ieno, 2016)
-##1. Proportion of 0's in data
-table(is.na(det$Caribou)) #647 NAs, 853 non-NAs
-table(det$Caribou == 0)
-```
-```{r}
-sum(det$Caribou==0, na.rm = TRUE)/nrow(det)
-
-```
-Fitting a basic poisson GLM and checking overdispersion, using global model
-```{r}
-glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays, data = det, family = poisson)
-# Residuals and overdispersion
-E1 <- resid(glm1, type="pearson")
-N <- nrow(det)
-p <- length(coef(glm1))
-sum(E1^2)/(N-p)
-```
-Simulating data to check probability of calculated dispersion.
-```{r, include=FALSE, echo=FALSE, warning=FALSE}
-#function for calculating overdispersion (as above)
-MyDispersion <- function(y, mu, N, p){
-  e <- (y-mu)/sqrt(mu)
-  sum(e^2)/(N-p)
-}
-muFit <- fitted(glm1) #fitted values from model
-Ysim <- matrix(nrow = N, ncol = 100000) #matrix storing simulated responses
-DispersionSim <- vector(length = 100000)#vector storing Dispersion value
-#Loop running simulation of Poisson distributed data and calculating Dispersion value
-for(i in 1:100000){
-  Ysim[,i] <- rpois(N,lambda = muFit)
-  DispersionSim[i] <- MyDispersion(Ysim[,i], muFit, N, p) #warnings generated but vector obtained
-}
-```
+## Finding random structure
 ```{r, echo=FALSE}
-#Histogram of dispersion statistics
-hist(DispersionSim)# Simulated statistics are mostly on either side of 1 -->unlikely to have overdispersion
-```
-Histogram indicates that an overdispersion statistic of 0.815 is well within the likely distribution, indicating that the data is not overdispersed.
-
-Comparing the proportion of zeros in data to simulated data for model actually shows that Caribou data has far fewer zeros than would be expected in a Poisson distribution GLM. This may simply mean that a Poisson GLM is not appropriate for this data.
-```{r, echo=FALSE}
-## Comparing proportions of 0's in simulated data to that in sampled data
-zeros <- vector(length = 100000)
-for(i in 1:100000){
-  zeros[i] <- sum(Ysim[,i] == 0) / N
-}
-
-plot(table(zeros),
-     axes = FALSE,
-     xlim = c(0.4, 1),
-     xlab = "Percentage of zeros",
-     ylab = "Frequency")
-
-axis(2)
-axis(1, 
-     at = c(0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
-     labels = c("40%", "50%", "60%", "70%", "80%", "90%"))
-points(x = sum(det$Caribou==0, na.rm = TRUE)/ N,
-       y = 0, pch = 16, cex = 5, col = 2)
-```
-
-Previously I had decided on using a zero-inflated model a priori to account for the structured nature of zero counts. However, this may misrepresent the data in some cases.
-
-Comparing the same GLMM (including random effects of Site and Month) modeled as a poisson, nb, ZIP and ZINB (with nbinom1 and nbinom2 differing in how variance changes with mean) yields:
-```{r}
-## Model comparisons of distributions and zero-inflation
-glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = poisson)
-glm2 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = nbinom1(link= "log"))
-glm3 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = nbinom2(link = "log"))
-glm4 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), zi = ~1, data = det, family = poisson)
-glm5 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays +(1| Site) + (1|Month), zi = ~1, data = det, family = nbinom1(link= "log"))
-glm6 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), zi = ~1, data = det, family = nbinom2(link= "log"))
-```
-```{r, echo=FALSE}
-modnames <- c("Poisson", "Nbinom1", "Nbinom2", "ZIP", "ZINB1", "ZINB2")
-ICtab(glm1,glm2,glm3,glm4,glm5,glm6, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
-
-```
-Where the Nbinom1 model's summary output is:
-```{r, echo = FALSE}
-summary(glm2)
-```
- For caribou models, I will therefore use non-zero inflated GLMMs with a nbinom1 distribution (where variance changes linearly with the mean).  
- # Model hypotheses  
- ## Finding random structure
-```{r, echo=FALSE}
-r0 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + SnowDays, data = det, family = nbinom1)
-rSite <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + SnowDays + (1|Site), data = det, family = nbinom1) 
-rMonth <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + SnowDays + (1|Month), data = det, family = nbinom1)
-r2 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+r0 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays, data = det, family = nbinom1)
+rSite <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Site), data = det, family = nbinom1) 
+rMonth <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Month), data = det, family = nbinom1)
+r2 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 ICtab(r0, rSite, rMonth, r2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 ```
-Continue modelling with 2 random effects
- 
+Continue modelling with 2 random effects  
+
+## Environmental models  
+Model Name  | Covariates
+----------- | -------------------
+E1          | None
+E2          | low1750 + SnowDays
+E3          | low1750
+E4          | SnowDays
+
+```{r, echo=FALSE}
+E1 <- glmmTMB(Caribou~1 + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#2. Global model
+E2 <- glmmTMB(Caribou~low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#3. Lowland only
+E3 <- glmmTMB(Caribou~low1750 + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#4. Snow only
+E4 <- glmmTMB(Caribou~SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+ICtab(E1, E2, E3, E4, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE) 
+```
+Continue modelling Line characteristics with both environmental variables  
+
+## Line characteristics  
+Model Name  | Covariates
+----------- | -------------------
+L1          | Treatment + low1750 + SnowDays
+L2          | VegHt + low1750 + SnowDays
+L3          | LD1750 + low1750 + SnowDays
+L4          | LineWidth + low1750 + SnowDays
+L5          | Treatment + LineWidth + low1750 + SnowDays
+L6          | LineWidth + VegHt + low1750 + SnowDays
+L7          | Treatment + LD1750 + low1750 + SnowDays
+L8          | LD1750 + VegHt + low1750 + SnowDays
+L9          | Treatment + VegHt + low1750 + SnowDays
+L10         | Treatment + LineWidth + VegHt + low1750 + SnowDays
+L11         | Treatment + LineWidth + LD1750 + low1750 + SnowDays
+L12         | Treatment + VegHt + LD1750 + low1750 + SnowDays
+L13         | LineWidth + VegHt + LD1750 + low1750 + SnowDays
+L14         | Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays  
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+#1. Treatment
+L1 <- glmmTMB(Caribou~Treatment + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#2. VegHt
+L2 <- glmmTMB(Caribou~ VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#3. Line density
+L3 <- glmmTMB(Caribou~ LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#4. Line Width
+L4 <- glmmTMB(Caribou~ LineWidth + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#5. Treatment + LineWidth
+L5 <- glmmTMB(Caribou~ Treatment + LineWidth + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#6. LineWidth + VegHt
+L6 <- glmmTMB(Caribou~ LineWidth + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#7. Treatment + Line density
+L7 <- glmmTMB(Caribou~ Treatment + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#8. Line density and VegHt
+L8 <- glmmTMB(Caribou~ LD1750 + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#9. VegHt + Treatment
+L9 <- glmmTMB(Caribou~ Treatment + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#10. Treatment, LineWidth, VegHt
+L10 <- glmmTMB(Caribou~ Treatment + LineWidth + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#11. Treatment, LineWidth, Line density
+L11 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#12. Treatment, Line density, VegHt
+L12 <- glmmTMB(Caribou~ Treatment + VegHt + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#13. LineWidth, VegHt, Line density
+L12 <- glmmTMB(Caribou~ LineWidth + VegHt + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#14. Global model - Treatment, Line density, VegHt, LineWidth
+L14 <-  glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+CaribouAIC <- ICtab(E1, E2, E3, E4, L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+CaribouAIC
+```
+  Seven models within 2 dAIC points of each other, with model weights between 8-17%  
+  This suggests that all variables are somewhat influential on the response variable, but to varying degrees  
+  
+  Calculating evidence ratios (AIC wt of best model/AIC weight of others) gives:
+  
+```{r,echo=FALSE, results='hide'}
+EvR <- function(AICwt.high, AICwt.low){
+  EvR <- AICwt.high/AICwt.low
+  print(EvR)
+}
+EvR(CaribouAIC$weight[1], CaribouAIC$weight[2])
+CaribouWt <- CaribouAIC$weight
+CaribouER <- vector(length=17)
+for(i in 2:18){
+  CaribouER[i-1] <- EvR(CaribouWt[1], CaribouWt[i])
+}
+```
+```{r,echo=FALSE}
+CaribouER <- append("", CaribouER)
+ER <- as.data.frame(CaribouER)
+ER$dLogLikelihood <- CaribouAIC$dLogLik
+ER$dAIC <- CaribouAIC$dAIC
+ER$Modelweight <- CaribouAIC$weight
+ER$ModelNames <- c("L9", "L5", "L2", "L8", "L11", "L10", "L14", "L4", "L12", "L6","L13", "L7", "L1", "L3", "E2", "E3", "E4", "E1")
+
+ER <- ER %>% select(ModelNames, dLogLikelihood, dAIC, Modelweight, CaribouER)
+colnames(ER) <- c("ModelNames", "dLogLikelihood", "dAIC", "Modelweight", "EvidenceRatio")
+ER
+
+```
+  
+````{r, echo=FALSE}
+summary(L9)
+```
+
+## Checking Residuals of Top model
+
+### Calculating Overdispersion statistic:
+```{r, echo=FALSE}
+dispfun <- function(m) {
+  r <- residuals(m,type="pearson")
+  n <- df.residual(m)
+  dsq <- sum(r^2)
+  c(dsq=dsq,n=n,disp=dsq/n)
+}
+dispfun(L9)
+```
+  According to a nbinom1 distribution, the response variable is not overdispersed
+
+### Plotting residuals against fitted values and predicted values for all covariates
+```{r, echo=FALSE}
+
+E1 <- resid(L9, type = "pearson") #Pearson residuals
+F1 <- fitted(L9)
+op <- par(mfrow = c(3,2), mar = c(5,4,1,2))
+plot(x = F1,
+     y = E1,
+     xlab = "Fitted values",
+     ylab = "Pearson residuals")
+abline(h=0, lty=2)
+hist(E1, xlab = "Residuals", main = "")
+## Need to use newdat for covariates to remove NAs
+plot(newdat$Treatment, E1, xlab = "Treatment", ylab = "Residuals")
+plot(newdat$LineWidth, E1, xlab = "Line Width", ylab = "Residuals")
+plot(newdat$low1750, E1, xlab = "Proportion of Lowland habitat", ylab = "Residuals")
+plot(newdat$SnowDays, E1, xlab = "Snow Days per Month", ylab = "Residuals")
+par(op)
+
+
+```
