@@ -1,0 +1,483 @@
+##############################################
+# Data_cleaning_AlgarNov2015-Apr2018.R
+## Raw data clean-up, Nov 2017 - April 2018
+## camtrapR recordTable exported from Camelot, includes both summer 2017 and winter 2017-18 deployments
+## Started April 30, 2018
+#############################################
+
+library(plyr)
+library(dplyr) #only load after using revalue function
+library(camtrapR)
+
+
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+
+# Camelot record table
+rc <- read.csv("recordTable_apr2017-2018_raw.csv")
+str(rc)
+head(rc)
+tail(rc)
+summary(rc)
+
+## Algar deployment data
+cams <- read.csv("Station_data/AlgarStations_DeploymentData.csv")
+str(cams) ## Session4, Problem3s
+head(cams)
+
+## Camera active days - should match number of Timelapse images
+## Recorded in SurveyEffort_summaries.docx (as of Apr. 30, in Data Analysis, Protocols --> Figures)
+# First re-calculate for Apr-Nov 2017 (Algar 43 added): to do this need to isolate first 60 cams
+cams60 <- cams[1:60,] %>% select(CamStation, utmE, utmN, Treatment, Session3Start, Problem2_from, Problem2_to,Session4Start)
+camEff <- cameraOperation(cams60, 
+                          stationCol = "CamStation", 
+                          setupCol = "Session3Start", 
+                          retrievalCol = "Session4Start",
+                          hasProblems = TRUE,
+                          dateFormat = "%d/%m/%Y", 
+                          writecsv = FALSE)
+
+sum(camEff,na.rm=T) ##7767
+
+# days per station
+summary(rowSums(camEff,na.rm=T)) # mean = 129.4, median = 203, range = 0 - 206
+
+# Nov 2017 - Apr 2018
+cams2018 <- cams %>% select(CamStation, utmE, utmN, Treatment, Session4Start, Problem3_from, Problem3_to,Session5Start)
+camEff2 <- cameraOperation(cams2018, 
+                          stationCol = "CamStation", 
+                          setupCol = "Session4Start", 
+                          retrievalCol = "Session5Start",
+                          hasProblems = TRUE,
+                          dateFormat = "%d/%m/%Y", 
+                          writecsv = FALSE)
+
+sum(camEff2,na.rm=T) ##8717 --> discrepancy with effort from Timelapse images (8555) could be from time of day when cameras were checked (affects camera being recorded as ACTIVE in Timelapse estimation)
+
+# days per station
+summary(rowSums(camEff2,na.rm=T))
+
+#### Total survey effort calculations
+cams_survey <- read.csv("Station_data/AlgarStations_FullSurveyDeploymentData.csv")
+camEff3 <- cameraOperation(cams_survey, 
+                           stationCol = "CamStation", 
+                           setupCol = "Session1Start", 
+                           retrievalCol = "Session5Start",
+                           hasProblems = TRUE,
+                           dateFormat = "%d/%m/%Y", 
+                           writecsv = FALSE)
+
+sum(camEff3,na.rm=T) ## 34, 277 camera days
+summary(rowSums(camEff3,na.rm=T)) ## mean = 469.5, median = 432.0, range = 121 - 886
+
+## Cams on lines only
+seiscams <- cams_survey[1:60,]
+camEff4 <- cameraOperation(seiscams, 
+                           stationCol = "CamStation", 
+                           setupCol = "Session1Start", 
+                           retrievalCol = "Session5Start",
+                           hasProblems = TRUE,
+                           dateFormat = "%d/%m/%Y", 
+                           writecsv = FALSE)
+
+sum(camEff4,na.rm=T) ## 32, 371 camera days
+summary(rowSums(camEff4,na.rm=T)) #mean = 539.5 median = 513, range = 158 - 886
+
+#### Data cleaning: recordTable ####
+table(rc$Species)
+summary(rc$Date)
+### Current Camelot recordTable includes 2 sessions: Apr - Nov 2017, and Nov 2017 - Apr 2018
+### Need recordTable for Nov 2017-Apr2018 only to count animal detections in this session
+### remove entries if they match the earlier Nov - Apr 2017 recordTable
+rc2017 <- read.csv("2017.01_rawrecordTable.csv")
+
+## Nov 2017 - Apr 2018 recordTable 
+rc2017.02 <- anti_join(rc, rc2017, by = "FileName") #FileName is unique to the detection event --> assigned in Camelot
+# rc2017.02 entries = rc - rc2017
+
+str(rc2017.02)
+summary(rc2017.02$DateTimeOriginal)
+rc2017.02 <- rc2017.02[order(rc2017.02$DateTimeOriginal),]
+head(rc2017.02)
+tail(rc2017.02)
+# Still includes Algar43 and a few other files not present on first recordTable
+# First 41 detections occur before session4
+## Save rc2017.02, including events occuring in Session3
+write.csv(rc2017.02, "2017.02_rawrecordTable.csv")
+
+# 685 - 41 = 644 independent detections in Session4
+rc2017.02 <- rc2017.02[42:685,]
+table(rc2017.02$Species) ## 11 non-human mammal species detected
+
+## Continue working with rc --> recordTable for Apr 2017 - Apr 2018. This ensures that Algar43 detections are included
+rc <- rc[order(rc$Station, rc$DateTimeOriginal), ]
+str(rc)
+summary(rc$Species)
+
+## Remove No Animal and Unknown
+rc <- rc[!rc$Species == "No Animal", ]
+rc <- rc[!rc$Species == "Unknown species", ]
+
+
+## Change known birds to bird spp in 2017
+rc$Species <- gsub("Perisoreus canadensis", "Bird spp.", rc$Species)
+rc$Species <- gsub("Colaptes auratus", "Bird spp.", rc$Species)
+rc$Species <- gsub("Tympanuchus phasianellus", "Bird spp.", rc$Species)
+rc$Species <- gsub("Strix nebulosa", "Bird spp.", rc$Species)
+rc$Species <- gsub("Canachites canadensis", "Bird spp.", rc$Species)
+rc$Species <- gsub("Branta canadensis", "Bird spp.", rc$Species)
+rc$Species <- gsub("Melospiza melodia", "Bird spp.", rc$Species)
+rc$Species <- gsub("Haemorhous purpureus", "Bird spp.", rc$Species)
+
+table(rc$Species)
+
+## Remove additional rows from Camelot record table (Camera, CameraName, TrapAndCamera)
+rc$Camera <- NULL
+rc$CameraName <- NULL
+rc$TrapAndCamera <- NULL
+
+## Combining to first 2 deployments (recordTable from Timelapse = rt)
+rt <- read.csv("recordTable_nov2015-apr2017.csv")
+str(rt)
+rt$X.1 <- NULL
+rt$X <- NULL
+str(rt)
+
+## Bind all record tables together
+All.rec <- rbind.data.frame(rt, rc, deparse.level = 0)
+unique(All.rec$Species) ## 19 categories, 16 non-human mammals
+unique(All.rec$Station) ## Algar73 contained no wildlife detections, though it was active
+
+## Date. Time conversions to POSIX
+All.rec$Date.Time <- as.POSIXct(strptime(All.rec$DateTimeOriginal, format = "%Y-%m-%d %H:%M:%S"))
+All.rec$Datep <- as.POSIXct(strptime(All.rec$Date, format = "%Y-%m-%d"))
+str(All.rec)
+
+##Save copy of full record table
+write.csv(All.rec, "AlgarRecordTable_nov2015-apr2018.csv")
+
+# Keeping in mind that for my Ch.1 analysis I will need to exclude off line sites
+# Offline sites
+offline <- All.rec[which(All.rec$Station == "Algar61" | All.rec$Station == "Algar62" | All.rec$Station == "Algar63" | All.rec$Station == "Algar64" | All.rec$Station == "Algar65" | All.rec$Station == "Algar66" | All.rec$Station == "Algar67" | All.rec$Station == "Algar68" | All.rec$Station == "Algar69" | All.rec$Station == "Algar70" | All.rec$Station == "Algar71" | All.rec$Station == "Algar72"), ]
+
+## Remove offline from record table 
+seismic.rec <- anti_join(All.rec, offline, by = "FileName")
+
+########### Convert to monthly detections ####
+## Use camelot recordtable (Apr 2017- 2018)
+## includes seismic and offline --> will remove offline as last step, prior to modelling
+library(reshape2)	# for formatting data frames
+# library(plyr) need for renaming Treatments for consistency, but conflicts with dplyr
+library(dplyr)		# for applying functions to subsets of data frames
+library(ggplot2)	# for data visualization
+library(stringr)	# for working with character strings
+library(tidyr)		# for data formatting functions
+library(knitr)		# for the "kable" function for formatting tables
+
+rc$Date.Time <- as.POSIXct(strptime(rc$DateTimeOriginal, format = "%Y-%m-%d %H:%M:%S"))
+rc$Datep <- as.POSIXct(strptime(rc$Date, format = "%Y-%m-%d"))
+str(rc)
+
+## Copied code uses object 'data' for record table (copied from 'Algar_prelim_analysis_ch1.R)
+data <- rc
+
+# first date of detection per site - ranges from 2017-04-19 to 2018-03-18
+mindate <- aggregate(Date.Time~Station, data, function(x) min(x))
+head(mindate)
+mindate.ord <- mindate[order(mindate$Date.Time, mindate$Station),] ## Order first detections by date
+head(mindate.ord)
+tail(mindate.ord)
+mindate.ord <- mindate[order(mindate$Station, mindate$Date.Time),] ## Order first detections by Station
+mindate.ord 
+
+maxdate <- aggregate(Date.Time~Station, data, function(x) max(x))
+maxdate.ord <- maxdate[order(maxdate$Date.Time, maxdate$Station),] # last date of detection per site - ranges from 2018-04-23 to 2018-04-08
+head(maxdate.ord)
+tail(maxdate.ord)
+maxdate.ord <- maxdate[order(maxdate$Station, maxdate$Date.Time),]
+maxdate.ord
+
+
+maxdate.ord[,2] - mindate.ord[,2] # (Needs to be ordered by Station here)
+# Time differences in secs
+
+
+# convert DateStart (but note that this doesn't have time set, so will treat as midnight)
+
+data$DateStart <- min(mindate.ord[,2]) #Adding the date of first detection to record Table
+data$DateStart <- (strptime(data$DateStart, "%Y-%m-%d", tz="MST")) ##Adding a column for the first day of the study
+DateStart <- min(data$DateStart) # The first detection from all stations - 2015-11-05 - first detection of the deployment
+str(data)
+
+# calculate a unique day for each day of study
+# taking straight difference will include partial days, so is really 24-hour periods from time first camera set
+# since there is no start time entered, this should work from hour 0, so should be same as calendar day
+# using "floor" so it doesn't round up to next day
+data$StudyDay <- floor(as.numeric(difftime(data$Date.Time,min(data$DateStart),units="days"))) ##Takes difference between the detection date and start date, without rounding up
+head(data)
+data$StudyDay <- data$StudyDay+1 #Turns start date into day 1, not day 0
+summary(data$StudyDay) # 1-355 study days between 2017-04-19 and 2018-04-18
+
+data[which(is.na(data$StudyDay)),]
+data$StudyDay[is.na(data$StudyDay)] <- 0
+data[which(is.na(data$StudyDay)),]
+
+
+### Adding Treatment Column by matching with station data (IMPORTANT NOTE: Algar07 and Algar34 lines were cleared, but cameras had already failed, so this did not affect the Nov - Apr 2018 deployment. Treatments will need to be adjusted in November 2018)
+data$Treatment <- cams$Treatment[match(data$Station, cams$CamStation)]
+
+### use reshape2 package to create vector of all study days per site
+# sum the number of independent-detections for each Site on each StudyDay
+# this creates dataframe, so Site is first column
+# only includes sites and days with species detections
+
+max(data$StudyDay)
+study.days <- 1:max(data$StudyDay) #355 study days
+sites <- unique(data$Station) #72 sites
+sites <- sort(sites, decreasing=FALSE)
+length(sites) #70 sites - Algar 21, 64, and 73 have no detections
+
+Site_rep <- rep(sites,355) ## Repeat site names 355 times (# days in study period)
+length(Site_rep)
+head(Site_rep)
+
+length(unique(data$Station)) #70 stations with detections
+study.days_rep <- rep(study.days, 70) ## Repeat study days 70 times (# of camera sites with detections)
+study.days_rep <- sort(study.days_rep, decreasing=FALSE)
+length(study.days_rep)
+
+d <- cbind(as.data.frame(Site_rep),study.days_rep) ## Creates a data frame of sites and study day
+d$Site_SD <- as.factor(paste(d$Site_rep, d$study.days_rep)) ##New column with both site and study day
+summary(d)
+
+
+data$count <- 1 #add count column - 1 detection per row (does not take multiple individuals/detection into consideration)
+names(data)
+data2 <- data[c(1,2,15:17)] ## new data frame only containing site, species, study day, treatment, and detection count
+head(data2)
+str(data2)
+data2$Species <- as.factor(data2$Species)
+
+levels(data2$Species) ##Names of different species detected
+
+#### Create individual species data frames --> # detections per day #### 
+## if summarise function only gives a 1 by 1 output that sums the count column: close R and reload with dplyr loaded only (not plyr)
+
+d.deer <- data2 %>%
+  filter(Species == "Odocoileus virginianus") %>% ##Select deer data only
+  group_by(Station, StudyDay) %>%        ## Arrange data first by Station, then by StudyDay (both in ascending order)
+  summarise(sum(count, na.rm = TRUE))    ## Summarise the detection count for that day, add to new column in data frame
+colnames(d.deer) <- c("Site","StudyDay","WTDeer") ##Renaming columns (ignore Warnings, function will add colname)
+glimpse(d.deer) #262 days of deer detections (where some days have multiple detections)
+plot(d.deer$StudyDay, d.deer$WTDeer, xlim=c(0,375)) ##Mostly 1 detection/day, up to 7
+
+d.bear <- data2 %>%
+  filter(Species == "Ursus americanus") %>%
+  group_by(Station, StudyDay) %>% 
+  summarise(sum(count, na.rm = TRUE))
+colnames(d.bear) <- c("Site","StudyDay","Blackbear")
+glimpse(d.bear) #178 obs
+plot(d.bear$StudyDay, d.bear$Blackbear, xlim=c(0,375)) #Up to 4 detections in a day
+d.bear <- d.bear[order(d.bear$StudyDay),]
+head(d.bear) ##First detections of bears within this deployment - day 8 of this session
+tail(d.bear) ##Last detections of bears within this deployment - day 181
+
+
+d.caribou <- data2 %>%
+  filter(Species == "Rangifer tarandus") %>%
+  group_by(Station, StudyDay) %>% 
+  summarise(sum(count, na.rm = TRUE))
+colnames(d.caribou) <- c("Site","StudyDay","Caribou")
+glimpse(d.caribou) #76
+plot(d.caribou$StudyDay, d.caribou$Caribou, xlim=c(0,750)) # As many as 3 in a day (once)
+
+d.moose <- data2 %>%
+  filter(Species == "Alces alces") %>%
+  group_by(Station, StudyDay) %>% 
+  summarise(sum(count, na.rm = TRUE))
+colnames(d.moose) <- c("Site","StudyDay","Moose")
+glimpse(d.moose) #112 obs
+plot(d.moose$StudyDay, d.moose$Moose, xlim=c(0,750)) # As many as 3 in a day
+
+d.coyote <- data2 %>%
+  filter(Species == "Canis latrans") %>%
+  group_by(Station, StudyDay) %>% 
+  summarise(sum(count, na.rm = TRUE))
+colnames(d.coyote) <- c("Site","StudyDay","Coyote")
+glimpse(d.coyote) #40 obs
+plot(d.coyote$StudyDay, d.coyote$Coyote, xlim=c(0,750)) #1 3-det. and 1 4-det. data point
+
+d.lynx <- data2 %>%
+  filter(Species == "Lynx canadensis") %>%
+  group_by(Station, StudyDay) %>% 
+  summarise(sum(count, na.rm = TRUE))
+colnames(d.lynx) <- c("Site","StudyDay","Lynx")
+glimpse(d.lynx) # 15 obs
+plot(d.lynx$StudyDay, d.lynx$Lynx, xlim=c(0,750)) # only 1-detection days
+
+d.wolf <- data2 %>%
+  filter(Species == "Canis lupus") %>%
+  group_by(Station, StudyDay) %>% 
+  summarise(sum(count, na.rm = TRUE))
+colnames(d.wolf) <- c("Site","StudyDay","Wolf")
+glimpse(d.wolf) # 121 obs
+plot(d.wolf$StudyDay, d.wolf$Wolf, xlim=c(0,750)) #2 3-det. days, many 1 and 2
+
+#### Adding species detections counts to a master data frame ####
+
+names(d)
+
+##Creating column of Station and StudyDay in data2 dataframe
+data2$Site_SD <- as.factor(paste(data2$Station,data2$StudyDay))
+data3 <- d
+colnames(data3) <- c("Site","StudyDay","Site_SD")
+data3$Treatment <- data2$Treatment[match(data3$Site,data2$Station)]
+str(data3)
+head(data3)
+
+d.deer$Site_SD <- paste(d.deer$Site,d.deer$StudyDay) ## Adding Site/studyDay column to relate detection data between data frames
+data3$WTDeer <- d.deer$WTDeer[match(data3$Site_SD,d.deer$Site_SD)] ##Matching Site_SD between data frames 
+##NAs on Sites/Days with no detections
+
+d.bear$Site_SD <- paste(d.bear$Site,d.bear$StudyDay)
+data3$Blackbear <- d.bear$Blackbear[match(data3$Site_SD,d.bear$Site_SD)]
+
+d.caribou$Site_SD <- paste(d.caribou$Site,d.caribou$StudyDay)
+data3$Caribou <- d.caribou$Caribou[match(data3$Site_SD,d.caribou$Site_SD)]
+
+d.moose$Site_SD <- paste(d.moose$Site,d.moose$StudyDay)
+data3$Moose <- d.moose$Moose[match(data3$Site_SD,d.moose$Site_SD)]
+
+d.coyote$Site_SD <- paste(d.coyote$Site,d.coyote$StudyDay)
+data3$Coyote <- d.coyote$Coyote[match(data3$Site_SD,d.coyote$Site_SD)]
+
+d.lynx$Site_SD <- paste(d.lynx$Site,d.lynx$StudyDay)
+data3$Lynx <- d.lynx$Lynx[match(data3$Site_SD,d.lynx$Site_SD)]
+
+d.wolf$Site_SD <- paste(d.wolf$Site,d.wolf$StudyDay)
+data3$Wolf <- d.wolf$Wolf[match(data3$Site_SD,d.wolf$Site_SD)]
+
+summary(data3)
+
+data3[is.na(data3)] <- 0 ## Converting NAs to 0's
+summary(data3)
+nrow(data3)
+
+sum(data3$WTDeer) #344
+sum(data3$Blackbear) #208
+sum(data3$Caribou) #83
+sum(data3$Coyote) #56
+sum(data3$Lynx) #15
+sum(data3$Wolf) #142
+sum(data3$Moose) #119
+
+####--- aggregate species detection data by month ####
+data$Site_SD <- paste(data$Station,data$StudyDay)
+data3$StudyDay.date <- as.Date(data3$StudyDay,origin = "2017-04-18") # Origin = day before first detection
+
+data3$Year <- as.factor(format(as.Date(data3$StudyDay.date), "%Y")) ##Separating date info into year, month, and year_month (to distinguish Nov.2015 from Nov. 2016)
+data3$Month <- as.factor(format(as.Date(data3$StudyDay.date), "%b"))
+data3$Yr_Month <- as.factor(format(as.Date(data3$StudyDay.date), "%Y-%m"))
+
+head(data3)
+summary(data3)
+levels(data3$Yr_Month)
+
+sum(data3$WTDeer)
+sum(data3$Blackbear)
+sum(data3$Caribou) 
+sum(data3$Coyote) 
+sum(data3$Lynx) 
+sum(data3$Wolf) 
+sum(data3$Moose) 
+
+m.deer <- data3 %>%
+  group_by(Site, Treatment, Yr_Month) %>% 
+  summarise(sum(WTDeer, na.rm = TRUE))
+colnames(m.deer) <- c("Site","Treatment","Yr_Month","WTDeer")
+summary(m.deer) 
+sum(m.deer$WTDeer)
+
+m.bear <- data3 %>%
+  group_by(Site, Treatment, Yr_Month) %>% 
+  summarise(sum(Blackbear, na.rm = TRUE))
+colnames(m.bear) <- c("Site","Treatment","Yr_Month","Blackbear")
+summary(m.bear) 
+sum(m.bear$Blackbear)
+
+m.caribou <- data3 %>%
+  group_by(Site, Treatment, Yr_Month) %>% 
+  summarise(sum(Caribou, na.rm = TRUE))
+colnames(m.caribou) <- c("Site","Treatment","Yr_Month","Caribou")
+summary(m.caribou) 
+sum(m.caribou$Caribou) 
+
+m.moose <- data3 %>%
+  group_by(Site, Treatment, Yr_Month) %>% 
+  summarise(sum(Moose, na.rm = TRUE))
+colnames(m.moose) <- c("Site","Treatment","Yr_Month","Moose")
+summary(m.moose) 
+sum(m.moose$Moose) 
+
+
+m.coyote <- data3 %>%
+  group_by(Site, Treatment, Yr_Month) %>% 
+  summarise(sum(Coyote, na.rm = TRUE))
+colnames(m.coyote) <- c("Site","Treatment","Yr_Month","Coyote")
+summary(m.coyote) 
+sum(m.coyote$Coyote) 
+
+m.lynx <- data3 %>%
+  group_by(Site, Treatment, Yr_Month) %>% 
+  summarise(sum(Lynx, na.rm = TRUE))
+colnames(m.lynx) <- c("Site","Treatment","Yr_Month","Lynx")
+summary(m.lynx) 
+sum(m.lynx$Lynx) 
+
+m.wolf <- data3 %>%
+  group_by(Site, Treatment, Yr_Month) %>% 
+  summarise(sum(Wolf, na.rm = TRUE))
+colnames(m.wolf) <- c("Site","Treatment","Yr_Month","Wolf")
+summary(m.wolf) # max 19 obs in one month
+sum(m.wolf$Wolf) 
+
+#### Aggregating all monthly detection data into one data frame ####
+data.month <- m.wolf ##Starting new dataframe with rows for all stations in increments by yr_month
+data.month$Wolf <- NULL #Removing wolf column for now (add back in later with all other species detections)
+data.month$Site_ym <- paste(data.month$Site,data.month$Yr_Month) ##Create a site and year/month column for matching with monthly species detections
+
+m.bear$Site_ym <- paste(m.bear$Site,m.bear$Yr_Month)
+data.month$Blackbear <- m.bear$Blackbear[match(data.month$Site_ym,m.bear$Site_ym)]
+
+m.wolf$Site_ym <- paste(m.wolf$Site,m.wolf$Yr_Month)
+data.month$Wolf <- m.wolf$Wolf[match(data.month$Site_ym,m.wolf$Site_ym)]
+
+m.coyote$Site_ym <- paste(m.coyote$Site,m.coyote$Yr_Month)
+data.month$Coyote <- m.coyote$Coyote[match(data.month$Site_ym,m.coyote$Site_ym)]
+
+m.lynx$Site_ym <- paste(m.lynx$Site,m.lynx$Yr_Month)
+data.month$Lynx <- m.lynx$Lynx[match(data.month$Site_ym,m.lynx$Site_ym)]
+
+m.caribou$Site_ym <- paste(m.caribou$Site,m.caribou$Yr_Month)
+data.month$Caribou <- m.caribou$Caribou[match(data.month$Site_ym,m.caribou$Site_ym)]
+
+m.deer$Site_ym <- paste(m.deer$Site,m.deer$Yr_Month)
+data.month$WTDeer <- m.deer$WTDeer[match(data.month$Site_ym,m.deer$Site_ym)]
+
+m.moose$Site_ym <- paste(m.moose$Site,m.moose$Yr_Month)
+data.month$Moose <- m.moose$Moose[match(data.month$Site_ym,m.moose$Site_ym)]
+
+sum(data.month$WTDeer)
+sum(data.month$Blackbear) 
+sum(data.month$Caribou) 
+sum(data.month$Coyote) 
+sum(data.month$Lynx) 
+sum(data.month$Wolf) 
+sum(data.month$Moose) 
+
+summary(data.month)
+glimpse(data.month)
+
+
+write.csv(data.month, "MonthlyDetections_apr2017-2018.csv")
+
+
