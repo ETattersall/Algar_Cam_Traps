@@ -70,6 +70,7 @@ sum(camEff3,na.rm=T) ## 34, 277 camera days
 summary(rowSums(camEff3,na.rm=T)) ## mean = 469.5, median = 432.0, range = 121 - 886
 
 ## Cams on lines only
+
 seiscams <- cams_survey[1:60,]
 camEff4 <- cameraOperation(seiscams, 
                            stationCol = "CamStation", 
@@ -161,6 +162,7 @@ offline <- All.rec[which(All.rec$Station == "Algar61" | All.rec$Station == "Alga
 
 ## Remove offline from record table 
 seismic.rec <- anti_join(All.rec, offline, by = "FileName")
+table(seismic.rec$Species)
 
 ########### Convert to monthly detections ####
 ## Use camelot recordtable (Apr 2017- 2018)
@@ -479,5 +481,67 @@ glimpse(data.month)
 
 
 write.csv(data.month, "MonthlyDetections_apr2017-2018.csv")
+## data.month is missing counts for cameras that had no detections during this period --> Algar21, 64 and 73
+
+######## Need to account for months during which cameras were inactive -- currently entered as 0's
+## Convert to NA
+## Previously done for Apr - Nov data in cameraInactiveDays.R, but this method risked losing data in partial months
+## Add number of active days to monthly detection data instead
 
 
+#### Attempting to check camera effort for Apr 2017-2018
+## Isolating Apr 2017-2018 study period
+Camelotcams <- cams %>% select(CamStation, Treatment, Session3Start, Problem2_from, Problem2_to, Session4Start, Problem3_from,Problem3_to, Session5Start)
+
+## setupCol needs to include checkdates in April 2017 and deployment dates for offline cams in Nov 2017
+setupdates1 <- cbind.data.frame(cams$CamStation[1:60], cams$Session3Start[1:60])
+colnames(setupdates1) <- c("CamStation", "setupDate")
+setupdates2 <- cbind.data.frame(cams$CamStation[61:73], cams$Session4Start[61:73])
+colnames(setupdates2) <- c("CamStation", "setupDate")
+setupCol <- bind_rows(setupdates1,setupdates2)
+
+Camelotcams$setupCol <- setupCol$setupDate[match(Camelotcams$CamStation, setupCol$CamStation)] #Deployment data now has setupCol indicating initial deployment date
+Camelotcams$setupCol <- as.factor(Camelotcams$setupCol)
+
+str(Camelotcams)
+
+camEff <- as.data.frame(cameraOperation(Camelotcams, 
+                                        stationCol = "CamStation", 
+                                        setupCol = "setupCol", 
+                                        retrievalCol = "Session5Start",
+                                        hasProblems = TRUE,
+                                        dateFormat = "%d/%m/%Y", 
+                                        writecsv = FALSE))
+## where NA = camera not set up, 1 = camera was operational, 0 = camera not operational 
+
+sum(camEff,na.rm=T) ## Total active days for entire survey = 16425 active days
+
+# days per camsion
+summary(rowSums(camEff,na.rm=T)) # Min = 1, Max = 355, median = 225 mean 225
+
+cams.ActDays <- rowSums(camEff, na.rm = T)
+Camelotcams$ActiveDays <- cams.ActDays ## Adding ActiveDays to deployment data
+
+glimpse(camEff) # check for correct loading of data - to see data classes and initial values
+summary(camEff) # overview of data and check for NAs
+View(camEff)
+
+dim(camEff) # 73 Sites x 358 days
+
+camEff[camEff == 0] <- NA # changes all 0 to NA, as 0 is not operational
+###camEff now = matrix of 1's and NAs for active Days of entire study
+
+hist(Camelotcams$ActiveDays) ##Bi-modal, with spikes at 150-200 and 350-400
+#### Check ActiveDays across entire survey for all cams on lines (cams_survey, seiscams --> camEff4)
+seiscams$ActiveDays <- rowSums(camEff4, na.rm = T)
+hist(seiscams$ActiveDays) ## somewhat normal distribution, indicating a high number of inactive days
+dim(camEff4) ## 60 cams x 889 days = 53 340 camera days in survey period
+table(is.na(camEff4)) ##13 630 NAs --> camera days during which station was not set up
+table(camEff4) ##7339 0s --> inactive camera days
+
+## For the purposes of my models, camera not set up is equivalent to inactive --> convert all to 0
+camEff4[is.na(camEff4)] <- 0
+table(camEff4)
+ 
+## Aggregate into counts per Yr_month --> requires lookup table of study day
+## Need to use entire survey period --> November 2015 - April 2018
