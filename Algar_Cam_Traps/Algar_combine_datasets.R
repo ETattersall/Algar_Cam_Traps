@@ -16,6 +16,7 @@ rec.2015 <- read.csv("2015.01_recordTable.csv")
 rec.2016 <- read.csv("2016.01_recordTable.csv")
 rec.2017 <- read.csv("2017.01_recordTable.csv")
 
+
 str(rec.2015) #12variables. Need to change Station names and Date format
 str(rec.2016) #12 variables
 str(rec.2017) #15 variables

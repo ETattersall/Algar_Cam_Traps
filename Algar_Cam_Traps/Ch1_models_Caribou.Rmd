@@ -16,7 +16,7 @@ Here I will:
 7. Model Averaging?
 8. Standardize parameter estimates for easy interpretation
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(glmmTMB)
 library(bbmle) #AICtab function
 library(ggplot2)
@@ -164,7 +164,7 @@ L11 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + low1750 + SnowDays + (1
 L12 <- glmmTMB(Caribou~ Treatment + VegHt + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 
 #13. LineWidth, VegHt, Line density
-L12 <- glmmTMB(Caribou~ LineWidth + VegHt + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+L13 <- glmmTMB(Caribou~ LineWidth + VegHt + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 
 #14. Global model - Treatment, Line density, VegHt, LineWidth
 L14 <-  glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)

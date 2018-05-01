@@ -75,12 +75,25 @@ table(det$Caribou == 0) #781
 sum(det$Caribou==0, na.rm = TRUE)/nrow(det) #52% 0's in data
 
 ##2. Fitting most basic model - Poisson GLM - to global model 
-glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = poisson)
+glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays, data = det, family = poisson)
+summary(glm1)
 # Residuals and overdispersion
 E1 <- resid(glm1, type="pearson")
 N <- nrow(det)
 p <- length(coef(glm1))
 sum(E1^2)/(N-p) #0.815 --> less than one, so not overdispersed
+### Flawed code --> coef() does not extract coefficients from glmmTMB
+
+
+## Bolker's code for overdispersion
+dispfun <- function(m) {
+  r <- residuals(m,type="pearson")
+  n <- df.residual(m)
+  dsq <- sum(r^2)
+  c(dsq=dsq,n=n,disp=dsq/n)
+}
+dispfun(glm1) ##1.48 --> indicates overdispersion!
+
 
 ##3. Simulating data from the model
 #function for calculating overdispersion (as above)
@@ -118,6 +131,7 @@ axis(1,
 points(x = sum(det$Caribou==0, na.rm = TRUE)/ N,
        y = 0, pch = 16, cex = 5, col = 2)
 ## Model comparisons of distributions and zero-inflation
+glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = poisson)
 glm2 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = nbinom1(link= "log"))
 glm3 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = nbinom2(link = "log"))
 glm4 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), zi = ~1, data = det, family = poisson)
@@ -128,6 +142,8 @@ modnames <- c("Poisson", "Nbinom1", "Nbinom2", "ZIP", "ZINB1", "ZINB2")
 ICtab(glm1,glm2,glm3,glm4,glm5,glm6, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 
 summary(glm2)
+sigma(glm2) #1.06, directly from output
+dispfun(glm2)#0.411
 summary(glm5)
 
 
@@ -187,24 +203,26 @@ L6 <- glmmTMB(Caribou~ LineWidth + VegHt + low1750 + SnowDays + (1|Site) + (1|Mo
 #7. Treatment + Line density
 L7 <- glmmTMB(Caribou~ Treatment + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 
-#8. VegHt + Treatment
-L8 <- glmmTMB(Caribou~ Treatment + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+#8. Line density and VegHt
+L8 <- glmmTMB(Caribou~ LD1750 + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 
-#9. Treatment, LineWidth, VegHt
-L9 <- glmmTMB(Caribou~ Treatment + LineWidth + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+#9. VegHt + Treatment
+L9 <- glmmTMB(Caribou~ Treatment + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 
-#10. Treatment, LineWidth, Line density
-L10 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+#10. Treatment, LineWidth, VegHt
+L10 <- glmmTMB(Caribou~ Treatment + LineWidth + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 
-#11. Treatment, Line density, VegHt
-L11 <- glmmTMB(Caribou~ Treatment + VegHt + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+#11. Treatment, LineWidth, Line density
+L11 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 
-#12. Global model - Treatment, Line density, VegHt, LineWidth
-L12 <-  glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+#12. Treatment, Line density, VegHt
+L12 <- glmmTMB(Caribou~ Treatment + VegHt + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 
-## Interaction terms
-# Treatment*low1750
-L13 <-  glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+#13. LineWidth, VegHt, Line density
+L12 <- glmmTMB(Caribou~ LineWidth + VegHt + LD1750 + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+
+#14. Global model - Treatment, Line density, VegHt, LineWidth
+L14 <-  glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
 
 
 
@@ -254,5 +272,11 @@ abline(h = 0, lty = 2)
 
 ## Global model is a better fit, which is expected given that it hase more parameters
 
+
+plot(x = F1,
+     y = E1,
+     xlab = "Fitted values",
+     ylab = "Pearson residuals")
+abline(h=0, lty=2)
 
 ## Standardizing estimates? Evidence ratios? Model averaging?
