@@ -199,6 +199,10 @@ str(All.rec)
 
 ## Copied code uses object 'data' for record table (copied from 'Algar_prelim_analysis_ch1.R)
 data <- All.rec
+data <- read.csv("AlgarRecordTable_nov2015-apr2018.csv")
+str(data)
+data$Date.Time <- as.POSIXct(strptime(data$DateTimeOriginal, format = "%Y-%m-%d %H:%M:%S"))
+data$Datep <- as.POSIXct(strptime(data$Date, format = "%Y-%m-%d"))
 
 
 # first date of detection per site - ranges from 2015-11-05 to 2018-03-19 (offline site)
@@ -240,8 +244,7 @@ data[is.na(data$StudyDay),] ## NA StudyDay occurs on 2018-03-11...Date.Time is N
 data$Date.Time[is.na(data$Date.Time)] <- "2018-03-11 02:26:52" #re-ran code to calculate StudyDay, no NAs
 data[which(data$StudyDay==0),]
 data$StudyDay <- data$StudyDay+1 #Turns start date into day 1, not day 0
-summary(data$StudyDay) # 1-355 study days between 2017-04-19 and 2018-04-18
-
+summary(data$StudyDay) #
 
 ### Adding Treatment Column by matching with station data (IMPORTANT NOTE: Algar07 and Algar34 lines were cleared, but cameras had already failed, so this did not affect the Nov - Apr 2018 deployment. Treatments will need to be adjusted in November 2018)
 data$Treatment <- cams$Treatment[match(data$Station, cams$CamStation)]
@@ -581,6 +584,12 @@ data.month$Treatment <- as.factor(data.month$Treatment)
 data.month$Site_ym <- as.factor(data.month$Site_ym)
 str(data.month)
 class(data.month$Treatment)
+
+## Separating elements from Yr_Month
+data.month$Yr_Month2 <- data.month$Yr_Month #replicating Yr_Month for separation
+data.month <- cbind(data.month[,1:12],
+                    colsplit(data.month$Yr_Month2, "[-]", names=c("Year", "Month")))
+
 write.csv(data.month, "MonthlyDetections_nov2015-apr2018.csv")
 
 
@@ -690,6 +699,7 @@ plot(data.month$ActiveDays, data.month$Wolf)
 #Only adding in a few data points that would have been thrown out in inactive months
 #data.month should have 30 months for each 73 cameras=2190 rows - yes
 
+data.month$X <- NULL
 write.csv(data.month, "MonthlyDetections_nov2015-apr2018.csv")
 
 ### Remove offline sites for thesis analyses
