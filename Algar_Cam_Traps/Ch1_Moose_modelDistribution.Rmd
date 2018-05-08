@@ -1,0 +1,188 @@
+---
+title: "Ch1_Moose_modelDistribution"
+author: "Erin Tattersall"
+date: "May 8, 2018"
+output: word_document
+---
+
+
+Modelling detections rates between November 2015 and April 2018 for moose.  
+Deciding on most appropriate distribution for response variable.
+
+
+Proportion of zeros in data
+```{r "setup", include=FALSE, cache=FALSE}
+knitr::opts_knit$set(root.dir = 'C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data') #Setting working directory for all code chunks
+```
+
+```{r, message=FALSE, echo=FALSE}
+
+library(glmmTMB)
+library(bbmle) #AICtab function
+library(ggplot2)
+library(lmtest)
+library(reshape)
+library(dplyr)
+```
+```{r, echo=FALSE, message=FALSE}
+#Load detection data
+det <- read.csv("Seismic_nov2015-apr2018.csv")
+det$X <- NULL
+
+#Load lowland data
+low <- read.csv("newAVIE_lowland8buffersizes.csv")
+
+#Combine data
+det$low250 <- low$low250[match(det$Site, low$CamStation)]
+det$low500 <- low$low500[match(det$Site, low$CamStation)]
+det$low750 <- low$low750[match(det$Site, low$CamStation)]
+det$low1000 <- low$low1000[match(det$Site, low$CamStation)]
+det$low1250 <- low$low1250[match(det$Site, low$CamStation)]
+det$low1500 <- low$low1500[match(det$Site, low$CamStation)]
+det$low1750 <- low$low1750[match(det$Site, low$CamStation)]
+det$low2000 <- low$low2000[match(det$Site, low$CamStation)]
+
+#Load linedensity data
+LineDens <- read.csv("AlgarStationsLD_Lines.csv")
+
+# Combine datasets
+det$LD250 <- LineDens$X250m[match(det$Site, LineDens$CamStation)]
+det$LD500 <- LineDens$X500m[match(det$Site, LineDens$CamStation)]
+det$LD750 <- LineDens$X750m[match(det$Site, LineDens$CamStation)]
+det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
+det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
+det$LD1500 <- LineDens$X1500m[match(det$Site, LineDens$CamStation)]
+det$LD1750 <- LineDens$X1750m[match(det$Site, LineDens$CamStation)]
+det$LD2000 <- LineDens$X2000m[match(det$Site, LineDens$CamStation)]
+
+
+#Load line width and veg height
+sp <- read.csv("Spatial_covariates.csv")
+
+det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
+det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
+```
+
+
+```{r, echo=FALSE, results='hide'}
+
+#### Moose models ####
+## Lowland measured at 250m, LD measured at 1250m
+
+
+### Exploring distribution and overdispersion (code from Zuur & Ieno, 2016)
+##1. Proportion of 0's in data
+table(is.na(det$Moose)) #1800 non-NAs --> no NAs present
+table(det$Moose == 0) # 116 non-zero values
+```
+```{r}
+sum(det$Moose==0, na.rm = TRUE)/nrow(det)
+```
+  94% of the data is zeroes --> very likely zero-inflated.  
+
+### Fitting a basic poisson GLM and checking overdispersion, using global model (doesn't yet include SnowDays)
+```{r}
+glm1 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + ActiveDays, data = det, family = poisson)
+# Residuals and overdispersion
+E1 <- resid(glm1, type="pearson")
+N <- nrow(det)
+p <- length(coef(glm1))
+sum(E1^2)/(N-p)
+```
+Dispersion value of  1.03 indicates data is not necessarily overdispersed
+
+Simulating data to check probability of calculated dispersion.
+```{r, include=FALSE, echo=FALSE, warning=FALSE}
+#function for calculating overdispersion (as above)
+MyDispersion <- function(y, mu, N, p){
+  e <- (y-mu)/sqrt(mu)
+  sum(e^2)/(N-p)
+}
+muFit <- fitted(glm1) #fitted values from model
+Ysim <- matrix(nrow = N, ncol = 10000) #matrix storing simulated responses
+DispersionSim <- vector(length = 10000)#vector storing Dispersion value
+#Loop running simulation of Poisson distributed data and calculating Dispersion value
+for(i in 1:10000){
+  Ysim[,i] <- rpois(N,lambda = muFit)
+  DispersionSim[i] <- MyDispersion(Ysim[,i], muFit, N, p)
+}
+```
+```{r, echo=FALSE}
+#Histogram of dispersion statistics
+hist(DispersionSim, breaks = 1000, xlim = c(0,5))# Simulated statistics are mostly on either side of 1 -->unlikely to have overdispersion
+```
+Histogram indicates that an overdispersion statistic of 1.03 is well within the likely distribution of dispersion statistics for Poisson distributed response variables, suggesting that Moose data is not necessarily overdispersed.  
+
+Comparing the proportion of zeros in data to simulated zeros from model shows that Moose data has more zeroes than would be expected in a Poisson GLM
+```{r, echo=FALSE}
+## Comparing proportions of 0's in simulated data to that in sampled data
+zeros <- vector(length = 10000)
+for(i in 1:10000){
+  zeros[i] <- sum(Ysim[,i] == 0) / N
+}
+
+{plot(table(zeros),
+     axes = FALSE,
+     xlim = c(0.9,1),
+     xlab = "Percentage of zeros",
+     ylab = "Frequency")
+
+axis(2)
+axis(1, 
+     at = c(0.90,0.92,0.94,0.96,0.98,1.0),
+     labels = c("90%","92%","94%","96%","98%","100%"))
+points(x = sum(det$Moose==0, na.rm = TRUE)/ N,
+       y = 0, pch = 16, cex = 5, col = 2)}
+```
+  This presents a case for using zero-inflated models, which can be verified with model selection of GLMMs
+## Model selection: choosing model form and distribution  
+
+Comparing the same GLMM (including random effects of Site and Month) modeled as a poisson, nb, ZIP and ZINB (with nbinom1 and nbinom2 differing in how variance changes with mean) yields:
+```{r, message=FALSE}
+## Model comparisons of distributions and zero-inflation
+glm1 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + Dist2Water_km + ActiveDays + (1| Site) + (1|Month), data = det, family = poisson)
+glm2 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + Dist2Water_km + ActiveDays + (1| Site) + (1|Month), data = det, family = nbinom1(link= "log"))
+glm3 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + Dist2Water_km + ActiveDays + (1| Site) + (1|Month), data = det, family = nbinom2(link = "log"))
+glm4 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + Dist2Water_km + ActiveDays + (1| Site) + (1|Month), zi = ~1, data = det, family = poisson)
+glm5 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + Dist2Water_km + ActiveDays +(1| Site) + (1|Month), zi = ~1, data = det, family = nbinom1(link= "log")) ## warning 'matrix not positive definite'
+glm6 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + Dist2Water_km + ActiveDays + (1| Site) + (1|Month), zi = ~1, data = det, family = nbinom2(link= "log"))
+```
+```{r, echo=FALSE}
+modnames <- c("Poisson", "Nbinom1", "Nbinom2", "ZIP", "ZINB1", "ZINB2")
+ICtab(glm1,glm2,glm3,glm4,glm5,glm6, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+
+```
+ZINB1 displayed a warning when modeled, but parameter estimates + s.e. obtained, so included in model selection.  
+ Nbinom2 model's summary output is:
+```{r, echo = FALSE}
+summary(glm3)
+```
+ ZINB model output:
+```{r, echo = FALSE}
+summary(glm6)
+```
+ Active Days affects the probability of observing a zero in data --> should be included in ZI model. It could be argued that it should NOT be included in conditional. I will test both  
+```{r, warning=FALSE}
+glm7 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + Dist2Water_km + ActiveDays +(1| Site) + (1|Month), zi = ~ActiveDays, data = det, family = nbinom2(link= "log"))
+glm8 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + Dist2Water_km +(1| Site) + (1|Month), zi = ~ActiveDays, data = det, family = nbinom2(link= "log"))
+summary(glm8)
+```
+```{r, echo=FALSE}
+modnames <- c("Poisson", "Nbinom1", "Nbinom2", "ZIP", "ZINB1", "ZINB2","ZINB2-AD2","ZINB2-AD1")
+ICtab(glm1,glm2,glm3,glm4,glm5,glm6, glm7, glm8, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+```
+ Nbinom2 without zero-inflation still comes out as top model. However, there is evidence that Moose detection data is zero-inflated, justifying including zero-inflation a priori. Further, examining the output for ZINB2-AD1 shows that ActiveDays in the ZI model has a small but near significant effect on detecting structured zeros (and that there is a high chance of observing a structured zero in data regardless).  
+ I will therefore model moose data as zero-inflated nbinom2 with ActiveDays in the ZI model. 
+ 
+ 
+ # Model hypotheses  
+ ## Finding random structure
+```{r, echo=FALSE}
+r0 <- glmmTMB(Moose~ LineWidth + LD1250 + VegHt + Dist2Water_km + low250*Treatment, data = det, zi=~ActiveDays,family = nbinom2)
+rSite <- glmmTMB(Moose~ LineWidth + LD1250 + VegHt + low250*Treatment + Dist2Water_km +  (1|Site), data = det,zi=~ActiveDays, family = nbinom2) 
+rMonth <- glmmTMB(Moose~ LineWidth + LD1250 + VegHt + low250*Treatment + Dist2Water_km + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
+r2 <- glmmTMB(Moose~ LineWidth + LD1250 + VegHt + low250*Treatment + Dist2Water_km + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
+ICtab(r0, rSite, rMonth, r2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+```
+Continue modelling with 2 random effects
+ 
