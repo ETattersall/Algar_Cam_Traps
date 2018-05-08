@@ -10,7 +10,7 @@ Deciding on most appropriate distribution for response variable.
 
 
 Proportion of zeros in data
-```{r setup, message=FALSE}
+```{r setup, message=FALSE, echo=FALSE}
 knitr::opts_knit$set(root.dir = 'C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data') #Setting working directory for all code chunks
 library(glmmTMB)
 library(bbmle) #AICtab function
@@ -60,7 +60,7 @@ det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
 ## Still missing Snow days, Distance to water
 
 ```
-```{r, echo=FALSE}
+```{r, echo=FALSE, results='hide'}
 
 #### Caribou models ####
 ## Lowland measured at 1750m, LD measured at 1750m
@@ -172,7 +172,7 @@ summary(glm8)
  # Model hypotheses  
  ## Finding random structure
 ```{r, echo=FALSE}
-r0 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + SnowDays, data = det, family = nbinom1)
+r0 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment, data = det, family = nbinom1)
 rSite <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Site), data = det, family = nbinom1) 
 rMonth <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Month), data = det, family = nbinom1)
 r2 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Site) + (1|Month), data = det, family = nbinom1)
