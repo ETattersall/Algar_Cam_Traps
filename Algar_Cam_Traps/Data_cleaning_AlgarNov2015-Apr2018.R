@@ -707,3 +707,11 @@ seismic <- data.month %>% filter(Treatment != "OffLine")
 #13*30=390, 2190-390=1800
 tail(seismic)
 write.csv(seismic, "Seismic_nov2015-apr2018.csv")
+
+### Adding dist to water
+seismic <- read.csv("Seismic_nov2015-apr2018.csv")
+det3 <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
+
+seismic$Dist2Water_km <- det3$Dist2water_km[match(seismic$Site, det3$Site)]
+
+write.csv(seismic, "Seismic_nov2015-apr2018.csv")
