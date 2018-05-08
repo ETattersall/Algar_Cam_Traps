@@ -5,7 +5,7 @@ date: "April 26, 2018"
 output: word_document
 ---
 
-Modelling detections rates between November 2015 and April 2018 for caribou, wolves, black bears, white-tailed deer, and moose.  
+Modelling detections rates between November 2015 and April 2018 for caribou.  
 Deciding on most appropriate distribution for response variable.
 
 
@@ -172,10 +172,10 @@ summary(glm8)
  # Model hypotheses  
  ## Finding random structure
 ```{r, echo=FALSE}
-r0 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment, data = det, family = nbinom1)
-rSite <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Site), data = det, family = nbinom1) 
+r0 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment, data = det, zi=~ActiveDays,family = nbinom1)
+rSite <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Site), data = det,zi=~ActiveDays, family = nbinom1) 
 rMonth <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Month), data = det, family = nbinom1)
-r2 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Site) + (1|Month), data = det, family = nbinom1)
+r2 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Site) + (1|Month), data = det, zi=~ActiveDays,family = nbinom1)
 ICtab(r0, rSite, rMonth, r2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 ```
 Continue modelling with 2 random effects
