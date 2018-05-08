@@ -5,17 +5,14 @@ date: "April 26, 2018"
 output: word_document
 ---
 
-Modelling detections rates between November 2015 and November 2017 for caribou, wolves, black bears, white-tailed deer, and moose.
-Seismic line characteristic covariates: treatment, vegetation height, line connectivity, line width
-Environmental covariates: proportion of lowland habitat, SnowDays, Distance to water
+Modelling detections rates between November 2015 and April 2018 for caribou, wolves, black bears, white-tailed deer, and moose.  
+Deciding on most appropriate distribution for response variable.
 
-For full script, see Ch1_models.R
-
-1. Caribou
-
-a. Checked for data for 0's and overdispersion
 
 Proportion of zeros in data
+```{r setup}
+knitr::opts_knit$set(root.dir = 'C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data') #Setting working directory for all code chunks
+```
 ```{r, echo=FALSE, message=FALSE}
 library(glmmTMB)
 library(bbmle) #AICtab function
@@ -24,11 +21,9 @@ library(lmtest)
 library(reshape)
 library(dplyr)
 
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 
 #Load detection data
-det <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
-det$X.1 <- NULL
+det <- read.csv("MonthlyDetections_nov2015-apr2018.csv")
 det$X <- NULL
 
 #Load lowland data
@@ -64,13 +59,19 @@ sp <- read.csv("Spatial_covariates.csv")
 det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
 det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
 
+## Still missing Snow days, Distance to water
 
 
 
+
+
+summary(det) #No NAs in detection data, but  there are NAs in covariates
 ## Visualising patterns using predict function (predicting new data, given the best-fit model)
 ## Need to first remove NAs from explanatory variables
 newdat <-  det[ , c(1,2,12:34)] #Naming columns in df
 newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
+```
+```{r, echo=FALSE}
 
 #### Caribou models ####
 ## Lowland measured at 1750m, LD measured at 1750m
@@ -78,22 +79,25 @@ newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
 
 ### Exploring distribution and overdispersion (code from Zuur & Ieno, 2016)
 ##1. Proportion of 0's in data
-table(is.na(det$Caribou)) #647 NAs, 853 non-NAs
+table(is.na(det$Caribou)) #2190 non-NAs --> no NAs present
 table(det$Caribou == 0)
 ```
 ```{r}
 sum(det$Caribou==0, na.rm = TRUE)/nrow(det)
-
 ```
-Fitting a basic poisson GLM and checking overdispersion, using global model
+  96% of the data is zeroes --> very likely zero-inflated.  
+
+### Fitting a basic poisson GLM and checking overdispersion, using global model (doesn't yet include SnowDays)
 ```{r}
-glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays, data = det, family = poisson)
+glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays, data = det, family = poisson)
 # Residuals and overdispersion
 E1 <- resid(glm1, type="pearson")
 N <- nrow(det)
 p <- length(coef(glm1))
 sum(E1^2)/(N-p)
 ```
+Dispersion value of  0.73 indicates underdispersion, which would correspond to zero-inflation
+
 Simulating data to check probability of calculated dispersion.
 ```{r, include=FALSE, echo=FALSE, warning=FALSE}
 #function for calculating overdispersion (as above)
@@ -102,53 +106,53 @@ MyDispersion <- function(y, mu, N, p){
   sum(e^2)/(N-p)
 }
 muFit <- fitted(glm1) #fitted values from model
-Ysim <- matrix(nrow = N, ncol = 100000) #matrix storing simulated responses
-DispersionSim <- vector(length = 100000)#vector storing Dispersion value
+Ysim <- matrix(nrow = N, ncol = 10000) #matrix storing simulated responses
+DispersionSim <- vector(length = 10000)#vector storing Dispersion value
 #Loop running simulation of Poisson distributed data and calculating Dispersion value
-for(i in 1:100000){
+for(i in 1:10000){
   Ysim[,i] <- rpois(N,lambda = muFit)
-  DispersionSim[i] <- MyDispersion(Ysim[,i], muFit, N, p) #warnings generated but vector obtained
+  DispersionSim[i] <- MyDispersion(Ysim[,i], muFit, N, p)
 }
 ```
 ```{r, echo=FALSE}
 #Histogram of dispersion statistics
-hist(DispersionSim)# Simulated statistics are mostly on either side of 1 -->unlikely to have overdispersion
+hist(DispersionSim, breaks = 1000, xlim = c(0,5))# Simulated statistics are mostly on either side of 1 -->unlikely to have overdispersion
 ```
-Histogram indicates that an overdispersion statistic of 0.815 is well within the likely distribution, indicating that the data is not overdispersed.
+Histogram indicates that an overdispersion statistic of 0.73 is well within the likely distribution of dispersion statistics for Poisson distributed response variables, suggesting that Caribou data is not necessarily overdispersed.  
 
-Comparing the proportion of zeros in data to simulated data for model actually shows that Caribou data has far fewer zeros than would be expected in a Poisson distribution GLM. This may simply mean that a Poisson GLM is not appropriate for this data.
+Comparing the proportion of zeros in data to simulated zeros from model shows that Caribou data has more zeroes than would be expected in a Poisson GLM
 ```{r, echo=FALSE}
 ## Comparing proportions of 0's in simulated data to that in sampled data
-zeros <- vector(length = 100000)
-for(i in 1:100000){
+zeros <- vector(length = 10000)
+for(i in 1:10000){
   zeros[i] <- sum(Ysim[,i] == 0) / N
 }
 
-plot(table(zeros),
+{plot(table(zeros),
      axes = FALSE,
-     xlim = c(0.4, 1),
+     xlim = c(0.8,1),
      xlab = "Percentage of zeros",
      ylab = "Frequency")
 
 axis(2)
 axis(1, 
-     at = c(0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
-     labels = c("40%", "50%", "60%", "70%", "80%", "90%"))
+     at = c(0.82,0.84,0.86,0.88,0.90,0.92,0.94,0.96,0.98,1.0),
+     labels = c("82%","84%","86%","88%","90%","92%","94%","96%","98%","100%"))
 points(x = sum(det$Caribou==0, na.rm = TRUE)/ N,
-       y = 0, pch = 16, cex = 5, col = 2)
+       y = 0, pch = 16, cex = 5, col = 2)}
 ```
-
-Previously I had decided on using a zero-inflated model a priori to account for the structured nature of zero counts. However, this may misrepresent the data in some cases.
+  This presents a case for using zero-inflated models, which can be verified with model selection of GLMMs
+## Model selection: choosing model form and distribution  
 
 Comparing the same GLMM (including random effects of Site and Month) modeled as a poisson, nb, ZIP and ZINB (with nbinom1 and nbinom2 differing in how variance changes with mean) yields:
 ```{r}
 ## Model comparisons of distributions and zero-inflation
-glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = poisson)
-glm2 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = nbinom1(link= "log"))
-glm3 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), data = det, family = nbinom2(link = "log"))
-glm4 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), zi = ~1, data = det, family = poisson)
-glm5 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays +(1| Site) + (1|Month), zi = ~1, data = det, family = nbinom1(link= "log"))
-glm6 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1| Site) + (1|Month), zi = ~1, data = det, family = nbinom2(link= "log"))
+glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), data = det, family = poisson)
+glm2 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), data = det, family = nbinom1(link= "log"))
+glm3 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), data = det, family = nbinom2(link = "log"))
+glm4 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), zi = ~1, data = det, family = poisson)
+glm5 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays +(1| Site) + (1|Month), zi = ~1, data = det, family = nbinom1(link= "log"))
+glm6 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), zi = ~1, data = det, family = nbinom2(link= "log"))
 ```
 ```{r, echo=FALSE}
 modnames <- c("Poisson", "Nbinom1", "Nbinom2", "ZIP", "ZINB1", "ZINB2")
@@ -159,7 +163,23 @@ Where the Nbinom1 model's summary output is:
 ```{r, echo = FALSE}
 summary(glm2)
 ```
- For caribou models, I will therefore use non-zero inflated GLMMs with a nbinom1 distribution (where variance changes linearly with the mean).  
+ ZINB model output:
+```{r, echo = FALSE}
+summary(glm5)
+```
+ Active Days affects the probability of observing a zero in data --> should be included in ZI model. It could be argued that it should NOT be included in conditional. I will test both
+```{r, warning=FALSE}
+glm7 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays +(1| Site) + (1|Month), zi = ~ActiveDays, data = det, family = nbinom1(link= "log"))
+glm8 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 +(1| Site) + (1|Month), zi = ~ActiveDays, data = det, family = nbinom1(link= "log"))
+```
+```{r, echo=FALSE}
+modnames <- c("Poisson", "Nbinom1", "Nbinom2", "ZIP", "ZINB1", "ZINB2", "ZINB1-AD1")
+ICtab(glm1,glm2,glm3,glm4,glm5,glm6,glm8, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+summary(glm8)
+```
+ The ZINB including ActiveDays in conditional and ZI had convergence issues, and was therefore excluded.  
+ Including ActiveDays in the ZI model results in more logLikelihood of model and more AIC weight.
+ For caribou models, I will therefore use zero inflated GLMMs with a nbinom1 distribution (where variance changes linearly with the mean), including ActiveDays in the ZI model.  
  # Model hypotheses  
  ## Finding random structure
 ```{r, echo=FALSE}
