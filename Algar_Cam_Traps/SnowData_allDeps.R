@@ -322,5 +322,7 @@ tail(m.snow)
 ##2. Add NAs for ALL partial months (regardless of when camera fails). This will include  deployment month and 2018-04 (2015-11 for 1-24, 2016-11 for 25-60, 2017-11 for 61-73)
 # a. In third deployment, if partial month was previously kept because ActiveDays >15, will need to be excluded (See problem sites)
 
-##3. Some stations (noted at top) need to be addressed individually.
+## 3. Add NAs for months when camera was not deployed (12 for Algar25-60, 24 for Algar61-73)
+
+##4. Some stations (noted at top) need to be addressed individually.
 ## Algar30 nov2017: 4 months of full snow, failed in Feb. (23 days in Nov., 30 in Dec., 30 in Jan., 26 in Feb.). 2 NA months for failing
