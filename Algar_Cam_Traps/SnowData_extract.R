@@ -7,14 +7,18 @@
 # Started Jan. 19, 2018 by Erin T.
 # Updated Jan. 30 for 2016-2017 Winter deployment
 # Updated March 13 for Apr-Nov2017 deployment
+# Updated May 9 for 2017-2018 winter deployment -- extract both snow (T/F) and SnowDepth
 ################################
+
+### Issues when trying to address partial months, adding check months (e.g. April or November) together, combining Algar43 data with appropriate time periods
+## Will attempt to add ALL csvs from all deployments together in SnowData_allDeps.R
 
 library(dplyr)
 library(tidyr)
 
 # working directory for Nisha's csvs
-setwd('C:/Users/ETattersall/OneDrive/ALGAR/Snow_csvs(Nisha)/2017-2017 CSV Snow data')
-list.files() #57 csvs --> Missing Algar06 (file too large), Algar21 (stolen), Algar43 (nothing on card) --> NAs will be added
+setwd('C:/Users/ETattersall/OneDrive/ALGAR/Snow_csvs(Nisha)/2017-2018 CSV Snow data')
+list.files() #70 csvs --> Missing  Algar17 (failed on check day), Algar27, (stolen), Algar30 (skipped; Nisha will add, but I can add values manually for Snow (T/F))
 
 
 csv.names <- list.files() #vector of all file names
@@ -24,7 +28,6 @@ csv.names <- list.files() #vector of all file names
 #Read csv files into a list
 csv.list <- lapply(csv.names, read.csv, sep = ",")
 summary(csv.list) # All have 30 variables
-str(csv.list) # Appear to all be the same. Check possible problem variables?
 head(csv.list) # Each element is a data frame, one from each station
 tail(csv.list)
 
@@ -39,10 +42,11 @@ all <- csv.list %>%
   bind_rows() %>% 
   mutate_all(funs('as.factor')) # Worked with error `mutate_each()` is deprecated. Use `mutate_all()`, `mutate_at()` or `mutate_if()` instead.
 
-str(all) #57 levels for folders: addressed above
+str(all) #70 levels for folders: addressed above
+head(all)
 
 Snow <- all$Snow
-Snow
+table(Snow)
 Snow <- toupper(Snow) #All characters to upper case
 unique(Snow)
 table(Snow) #6958 FALSE, 665 TRUE
@@ -57,12 +61,13 @@ table(Snow) #6958 = 0, 665 = 1
 # Station == all$Folder
 # date == all$Date
 class(all$Date) #factor
-head(all$Date) #162 levels, indicating all Dates are in same format
-#Confirm that dataframe is only Timelapse photos
+head(all$Date) #190 levels; will have some dates from summer (Algar43)
+#Confirm that dataframe is only Timelapse photos (2017-2018 data is ONLY timelapse photos -ignore this step)
 unique(all$TriggerMode) #1 level TRUE (character is T for Timelapse, which is read as logical TRUE)
 class(all$TriggerMode)
 # all$TriggerMode[is.na(all$TriggerMode)] <- "T"
 # unique(all$TriggerMode) Results in NAs. Leave as is (i.e. return to TRUE)
+
 
 #### If Date format needs to be standardized, otherwise just convert to Date class (skip to line 108) ####
 Date <- as.character(all$Date)
@@ -100,7 +105,9 @@ str(all) #24 levels for  folders, Snow variable is a mix of upper and lower case
 Snow <- all$Snow
 Snow <- toupper(Snow) #All characters to upper case
 unique(Snow)
-table(Snow) #4950 FALSE, 3937 TRUE
+table(Snow) #336 FALSE, 8153 TRUE
+
+## 
 
 
 #Convert to numeric
@@ -110,36 +117,13 @@ table(Snow) #4950 FALSE, 3937 TRUE
 
 #### Create data.frame of stations (Folder column), Date, Snow ###
 all$Date <- as.Date(all$Date, format = "%d-%b-%Y")
+head(all$Date)
 S <- as.data.frame(all$Folder)
 colnames(S) <- "Station"
 S$Date <- all$Date
 S$Snow <- Snow
 glimpse(S)
 str(S) #Factor, Date, character
-
-#### Extracting Snow data from Camelot full export (April 2017 deployment): Incomplete, having Nisha do in Timelapse ####
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
-fexp <- read.csv("2017.01_fullexport(Camelot).csv")
-rt <- read.csv("2017.01_rawrecordTable.csv") #Other record table has already had 'No Animal' detections removed
-
-str(fexp) #Both Timelapse and Snow have 3 levels: "", "false", "true"
-table(fexp$Timelapse) #True = 7492 --> does not match study days, but close (7703)
-
-str(rt)
-Nan <- rt %>% filter(Species == "No Animal") %>% select(Station,Species, DateTimeOriginal,Date,Time)
-TL <- rt %>% filter(Time == "12:00:00") #7640 (26 of which are marked as a Species), closer than 7492 but not all
-wtf <- rt %>% filter(Time == "12:00:00" & Species != "No Animal") # Mostly cranes and bird, one coyote, one bear, 2 WTDeer...need to be resolved first?
-
-### Check number of Timelapse images with camtrapR metadata extraction? ###
-library(camtrapR)
-EXIF <- exifTagNames(inDir = "D:/Algar_Apr-Nov2017/Renamed_Images", returnMetadata = TRUE) #File: FileName, MakerNotes:TriggerMode--> only returns metadata for one image
-
-
-
-A <- fexp %>% select(Date.Time, Trap.Station.Name, Timelapse, Snow) %>% filter(Timelapse == "true")
-A1 <- fexp %>% select(Date.Time, Trap.Station.Name, Timelapse, Snow) %>% filter(Timelapse == "")
-#Of A1 images, could try to extract all images taken at 12:00:00?
-str(A1$Date.Time)
 
 #### Ordering data by date and station, creating study days ####
 # Adapted from Jo (and Algar_prelim_analysis_ch1.R)
@@ -171,7 +155,7 @@ str(S)
 # using "floor" so it doesn't round up to next day
 S$StudyDay <- floor(as.numeric(difftime(S$Date,min(S$DateStart),units="days"))) ##Takes difference between the detection date and start date, without rounding up
 S$StudyDay <- S$StudyDay+2 #Turns start date into day 1, not day -1
-summary(S$StudyDay) # 205 study days
+summary(S$StudyDay) # 354 study days --> because of Algar43, study days starts in April 2017. Shouldn't cause issues...
 
 
 #### Aggregating snow data into average per month (again, adapting Jo's code) ####
@@ -180,12 +164,15 @@ S$Year <- as.factor(format(S$Date, "%Y"))
 S$Month <- as.factor(format(S$Date, "%m"))
 S$Yr_month <- as.factor(format(S$Date, "%Y-%m"))
 
+## There appear to be duplicate rows in S--> remove
+S <- S[!duplicated(S), ]
+
 head(S)
 summary(S) #snow is character, convert to numeric
 S$Snow <- as.numeric(S$Snow)
 summary(S)
 levels(S$Yr_month)
-sum(S$Snow) #665 snow days total
+sum(S$Snow) #8144 snow days total
 
 #Subsetting for Station, StudyDay, Snow, Yr_Month columns (group_by has issue with POSIXct format from S)
 S1 <- as.data.frame(S$Station)
@@ -199,17 +186,28 @@ m.snow <- S1 %>%
   group_by(Station, Yr_month) %>% 
   summarise(sum(Snow, na.rm = TRUE))
 colnames(m.snow) <- c("Station","Yr_Month","Snow")
-summary(m.snow) #max 13 snow days in a month, min 0, mean 2.065, median 0
-sum(m.snow$Snow) #665 snow days in deployment
+summary(m.snow) #max 37, nonsensical
+m.snow[which(m.snow$Snow==37),] #Returned to S to remove duplicates --> fixed
+
+sum(m.snow$Snow) #8144 snow days in deployment
 
 plot(x = m.snow$Yr_Month, y = m.snow$Snow, xlab = "Year-Month",ylab = "Snow Days")
 
-#### Aggregate with detection data ####
+## Low number of Snow Days in April because there are low number of ActiveDays in April...
+
+## m.snow also needs to include NA months for failed cameras
+
+## Some data lost previously because NAs replaced partial months
+
+#### Aggregate with Snow Data from earlier deployments ####
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
-#Load in monthly detection data for 3rd deployment (Apr-Nov 2017)
-dep1 <- read.csv("2017.01_monthlydetections.csv") #472 observations, as opposed to 322 in m.snow
-dep1$X <- NULL
-##m.snow does not include NA months for failed cameras
+## Load in detection data for all 3 previous deployments
+dep2yr <- read.csv("MonthlyDetections_nov2015-nov2017.csv") #Contains NAs for all Nov 2017 rows --> removed because they were partial
+
+#Load in monthly detection data for all deployments individually
+dep3 <- read.csv("2017.01_monthlydetections.csv") #472 observations, as opposed to 322 in m.snow
+dep3$X <- NULL
+
 
 ## Add in 8 NA months for cameras with no snow data: Algar06, Algar21, Algar43
 #Station column
