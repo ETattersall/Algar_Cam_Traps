@@ -5,16 +5,21 @@ date: "April 27, 2018"
 output: html_document
 ---
 
-  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom1 distribution for caribou data (see Ch1_caribou_modelDistribution.Rmd)    
+  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom1 distribution for caribou data, with zero-inflation and ActiveDays in the ZI model (see Ch1_caribou_modelDistribution.Rmd)    
 Here I will:  
-1. Select random effects to model random structure  
-2. Build models with environmental covariates only  
-3. Build hypothesis models with line covariates + environmental  
-4. Perform model selection with AIC  
-5. Calculate evidence ratios (AICwt of Best Model/ AICwt of other models)  
-6. Checking residuals of Top Model
-7. Model Averaging?
-8. Standardize parameter estimates for easy interpretation
+1. Build models with environmental covariates only  
+2. Build hypothesis models with line covariates + environmental  
+3. Perform model selection with AIC  
+4. Calculate evidence ratios (AICwt of Best Model/ AICwt of other models)  
+5. Checking residuals of Top Model
+6. Model Averaging?
+7. Standardize parameter estimates for easy interpretation  
+Previous scale analysis showed lowland habitat and linear density measured at 1750m best explained caribou detections
+
+```{r "setup", include=FALSE, cache=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath('C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data')) #Setting working directory for all code chunks
+getwd()
+```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(glmmTMB)
@@ -23,13 +28,14 @@ library(ggplot2)
 library(lmtest)
 library(reshape)
 library(dplyr)
-library(AICcmodavg)
+library(knitr)
 
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
-
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #Load detection data
-det <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
+det <- read.csv("Seismic_nov2015-apr2018.csv")
 det$X.1 <- NULL
+det$X.2 <- NULL
 det$X <- NULL
 
 #Load lowland data
@@ -66,23 +72,12 @@ det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
 det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
 
 
-
-
 ## Visualising patterns using predict function (predicting new data, given the best-fit model)
 ## Need to first remove NAs from explanatory variables
-newdat <-  det[ , c(1,2,12:34)] #Naming columns in df
-newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
+# newdat <-  det[ , c(1,2,12:34)] #Naming columns in df
+# newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
 ```
 
-## Finding random structure
-```{r, echo=FALSE}
-r0 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays, data = det, family = nbinom1)
-rSite <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Site), data = det, family = nbinom1) 
-rMonth <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Month), data = det, family = nbinom1)
-r2 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
-ICtab(r0, rSite, rMonth, r2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
-```
-Continue modelling with 2 random effects  
 
 ## Environmental models  
 Model Name  | Covariates
@@ -93,19 +88,24 @@ E3          | low1750
 E4          | SnowDays
 
 ```{r, echo=FALSE}
-E1 <- glmmTMB(Caribou~1 + (1|Site) + (1|Month), data = det, family = nbinom1)
+E1 <- glmmTMB(Caribou~1 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
 
 #2. Global model
-E2 <- glmmTMB(Caribou~low1750 + SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+E2 <- glmmTMB(Caribou~low1750 + SnowDays + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
 
 #3. Lowland only
-E3 <- glmmTMB(Caribou~low1750 + (1|Site) + (1|Month), data = det, family = nbinom1)
+E3 <- glmmTMB(Caribou~low1750 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
 
 #4. Snow only
-E4 <- glmmTMB(Caribou~SnowDays + (1|Site) + (1|Month), data = det, family = nbinom1)
+E4 <- glmmTMB(Caribou~SnowDays + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
 
 ICtab(E1, E2, E3, E4, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE) 
 ```
+  SnowDays appears to be causing issues in model. Too many NAs?
+```{r,echo=FALSE}
+table(is.na(det$SnowDays))
+```
+
 Continue modelling Line characteristics with both environmental variables  
 
 ## Line characteristics  
