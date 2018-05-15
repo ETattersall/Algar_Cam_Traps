@@ -25,6 +25,7 @@ library(dplyr)
 ```
 ```{r, echo=FALSE, message=FALSE}
 #Load detection data
+getwd()
 det <- read.csv("Seismic_nov2015-apr2018.csv")
 det$X <- NULL
 
