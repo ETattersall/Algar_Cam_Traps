@@ -1,0 +1,184 @@
+---
+title: "Ch1_Caribou_modelDistribution"
+author: "Erin Tattersall"
+date: "April 26, 2018"
+output: word_document
+---
+
+Modelling detections rates between November 2015 and April 2018 for caribou.  
+Deciding on most appropriate distribution for response variable.
+
+
+Proportion of zeros in data
+```{r setup, message=FALSE, echo=FALSE}
+knitr::opts_knit$set(root.dir = 'C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data') #Setting working directory for all code chunks
+library(glmmTMB)
+library(bbmle) #AICtab function
+library(ggplot2)
+library(lmtest)
+library(reshape)
+library(dplyr)
+```
+```{r, echo=FALSE, message=FALSE, results= 'hide'}
+#Load detection data
+det <- read.csv("Seismic_nov2015-apr2018.csv")
+det$X <- NULL
+det$X.1 <- NULL
+summary(det)
+
+#Load lowland data
+low <- read.csv("newAVIE_lowland8buffersizes.csv")
+
+#Combine data
+det$low250 <- low$low250[match(det$Site, low$CamStation)]
+det$low500 <- low$low500[match(det$Site, low$CamStation)]
+det$low750 <- low$low750[match(det$Site, low$CamStation)]
+det$low1000 <- low$low1000[match(det$Site, low$CamStation)]
+det$low1250 <- low$low1250[match(det$Site, low$CamStation)]
+det$low1500 <- low$low1500[match(det$Site, low$CamStation)]
+det$low1750 <- low$low1750[match(det$Site, low$CamStation)]
+det$low2000 <- low$low2000[match(det$Site, low$CamStation)]
+
+#Load linedensity data
+LineDens <- read.csv("AlgarStationsLD_Lines.csv")
+
+# Combine datasets
+det$LD250 <- LineDens$X250m[match(det$Site, LineDens$CamStation)]
+det$LD500 <- LineDens$X500m[match(det$Site, LineDens$CamStation)]
+det$LD750 <- LineDens$X750m[match(det$Site, LineDens$CamStation)]
+det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
+det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
+det$LD1500 <- LineDens$X1500m[match(det$Site, LineDens$CamStation)]
+det$LD1750 <- LineDens$X1750m[match(det$Site, LineDens$CamStation)]
+det$LD2000 <- LineDens$X2000m[match(det$Site, LineDens$CamStation)]
+
+
+#Load line width and veg height
+sp <- read.csv("Spatial_covariates.csv")
+
+det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
+det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
+
+## Still missing Snow days
+
+```
+```{r, echo=FALSE, results='hide'}
+
+#### Caribou models ####
+## Lowland measured at 1750m, LD measured at 1750m
+# Not including Dist2Water --> no corresponding hypothesis
+
+### Exploring distribution and overdispersion (code from Zuur & Ieno, 2016)
+##1. Proportion of 0's in data
+table(is.na(det$Caribou)) #1800 non-NAs --> no NAs present
+table(det$Caribou == 0)
+```
+```{r}
+sum(det$Caribou==0, na.rm = TRUE)/nrow(det)
+```
+  95% of the data is zeroes --> very likely zero-inflated.  
+
+### Fitting a basic poisson GLM and checking overdispersion, using global model (doesn't yet include SnowDays)
+```{r}
+glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays, data = det, family = poisson)
+# Residuals and overdispersion
+E1 <- resid(glm1, type="pearson")
+N <- nrow(det)
+p <- length(coef(glm1))
+sum(E1^2)/(N-p)
+```
+Dispersion value of  0.89 indicates underdispersion, which would correspond to zero-inflation
+
+Simulating data to check probability of calculated dispersion.
+```{r, include=FALSE, echo=FALSE, warning=FALSE}
+#function for calculating overdispersion (as above)
+MyDispersion <- function(y, mu, N, p){
+  e <- (y-mu)/sqrt(mu)
+  sum(e^2)/(N-p)
+}
+muFit <- fitted(glm1) #fitted values from model
+Ysim <- matrix(nrow = N, ncol = 10000) #matrix storing simulated responses
+DispersionSim <- vector(length = 10000)#vector storing Dispersion value
+#Loop running simulation of Poisson distributed data and calculating Dispersion value
+for(i in 1:10000){
+  Ysim[,i] <- rpois(N,lambda = muFit)
+  DispersionSim[i] <- MyDispersion(Ysim[,i], muFit, N, p)
+}
+```
+```{r, echo=FALSE}
+#Histogram of dispersion statistics
+hist(DispersionSim, breaks = 1000, xlim = c(0,5))# Simulated statistics are mostly on either side of 1 -->unlikely to have overdispersion
+```
+Histogram indicates that an overdispersion statistic of 0.89 is well within the likely distribution of dispersion statistics for Poisson distributed response variables, suggesting that Caribou data is not necessarily overdispersed.  
+
+Comparing the proportion of zeros in data to simulated zeros from model shows that Caribou data has more zeroes than would be expected in a Poisson GLM
+```{r, echo=FALSE}
+## Comparing proportions of 0's in simulated data to that in sampled data
+zeros <- vector(length = 10000)
+for(i in 1:10000){
+  zeros[i] <- sum(Ysim[,i] == 0) / N
+}
+
+{plot(table(zeros),
+     axes = FALSE,
+     xlim = c(0.8,1),
+     xlab = "Percentage of zeros",
+     ylab = "Frequency")
+
+axis(2)
+axis(1, 
+     at = c(0.82,0.84,0.86,0.88,0.90,0.92,0.94,0.96,0.98,1.0),
+     labels = c("82%","84%","86%","88%","90%","92%","94%","96%","98%","100%"))
+points(x = sum(det$Caribou==0, na.rm = TRUE)/ N,
+       y = 0, pch = 16, cex = 5, col = 2)}
+```
+  This presents a case for using zero-inflated models, which can be verified with model selection of GLMMs
+## Model selection: choosing model form and distribution  
+
+Comparing the same GLMM (including random effects of Site and Month) modeled as a poisson, nb, ZIP and ZINB (with nbinom1 and nbinom2 differing in how variance changes with mean) yields:
+```{r}
+## Model comparisons of distributions and zero-inflation
+glm1 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), data = det, family = poisson)
+glm2 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), data = det, family = nbinom1(link= "log"))
+glm3 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), data = det, family = nbinom2(link = "log"))
+glm4 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), zi = ~1, data = det, family = poisson)
+glm5 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays +(1| Site) + (1|Month), zi = ~1, data = det, family = nbinom1(link= "log"))
+glm6 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays + (1| Site) + (1|Month), zi = ~1, data = det, family = nbinom2(link= "log"))
+```
+```{r, echo=FALSE}
+modnames <- c("Poisson", "Nbinom1", "Nbinom2", "ZIP", "ZINB1", "ZINB2")
+ICtab(glm1,glm2,glm3,glm4,glm5,glm6, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+
+```
+Where the Nbinom1 model's summary output is:
+```{r, echo = FALSE}
+summary(glm2)
+```
+ ZINB model output:
+```{r, echo = FALSE}
+summary(glm5)
+```
+ Active Days affects the probability of observing a zero in data --> should be included in ZI model. It could be argued that it should NOT be included in conditional. I will test both
+```{r, warning=FALSE}
+glm7 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + ActiveDays +(1| Site) + (1|Month), zi = ~ActiveDays, data = det, family = nbinom1(link= "log"))
+glm8 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 +(1| Site) + (1|Month), zi = ~ActiveDays, data = det, family = nbinom1(link= "log"))
+```
+```{r, echo=FALSE}
+modnames <- c("Poisson", "Nbinom1", "Nbinom2", "ZIP", "ZINB1", "ZINB2", "ZINB1-AD1")
+ICtab(glm1,glm2,glm3,glm4,glm5,glm6,glm8, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+summary(glm8)
+```
+ The ZINB including ActiveDays in conditional and ZI did not produce std. errors for parameter estimates, and was therefore excluded.  
+ Including ActiveDays in the ZI model results in more logLikelihood of model and more AIC weight.
+ For caribou models, I will therefore use zero inflated GLMMs with a nbinom1 distribution (where variance changes linearly with the mean), including ActiveDays in the ZI model.  
+ # Model hypotheses  
+ ## Finding random structure
+```{r, echo=FALSE}
+r0 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment, data = det, zi=~ActiveDays,family = nbinom1)
+rSite <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Site), data = det,zi=~ActiveDays, family = nbinom1) 
+rMonth <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+r2 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750*Treatment + (1|Site) + (1|Month), data = det, zi=~ActiveDays,family = nbinom1)
+ICtab(r0, rSite, rMonth, r2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+```
+Continue modelling with 2 random effects
+ 

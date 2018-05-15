@@ -1,0 +1,252 @@
+---
+title: "Ch1_models_caribou"
+author: "Erin Tattersall"
+date: "April 27, 2018"
+output: word_document
+---
+
+  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom1 distribution for caribou data, with zero-inflation and ActiveDays in the ZI model (see Ch1_caribou_modelDistribution.Rmd)    
+Here I will: 
+1. Double check random structure using all covariates
+2. Build models with environmental covariates only  
+3. Build hypothesis models with line covariates + environmental  
+4. Perform model selection with AIC  
+5. Calculate evidence ratios (AICwt of Best Model/ AICwt of other models)  
+6. Checking residuals of Top Model
+7. Model Averaging?
+8. Standardize parameter estimates for easy interpretation  
+Previous scale analysis showed lowland habitat and linear density measured at 1750m best explained caribou detections
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(glmmTMB)
+library(bbmle) #AICtab function
+library(ggplot2)
+library(lmtest)
+library(reshape)
+library(dplyr)
+library(knitr)
+library(arm) #for the standardize function
+
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#Load detection data
+det <- read.csv("Seismic_nov2015-apr2018.csv")
+
+#Load lowland data
+low <- read.csv("newAVIE_lowland8buffersizes.csv")
+
+#Combine data
+det$low250 <- low$low250[match(det$Site, low$CamStation)]
+det$low500 <- low$low500[match(det$Site, low$CamStation)]
+det$low750 <- low$low750[match(det$Site, low$CamStation)]
+det$low1000 <- low$low1000[match(det$Site, low$CamStation)]
+det$low1250 <- low$low1250[match(det$Site, low$CamStation)]
+det$low1500 <- low$low1500[match(det$Site, low$CamStation)]
+det$low1750 <- low$low1750[match(det$Site, low$CamStation)]
+det$low2000 <- low$low2000[match(det$Site, low$CamStation)]
+
+#Load linedensity data
+LineDens <- read.csv("AlgarStationsLD_Lines.csv")
+
+# Combine datasets
+det$LD250 <- LineDens$X250m[match(det$Site, LineDens$CamStation)]
+det$LD500 <- LineDens$X500m[match(det$Site, LineDens$CamStation)]
+det$LD750 <- LineDens$X750m[match(det$Site, LineDens$CamStation)]
+det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
+det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
+det$LD1500 <- LineDens$X1500m[match(det$Site, LineDens$CamStation)]
+det$LD1750 <- LineDens$X1750m[match(det$Site, LineDens$CamStation)]
+det$LD2000 <- LineDens$X2000m[match(det$Site, LineDens$CamStation)]
+
+
+#Load line width and veg height
+sp <- read.csv("Spatial_covariates.csv")
+
+det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
+det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
+
+str(det)
+
+
+## Visualising patterns using predict function (predicting new data, given the best-fit model)
+## Need to first remove NAs from explanatory variables
+# newdat <-  det[ , c(1,2,12:34)] #Naming columns in df
+# newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
+```
+### 1. Random structure  
+  Random structure was previously assessed, but here I will confirm using all model covariates. Also comparing random intercepts vs random slope.
+
+```{r, echo=FALSE, message = FALSE}
+r0 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750 + Treatment + pSnow, data = det, zi=~ActiveDays,family = nbinom1)
+rSite <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750 + Treatment + pSnow + (1|Site), data = det,zi=~ActiveDays, family = nbinom1) 
+rMonth <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750 + Treatment + pSnow + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+r2 <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750 + Treatment + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays,family = nbinom1)
+r2s <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750 + Treatment + pSnow + (Treatment|Site) + (Treatment|Month), data = det, zi=~ActiveDays,family = nbinom1)
+rMonthS <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750 + Treatment + pSnow + (Treatment|Month), data = det, zi=~ActiveDays, family = nbinom1)
+rSiteS <- glmmTMB(Caribou~ LineWidth + LD1750 + VegHt + low1750 + Treatment + pSnow + (Treatment|Site), data = det,zi=~ActiveDays, family = nbinom1)
+
+ICtab(r0, rSite, rMonth, r2, r2s, rMonthS, rSiteS, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+```  
+  Random slope models fail to converge, so exclude
+
+## Environmental models  
+Model Name  | Covariates
+----------- | -------------------
+E1          | None
+E2          | low1750 + pSnow
+E3          | low1750
+E4          | pSnow
+
+```{r, echo=FALSE}
+E1 <- glmmTMB(Caribou~1 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#2. Global model
+E2 <- glmmTMB(Caribou~low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#3. Lowland only
+E3 <- glmmTMB(Caribou~low1750 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#4. Snow only
+E4 <- glmmTMB(Caribou~pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+ICtab(E1, E2, E3, E4, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE) 
+```  
+  Continue modelling Line characteristics with both environmental variables  
+
+## Line characteristics  
+Model Name  | Covariates
+----------- | -------------------
+L1          | Treatment + low1750 + pSnow
+L2          | VegHt + low1750 + pSnow
+L3          | LD1750 + low1750 + pSnow
+L4          | LineWidth + low1750 + pSnow
+L5          | Treatment + LineWidth + low1750 + pSnow
+L6          | LineWidth + VegHt + low1750 + pSnow
+L7          | Treatment + LD1750 + low1750 + pSnow
+L8          | LD1750 + VegHt + low1750 + pSnow
+L9          | Treatment + VegHt + low1750 + pSnow
+L10         | Treatment + LineWidth + VegHt + low1750 + pSnow
+L11         | Treatment + LineWidth + LD1750 + low1750 + pSnow
+L12         | Treatment + VegHt + LD1750 + low1750 + pSnow
+L13         | LineWidth + VegHt + LD1750 + low1750 + pSnow
+L14         | Treatment + LineWidth + LD1750 + VegHt + low1750 + pSnow  
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+#1. Treatment
+L1 <- glmmTMB(Caribou~Treatment + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#2. VegHt
+L2 <- glmmTMB(Caribou~ VegHt + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#3. Line density
+L3 <- glmmTMB(Caribou~ LD1750 + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#4. Line Width
+L4 <- glmmTMB(Caribou~ LineWidth + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#5. Treatment + LineWidth
+L5 <- glmmTMB(Caribou~ Treatment + LineWidth + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#6. LineWidth + VegHt
+L6 <- glmmTMB(Caribou~ LineWidth + VegHt + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays,family = nbinom1)
+
+#7. Treatment + Line density
+L7 <- glmmTMB(Caribou~ Treatment + LD1750 + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#8. Line density and VegHt
+L8 <- glmmTMB(Caribou~ LD1750 + VegHt + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#9. VegHt + Treatment
+L9 <- glmmTMB(Caribou~ Treatment + VegHt + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#10. Treatment, LineWidth, VegHt
+L10 <- glmmTMB(Caribou~ Treatment + LineWidth + VegHt + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#11. Treatment, LineWidth, Line density
+L11 <- glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#12. Treatment, Line density, VegHt
+L12 <- glmmTMB(Caribou~ Treatment + VegHt + LD1750 + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#13. LineWidth, VegHt, Line density
+L13 <- glmmTMB(Caribou~ LineWidth + VegHt + LD1750 + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+#14. Global model - Treatment, Line density, VegHt, LineWidth
+L14 <-  glmmTMB(Caribou~ Treatment + LineWidth + LD1750 + VegHt + low1750 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom1)
+
+CaribouAIC <- ICtab(E1, E2, E3, E4, L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+CaribouAIC
+```
+  Six models within 2 dAIC points of each other, with model weights between 0.08 - 20%  
+  VegHt is present in top 5 models, Treatment is included in models 3-6 .
+  Comparing simple models ONLY.
+```{r, echo=FALSE, message= FALSE}
+CaribouAIC <- ICtab(E1, E2, E3, E4, L1, L2, L3, L4, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+CaribouAIC
+```  
+## Evidence Ratios and Cumulative model weight (calculating confidence intervals)
+  
+  Calculating evidence ratios (AIC wt of best model/AIC weight of others) gives:
+  
+```{r,echo=FALSE, results='hide'}
+EvR <- function(AICwt.high, AICwt.low){
+  EvR <- AICwt.high/AICwt.low
+  print(EvR)
+}
+EvR(CaribouAIC$weight[1], CaribouAIC$weight[2])
+CaribouWt <- CaribouAIC$weight
+CaribouER <- vector(length=17)
+for(i in 2:18){
+  CaribouER[i-1] <- EvR(CaribouWt[1], CaribouWt[i])
+}
+```
+```{r,echo=FALSE}
+CaribouER <- append("", CaribouER)
+ER <- as.data.frame(CaribouER)
+ER$dLogLikelihood <- CaribouAIC$dLogLik
+ER$dAIC <- CaribouAIC$dAIC
+ER$Modelweight <- CaribouAIC$weight
+ER$ModelNames <- c("L8", "L2", "L12", "L9", "L13", "L11", "L14", "L5", "L4", "L10", "L6", "L7", "L3", "L1", "E2", "E3", "E4", "E1")
+ER$weight.cum <- rep(NA,18)
+ER$weight.cum[1] <- ER$Modelweight[1]
+for (i in 2:length(ER$Modelweight)){
+  ER$weight.cum[i] <- ER$Modelweight[i] + ER$weight.cum[i-1]
+}
+
+ER <- ER %>% select(ModelNames, dLogLikelihood, dAIC, Modelweight, weight.cum, CaribouER)
+colnames(ER) <- c("ModelNames", "dLogLikelihood", "dAIC", "Modelweight", "CumulativeWeight", "EvidenceRatio")
+ER
+
+```  
+###Summary Output for Top Model
+  
+````{r, echo=FALSE}
+summary(L8)
+```
+
+
+### Plotting residuals against fitted values and predicted values for all covariates
+```{r, echo=FALSE}
+
+## Residual plot for global model(L8)
+op <- par(mfrow = c(1,2))
+pred <- predict(L8, zitype = "response")
+resid <- residuals(L8)
+
+## Plot residuals against predicted --> diagonal lines characteristic of discrete data
+
+{plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)  
+lines(smooth.spline(pred, resid))}
+{plot(fitted(L8), residuals(L8), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)
+lines(smooth.spline(fitted(L8), resid))}
+
+
+
+```
+    Standardizing parameter estimates for global model
+```{r}
+std.glb <- standardize(L14, standardize.y = FALSE)
+```

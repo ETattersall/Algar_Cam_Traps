@@ -1,0 +1,157 @@
+---
+title: "AlgarData_Exploration"
+author: "Erin Tattersall"
+date: "May 11, 2018"
+output: word_document
+---
+
+  Data exploration prior to Ch.1 modelling of Algar data, as outlined in Zuur et al., 2010. As I know that the data is heterogeneous, non-normal, and zero-inflated, here I focus on outliers, collinearities, and interactions  
+```{r, echo=FALSE, message=FALSE}
+library(ggplot2) #for plotting magic
+library(dplyr) #for data management convenience
+library(tidyr) #for data management (gather function)
+
+
+det <- read.csv("Seismic_nov2015-apr2018.csv") # Detection deta for 30 months of surveying
+head(det)
+
+
+#Load lowland data
+low <- read.csv("newAVIE_lowland8buffersizes.csv")
+
+#Combine data
+det$low250 <- low$low250[match(det$Site, low$CamStation)]
+det$low500 <- low$low500[match(det$Site, low$CamStation)]
+det$low750 <- low$low750[match(det$Site, low$CamStation)]
+det$low1000 <- low$low1000[match(det$Site, low$CamStation)]
+det$low1250 <- low$low1250[match(det$Site, low$CamStation)]
+det$low1500 <- low$low1500[match(det$Site, low$CamStation)]
+det$low1750 <- low$low1750[match(det$Site, low$CamStation)]
+det$low2000 <- low$low2000[match(det$Site, low$CamStation)]
+
+#Load linedensity data
+LineDens <- read.csv("AlgarStationsLD_Lines.csv")
+
+# Combine datasets
+det$LD250 <- LineDens$X250m[match(det$Site, LineDens$CamStation)]
+det$LD500 <- LineDens$X500m[match(det$Site, LineDens$CamStation)]
+det$LD750 <- LineDens$X750m[match(det$Site, LineDens$CamStation)]
+det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
+det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
+det$LD1500 <- LineDens$X1500m[match(det$Site, LineDens$CamStation)]
+det$LD1750 <- LineDens$X1750m[match(det$Site, LineDens$CamStation)]
+det$LD2000 <- LineDens$X2000m[match(det$Site, LineDens$CamStation)]
+
+
+#Load line width and veg height
+sp <- read.csv("Spatial_covariates.csv")
+
+det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
+det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
+```
+
+## Checking outliers
+### Detection data
+```{r, echo=FALSE, message=FALSE}
+#### Species: gather species together for boxplot for every species ####
+d1 <- gather(data = det, key = Species, value = Detections, 5:11)
+
+#ggplot code for boxplot
+bp <- ggplot(data = d1, aes(x = Species, y = Detections, fill = Species)) #Coyote has one major outlier, probably Algar17 2017-08
+bp + geom_boxplot() + theme_classic() + theme(legend.position = "none")
+
+#dot plot
+dp <- bp + geom_dotplot(binaxis='y', binwidth = 0.25, stackdir='center')# Species overlap, but clear that data is skewed to 0
+dp
+#Shows means on plot
+dp + stat_summary(fun.y=mean, geom="point", shape=18,
+                    size=3, color="black") + theme_classic() + theme(legend.position = "none") 
+
+### Outcome: Data is heavily zero-inflated. Graphically, this presents all non-zero points as outliers. 
+```
+### Environmental covariates
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+d1 <- gather(data = det, key = Env, value = Proportions, c(15,17:25))
+
+#ggplot code for boxplot
+bp <- ggplot(data = d1, aes(x = Env, y = Proportions, fill = Env))
+bp + geom_boxplot() + theme_classic() + theme(legend.position = "none")
+
+```
+  Distance to water has a much larger range than other environmental covariates; may consider standardising  
+
+### Linear covariates   
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+d1 <- gather(data = det, key = Line, value = Values, 26:35)
+
+#ggplot code for boxplot
+bp <- ggplot(data = d1, aes(x = Line, y = Values, fill = Line))
+bp + geom_boxplot() + theme_classic() + theme(legend.position = "none") + scale_x_discrete(limits=c("LD250", "LD500", "LD750","LD1000", "LD1250", "LD1250", "LD1500", "LD1750", "LD2000", "LineWidth", "VegHt"))
+
+# Treatments
+Treat <- as.data.frame(table(det$Treatment))
+colnames(Treat) <- c("Treatment", "SiteMonths")
+bp <- ggplot(data = Treat, aes(x = Treatment, y = SiteMonths, fill = Treatment))
+bp+geom_bar(stat="identity") + theme_classic() + theme(legend.position = "none")
+
+```
+
+#### ActiveDays per Treatment  
+```{r, echo=FALSE, message=FALSE, warning = FALSE}
+bp <- ggplot(data = det, aes(x = Treatment, y = ActiveDays, fill = Treatment))
+bp + geom_boxplot() + theme_classic() + theme(legend.position = "none")
+```
+  Mean ActiveDays across Treatments varies substantially  
+## Collinearities  
+### Pairwise plot of covariates  
+  (Note: As I know linear density and proportion lowland are correlated with each other, for simplicity I am only comparing these covariates measured at 1000m)  
+```{r, echo=FALSE, message=FALSE, warning = FALSE}
+pairs(det[ , c(2,14,15,17,21,29,34,35)])
+```
+### Variance Inflation Factors (using linear model with all covariates, modelling random effects as covariates)  
+```{r, echo=FALSE, message=FALSE, warning = FALSE, results='hide'}
+library(fmsb)
+lm.cab <-lm(Caribou~LineWidth + LD1750 + VegHt + low1750 + Treatment + pSnow + Site + Month, data = det) 
+VIF(lm.cab)
+lm.WTD <-lm(WTDeer~LineWidth + LD750 + VegHt + low2000 + Treatment + pSnow + Site + Month, data = det) 
+VIF(lm.WTD)
+lm.Wolf <-lm(Wolf~LineWidth + LD1250 + VegHt + low500 + Treatment + pSnow + Site + Month, data = det) 
+lm.moose <-lm(Moose~LineWidth + LD1250 + VegHt + low250 + Treatment + pSnow + Site + Month, data = det) 
+VIF(lm.moose)
+lm.bear <- lm(Blackbear~LineWidth + LD750 + VegHt + low500 + Treatment + pSnow + Site + Month, data = det) 
+VIF(lm.bear)
+
+```
+Species  | VIF
+-------- | ------
+Caribou  | 1.203
+WTDeer   | 1.730
+Wolf     | 1.730
+Moose    | 1.164
+Bear     | 1.376  
+
+## Interactions  
+### Treatment * lowland
+```{r, echo=FALSE, message=FALSE, warning = FALSE}
+coplot(Caribou~low1750 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Wolf~low500 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(WTDeer~ low2000 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Moose~low250 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Blackbear~low500 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+```
+### Treatment * LineWidth
+```{r, echo=FALSE, message=FALSE, warning = FALSE}
+coplot(Caribou~LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Wolf~LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(WTDeer~ LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Moose~LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Blackbear~LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+```
+### Treatment * VegHt
+```{r, echo=FALSE, message=FALSE, warning = FALSE}
+coplot(Caribou~VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Wolf~VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(WTDeer~ VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Moose~VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Blackbear~VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+```
