@@ -5,20 +5,17 @@ date: "May 13, 2018"
 output: word_document
 ---
 
-  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom2 distribution for black bear data, with zero-inflation and ActiveDays in the ZI model (see Ch1_blackbear_modelDistribution.Rmd). However, including ActiveDays in the ZI model resulted in model convergence problems. I will therefore include ActiveDays in the conditional model with a null ZI.
-  
+  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom1 distribution for Blackbear data, with zero-inflation and ActiveDays in the ZI model (see Ch1_Blackbear_modelDistribution.Rmd)    
 Here I will: 
 1. Double check random structure using all covariates
-2. Build models with environmental covariates only  
-3. Build hypothesis models with line covariates + environmental  
+2. Build models assessing Treatment effect, including other combinations of covariates to account for additional noise and compare their effect to Treatment 
 4. Perform model selection with AIC  
 5. Calculate evidence ratios (AICwt of Best Model/ AICwt of other models)  
 6. Checking residuals of Top Model
-7. Model Averaging?
-8. Standardize parameter estimates for easy interpretation  
-Previous scale analysis showed lowland habitat and linear density measured at 1750m best explained caribou detections
+  
+Previous scale analysis showed lowland habitat at 500m and linear density measured at 750m best explained Blackbear detections
 
-## Select Active Months for Black bears
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(glmmTMB)
 library(bbmle) #AICtab function
@@ -27,6 +24,7 @@ library(lmtest)
 library(reshape)
 library(dplyr)
 library(knitr)
+library(MuMIn) #streamlining model selection
 
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
@@ -67,132 +65,100 @@ det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
 det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
 
 
-### Cropping data for active bear months only -- April - October
-unique(det$Yr_Month)
-plot(det$Yr_Month,det$Blackbear)
+### Centring and standardizing covariates
+## All continuous input variables need to be centred and standardized ((value - mean)/2SD; Gelman, 2008)
+covscale <- function(covariate){
+  centre <- (covariate - mean(covariate, na.rm = TRUE)) # where covariate is a vector of numeric input values for one covariate
+  standardize <- centre/(2*sd(covariate, na.rm = TRUE)) # Divide centred value by 2 SD
+}
 
+summary(det$ActiveDays) #mean 18
+sd(det$ActiveDays)
+det$ActiveDays_sc <- covscale(det$ActiveDays)
+summary(det$ActiveDays_sc)
+sd(det$ActiveDays_sc)
+det$D2W_sc <- covscale(det$Dist2Water_km) #mean 2.07
+summary(det$Dist2Water_km) #mean 2.07
+sd(det$Dist2Water_km) #1.76
+summary(det$D2W_sc) #mean 0
+sd(det$D2W_sc) #SD
+
+det$pSnow_sc <- covscale(det$pSnow)
+summary(det$pSnow_sc) #NAs, probably because of NAs in pSnow --> added na.rm = TRUE to function
+det$pSnow_sc <- covscale(det$pSnow)
+summary(det$pSnow_sc)
+sd(det$pSnow_sc, na.rm = TRUE)
+det$low250_sc <- covscale(det$low250)
+det$low500_sc <- covscale(det$low500)
+det$low750_sc <- covscale(det$low750)
+det$low1000_sc <- covscale(det$low1000)
+det$low1250_sc <- covscale(det$low1250)
+det$low1500_sc <- covscale(det$low1500)
+det$low1750_sc <- covscale(det$low1750)
+det$low2000_sc <- covscale(det$low2000)
+det$LD250_sc <- covscale(det$LD250)
+det$LD500_sc <- covscale(det$LD500)
+det$LD750_sc <- covscale(det$LD750)
+det$LD1000_sc <- covscale(det$LD1000)
+det$LD1250_sc <- covscale(det$LD1250)
+det$LD1500_sc <- covscale(det$LD1500)
+det$LD1750_sc <- covscale(det$LD1750)
+det$LD2000_sc <- covscale(det$LD2000)
+det$LineWidth_sc <- covscale(det$LineWidth)
+det$VegHt_sc <- covscale(det$VegHt)
+
+summary(det[ , 36:56]) #Centred means of 0
+
+write.csv(det, "Seismic_nov2015-apr2018.csv")
 
 #Filter for desired months and covariates - low500 and LD750
-det <- det %>% filter(Yr_Month == "2016-04" | Yr_Month == "2016-05" | Yr_Month == "2016-06"| Yr_Month == "2016-07"| Yr_Month == "2016-08"| Yr_Month == "2016-09"| Yr_Month == "2016-10"| Yr_Month == "2017-04" | Yr_Month == "2017-04" | Yr_Month == "2017-05" | Yr_Month == "2017-06"| Yr_Month == "2017-07"| Yr_Month == "2017-08"| Yr_Month == "2017-09"| Yr_Month == "2017-10") %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, Month, ActiveDays, pSnow,low500, LD750, VegHt, LineWidth)
-
-
-## Visualising patterns using predict function (predicting new data, given the best-fit model)
-## Need to first remove NAs from explanatory variables
-# newdat <-  det[ , c(1,2,12:34)] #Naming columns in df
-# newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
+det <- det %>% filter(Yr_Month == "2016-04" | Yr_Month == "2016-05" | Yr_Month == "2016-06"| Yr_Month == "2016-07"| Yr_Month == "2016-08"| Yr_Month == "2016-09"| Yr_Month == "2016-10"| Yr_Month == "2017-04" | Yr_Month == "2017-04" | Yr_Month == "2017-05" | Yr_Month == "2017-06"| Yr_Month == "2017-07"| Yr_Month == "2017-08"| Yr_Month == "2017-09"| Yr_Month == "2017-10") %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, Month, ActiveDays_sc, pSnow_sc,low500_sc, LD750_sc, VegHt_sc, LineWidth_sc)
+#Omit NA rows
+det <- na.omit(det)
 ```
-### 1. Random structure  
-  Random structure was previously assessed, but here I will confirm using all model covariates
+### 1. Random structure and Active Days 
+  Random structure was previously assessed, but here I will confirm using all model covariates. Models have convergence problems when ActiveDays is run in the zero-inflated part of the model, so here I include it in the conditional
 
 ```{r, echo=FALSE, message=FALSE}
-r0 <- glmmTMB(Blackbear~ LineWidth + LD750 + VegHt + low500 + Treatment + pSnow + ActiveDays, data = det, zi=~1,family = nbinom2)
-rSite <- glmmTMB(Blackbear~ LineWidth + LD750 + VegHt + low500 + Treatment + pSnow + ActiveDays + (1|Site), data = det,zi=~1, family = nbinom2) 
-rMonth <- glmmTMB(Blackbear~ LineWidth + LD750 + VegHt + low500 + Treatment + pSnow + ActiveDays  + (1|Month), data = det, zi=~1, family = nbinom2)
-r2 <- glmmTMB(Blackbear~ LineWidth + LD750 + VegHt + low500 + Treatment + pSnow + ActiveDays + (1|Site) + (1|Month), data = det, zi=~1,family = nbinom2)
-ICtab(r0, rSite, rMonth, r2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
-```
+r0 <- glmmTMB(Blackbear~ LineWidth_sc + LD750_sc + VegHt_sc + low500_sc + Treatment + ActiveDays_sc, data = det, zi=~1, family = nbinom2)
+rSite <- glmmTMB(Blackbear~ LineWidth_sc + LD750_sc + VegHt_sc + low500_sc + Treatment + ActiveDays_sc + (1|Site), data = det, zi=~1,  family = nbinom2) 
+rMonth <- glmmTMB(Blackbear~ LineWidth_sc + LD750_sc + VegHt_sc + low500_sc + Treatment + ActiveDays_sc + (1|Month), data = det, zi=~1, family = nbinom2)
+r2 <- glmmTMB(Blackbear~ LineWidth_sc + LD750_sc + VegHt_sc + low500_sc + Treatment + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
 
-## Environmental models  
-Model Name  | Covariates
------------ | -------------------
-E1          | ActiveDays
-E2          | ActiveDays + low500 + pSnow
-E3          | ActiveDays + low500
-E4          | ActiveDays + pSnow
+ICtab(r0, rSite, rMonth, r2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+```  
+   Continue modelling with 2 random effects.
+## Model Set  
+  (note that numbered models from dredge do not correspond with numbers in table; I have listed models in order of increasing complexity, dredge did not)
+  Also, Blackbear model sets do not include Snow, as they are active in the Snow-free period
+
+```{r, echo=FALSE, message=FALSE, results = 'hide'}
+# dredge function from MuMin generates and evaluates model sets
+global.model <- glmmTMB(Blackbear~ LineWidth_sc + LD750_sc + VegHt_sc + low500_sc + Treatment + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
+
+#List of all possible models including Treatment and some combination of other covariates. Runs models and returns a model selection data frame
+Treat.models <- dredge(global.model = global.model, beta = "none", evaluate = TRUE, rank = "AIC", fixed = ~cond(Treatment) + cond(ActiveDays_sc), trace = TRUE) # Does not include null model
+
+#Lists model objects
+Models <- get.models(Treat.models, subset = TRUE)
+
+## Add NULL model to list
+NULLmod <- glmmTMB(Blackbear~ ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
+Models[["Nullmod"]] <- NULLmod
+
+```
 
 ```{r, echo=FALSE}
-E1 <- glmmTMB(Blackbear~ActiveDays + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#2. Global model
-E2 <- glmmTMB(Blackbear~ActiveDays + low500 + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#3. Lowland only
-E3 <- glmmTMB(Blackbear~ActiveDays + low500 + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#4. Snow only
-E4 <- glmmTMB(Blackbear~ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-ICtab(E1, E2, E3, E4, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE) 
-```  
-  As in the Wolf models, E4 and E2 perform very similarly, with the pSnow model coming out slightly on top. Model deviance is only ~1 unit separate and lowland does not appear to have much of an effect. However, perhaps lowland has an effect when adding other variables?  
-  Compare global models with and without lowland habitat.  
-```{r, echo=FALSE, results='hide'}
-summary(E4)
-summary(E2)
-```
-```{r, echo=FALSE, message=FALSE}
-wLow <-  glmmTMB(Blackbear~ Treatment + LineWidth + LD750 + VegHt + low500 + pSnow + ActiveDays + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-woLow <-  glmmTMB(Blackbear~ Treatment + LineWidth + LD750 + VegHt + pSnow + ActiveDays + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-ICtab(wLow,woLow, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE) 
-```  
-  As in the simpler models, the global model without lowland habitat has more model weight, but still within 2 AIC points. This provides more evidence that lowland habitat may just be a 'pretending variable,' and I will exclude it from further analysis.  
-  
-## Line characteristics  
-Model Name  | Covariates
------------ | -------------------
-L1          | Treatment + pSnow + ActiveDays
-L2          | VegHt + pSnow + ActiveDays
-L3          | LD750 + pSnow + ActiveDays
-L4          | LineWidth + pSnow + ActiveDays
-L5          | Treatment + LineWidth + pSnow + ActiveDays
-L6          | LineWidth + VegHt + pSnow + ActiveDays
-L7          | Treatment + LD750 + pSnow + ActiveDays
-L8          | LD750 + VegHt + pSnow + ActiveDays
-L9          | Treatment + VegHt + pSnow + ActiveDays
-L10         | Treatment + LineWidth + VegHt + pSnow + ActiveDays
-L11         | Treatment + LineWidth + LD750 + pSnow + ActiveDays
-L12         | Treatment + VegHt + LD750 + pSnow + ActiveDays
-L13         | LineWidth + VegHt + LD750 + pSnow + ActiveDays
-L14         | Treatment + LineWidth + LD750 + VegHt + pSnow + ActiveDays  
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
-#1. Treatment
-L1 <- glmmTMB(Blackbear~Treatment + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#2. VegHt
-L2 <- glmmTMB(Blackbear~ VegHt + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#3. Line density
-L3 <- glmmTMB(Blackbear~ LD750 + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#4. Line Width
-L4 <- glmmTMB(Blackbear~ LineWidth + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#5. Treatment + LineWidth
-L5 <- glmmTMB(Blackbear~ Treatment + LineWidth + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#6. LineWidth + VegHt
-L6 <- glmmTMB(Blackbear~ LineWidth + VegHt + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1,family = nbinom2)
-
-#7. Treatment + Line density
-L7 <- glmmTMB(Blackbear~ Treatment + LD750 + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#8. Line density and VegHt
-L8 <- glmmTMB(Blackbear~ LD750 + VegHt + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#9. VegHt + Treatment
-L9 <- glmmTMB(Blackbear~ Treatment + VegHt + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#10. Treatment, LineWidth, VegHt
-L10 <- glmmTMB(Blackbear~ Treatment + LineWidth + VegHt + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#11. Treatment, LineWidth, Line density
-L11 <- glmmTMB(Blackbear~ Treatment + LineWidth + LD750 + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#12. Treatment, Line density, VegHt
-L12 <- glmmTMB(Blackbear~ Treatment + VegHt + LD750 + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#13. LineWidth, VegHt, Line density
-L13 <- glmmTMB(Blackbear~ LineWidth + VegHt + LD750 + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-#14. Global model - Treatment, Line density, VegHt, LineWidth
-L14 <-  glmmTMB(Blackbear~ Treatment + LineWidth + LD750 + VegHt + ActiveDays + pSnow + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
-
-BlackbearAIC <- ICtab(E1, E2, E3, E4, L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+BlackbearAIC <- ICtab(Models, mnames = names(Models), type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 BlackbearAIC
+``` 
+```{r, echo=FALSE, results='hide'}
+summary(Models$`13`)
+summary(Models$`9`)
+
 ```
-  3 models within 2 dAIC points of each other, with model weights between 16 - 43%  
-  VegHt is present in top 5 models, Treatment doesn't appear until 4th model  
+  Three models within 2 dAIC points of each other, with model weights between 13-25%. Top model is the Null, with only ActiveDays as a covariate
+    
   
 ## Evidence Ratios and Cumulative model weight (calculating confidence intervals)
   
@@ -205,53 +171,59 @@ EvR <- function(AICwt.high, AICwt.low){
 }
 EvR(BlackbearAIC$weight[1], BlackbearAIC$weight[2])
 BlackbearWt <- BlackbearAIC$weight
-BlackbearER <- vector(length=17)
-for(i in 2:18){
+BlackbearER <- vector(length=16)
+for(i in 2:17){
   BlackbearER[i-1] <- EvR(BlackbearWt[1], BlackbearWt[i])
 }
 ```
 ```{r,echo=FALSE}
 BlackbearER <- append("", BlackbearER)
-ER <- as.data.frame(BlackbearER)
+ER <- as.data.frame(c("Nullmod", names(Models[1:16]))) # Order needed to be corrected as Nullmod should be at top
+colnames(ER) <- "ModelNames"
 ER$dLogLikelihood <- BlackbearAIC$dLogLik
 ER$dAIC <- BlackbearAIC$dAIC
 ER$Modelweight <- BlackbearAIC$weight
-ER$ModelNames <- c("L2", "L6", "L8", "L9", "L13", "L12", "L10", "L4", "L14", "L5", "L11", "E4", "E2", "L3", "L1", "L7", "E1", "E3")
-ER$weight.cum <- rep(NA,18)
-ER$weight.cum[1] <- ER$Modelweight[1]
+ER$CumulativeWeight <- rep(NA,17)
+ER$CumulativeWeight[1] <- ER$Modelweight[1]
 for (i in 2:length(ER$Modelweight)){
-  ER$weight.cum[i] <- ER$Modelweight[i] + ER$weight.cum[i-1]
+  ER$CumulativeWeight[i] <- ER$Modelweight[i] + ER$CumulativeWeight[i-1]
 }
+ER$EvidenceRatio <- BlackbearER
 
-ER <- ER %>% select(ModelNames, dLogLikelihood, dAIC, Modelweight, weight.cum, BlackbearER)
-colnames(ER) <- c("ModelNames", "dLogLikelihood", "dAIC", "Modelweight", "CumulativeWeight", "EvidenceRatio")
 ER
+```
+ Examining summaries for top 2 models that aren't the null (2dAIC)  
+```{r, echo=FALSE, results='hide'}
+fixef(Models$`9`)
+fixef(Models$`13`)
 
 ```  
-###Summary Output for Top Model
-  
-````{r, echo=FALSE}
-summary(L2)
+In addition to ActiveDays and Treatment, both include VegHt and second includes low
+
+
+```{r, echo=FALSE}
+summary(Models$`9`)
+summary(Models$`13`)
+```
+### Model averaging
+  Two models are within 2dAIC scores of  each other, suggesting that they all explain the data equally well. As my goal is to compare Treatment effects to the effects of other covariates, I do not just want the estimates given in the top model, but rather the best possible estimates for many covariates. I will therefore model average to obtain a weighted average estimate (effect size) of covariates included in models that are within 2 dAIC of one another or within 95% confidence intervals, whichever is more conservative.
+```{r, echo=FALSE}
+#List of top models
+Beartop <- Models[c(1,2,17)]
+Bear.averaged <- model.avg(Beartop)
+summary(Bear.averaged) ## Look at full model --> parameters averaged over all models, with the coefficient set to 0 if the parameter is not present
+Est.full <- Bear.averaged$coefficients[1,] #Estimates for the full average
+summary(Bear.averaged[3])
+CI95.full <- confint(Bear.averaged)
+BearEffects.CI <- as.data.frame(c("Intercept", "ActiveDays",  "ziIntercept", "VegHt", "HumanUse", "NatRegen", "SPP", "Lowland"))
+colnames(BearEffects.CI) <- "Predictor"
+BearEffects.CI$Estimate <- Est.full
+BearEffects.CI$CIlow <- CI95.full[, 1]
+BearEffects.CI$CI.high <- CI95.full[, 2]
 ```
 
-
-### Plotting residuals against fitted values and predicted values for all covariates
+### Predictor Effect Sizes
 ```{r, echo=FALSE}
-
-## Residual plot for global model(L2)
-op <- par(mfrow = c(1,2))
-pred <- predict(L2, zitype = "response")
-resid <- residuals(L2)
-
-## Plot residuals against predicted --> diagonal lines characteristic of discrete data
-
-{plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
-abline(h = 0, lty = 2)  
-lines(smooth.spline(pred, resid))}
-{plot(fitted(L2), residuals(L2), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, lty = 2)
-lines(smooth.spline(fitted(L2), resid))}
-
-
-
+library(ggplot2)
+ggplot(data = BearEffects.CI, aes( x = Predictor, y = Estimate)) + geom_point() + geom_errorbar(aes(ymin=CIlow, ymax = CI.high))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("NatRegen", "SPP", "HumanUse", "Lowland", "VegHt"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + scale_y_continuous(limits = c(-3, 3))
 ```

@@ -5,17 +5,16 @@ date: "May 11, 2018"
 output: word_document
 ---
 
-  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom2 distribution for Wolf data, with zero-inflation and ActiveDays in the ZI model (see Ch1_Wolf_modelDistribution.Rmd)    
+  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom1 distribution for Wolf data, with zero-inflation.
+  I previously had decided to include ActiveDays in the ZI model. However, to retain the same amount of data in each model, I need to omit rows with NAs. NA rows are usually those in which cameras were inactive. Therefore, in the final dataset used in modelling, ActiveDays should have a greater effect on the count data, not the zero mass, so it should be included in the conditional model.
 Here I will: 
 1. Double check random structure using all covariates
-2. Build models with environmental covariates only  
-3. Build hypothesis models with line covariates + environmental  
+2. Build models assessing Treatment effect, including other combinations of covariates to account for additional noise and compare their effect to Treatment 
 4. Perform model selection with AIC  
 5. Calculate evidence ratios (AICwt of Best Model/ AICwt of other models)  
 6. Checking residuals of Top Model
-7. Model Averaging?
-8. Standardize parameter estimates for easy interpretation  
-Previous scale analysis showed lowland habitat and linear density measured at 1750m best explained Wolf detections
+  
+Previous scale analysis showed lowland habitat at 500m and linear density measured at 1250m best explained Wolf detections
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -26,6 +25,7 @@ library(lmtest)
 library(reshape)
 library(dplyr)
 library(knitr)
+library(MuMIn) #streamlining model selection
 
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
@@ -65,122 +65,140 @@ sp <- read.csv("Spatial_covariates.csv")
 det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
 det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
 
-str(det)
+
+### Centring and standardizing covariates
+## All continuous input variables need to be centred and standardized ((value - mean)/2SD; Gelman, 2008)
+covscale <- function(covariate){
+  centre <- (covariate - mean(covariate, na.rm = TRUE)) # where covariate is a vector of numeric input values for one covariate
+  standardize <- centre/(2*sd(covariate, na.rm = TRUE)) # Divide centred value by 2 SD
+}
+
+summary(det$ActiveDays) #mean 18
+sd(det$ActiveDays)
+det$ActiveDays_sc <- covscale(det$ActiveDays)
+summary(det$ActiveDays_sc)
+sd(det$ActiveDays_sc)
+det$D2W_sc <- covscale(det$Dist2Water_km) #mean 2.07
+summary(det$Dist2Water_km) #mean 2.07
+sd(det$Dist2Water_km) #1.76
+summary(det$D2W_sc) #mean 0
+sd(det$D2W_sc) #SD
+
+det$pSnow_sc <- covscale(det$pSnow)
+summary(det$pSnow_sc) #NAs, probably because of NAs in pSnow --> added na.rm = TRUE to function
+det$pSnow_sc <- covscale(det$pSnow)
+summary(det$pSnow_sc)
+sd(det$pSnow_sc, na.rm = TRUE)
+det$low250_sc <- covscale(det$low250)
+det$low500_sc <- covscale(det$low500)
+det$low750_sc <- covscale(det$low750)
+det$low1000_sc <- covscale(det$low1000)
+det$low1250_sc <- covscale(det$low1250)
+det$low1500_sc <- covscale(det$low1500)
+det$low1750_sc <- covscale(det$low1750)
+det$low2000_sc <- covscale(det$low2000)
+det$LD250_sc <- covscale(det$LD250)
+det$LD500_sc <- covscale(det$LD500)
+det$LD750_sc <- covscale(det$LD750)
+det$LD1000_sc <- covscale(det$LD1000)
+det$LD1250_sc <- covscale(det$LD1250)
+det$LD1500_sc <- covscale(det$LD1500)
+det$LD1750_sc <- covscale(det$LD1750)
+det$LD2000_sc <- covscale(det$LD2000)
+det$LineWidth_sc <- covscale(det$LineWidth)
+det$VegHt_sc <- covscale(det$VegHt)
 
 
-## Visualising patterns using predict function (predicting new data, given the best-fit model)
-## Need to first remove NAs from explanatory variables
-# newdat <-  det[ , c(1,2,12:34)] #Naming columns in df
-# newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
+
+summary(det[ , 36:56]) #Centred means of 0
+
+write.csv(det, "Seismic_nov2015-apr2018.csv")
+
+#Omit NA rows
+det <- na.omit(det)
+
 ```
-### 1. Random structure  
-  Random structure was previously assessed, but here I will confirm using all model covariates
+### 1. Random structure and Active Days 
+  Random structure was previously assessed, but here I will confirm using all model covariates. 
 
 ```{r, echo=FALSE, message=FALSE}
-r0 <- glmmTMB(Wolf~ LineWidth + LD1250 + VegHt + low500 + Treatment + pSnow, data = det, zi=~ActiveDays,family = nbinom2)
-rSite <- glmmTMB(Wolf~ LineWidth + LD1250 + VegHt + low500 + Treatment + pSnow + (1|Site), data = det,zi=~ActiveDays, family = nbinom2) 
-rMonth <- glmmTMB(Wolf~ LineWidth + LD1250 + VegHt + low500 + Treatment + pSnow + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-r2 <- glmmTMB(Wolf~ LineWidth + LD1250 + VegHt + low500 + Treatment + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays,family = nbinom2)
-ICtab(r0, rSite, rMonth, r2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+r0 <- glmmTMB(Wolf~ LineWidth_sc + LD1250_sc + VegHt_sc + low500_sc + Treatment + pSnow_sc + ActiveDays_sc, data = det, zi=~1,family = nbinom2)
+rSite <- glmmTMB(Wolf~ LineWidth_sc + LD1250_sc + VegHt_sc + low500_sc + Treatment + pSnow_sc + ActiveDays_sc + (1|Site), data = det, zi=~1,  family = nbinom2) 
+rMonth <- glmmTMB(Wolf~ LineWidth_sc + LD1250_sc + VegHt_sc + low500_sc + Treatment + pSnow_sc + ActiveDays_sc + (1|Month), data = det, zi=~1, family = nbinom2)
+r2 <- glmmTMB(Wolf~ LineWidth_sc + LD1250_sc + VegHt_sc + low500_sc + Treatment + pSnow_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
+rSiteS <- glmmTMB(Wolf~ LineWidth_sc + LD1250_sc + VegHt_sc + low500_sc + Treatment + pSnow_sc + ActiveDays_sc + (Treatment|Site), data = det,zi=~1, family = nbinom2) 
+rMonthS <- glmmTMB(Wolf~ LineWidth_sc + LD1250_sc + VegHt_sc + low500_sc + Treatment + pSnow_sc + ActiveDays_sc + (Treatment|Month), data = det, zi=~1, family = nbinom2)
+r2S <- glmmTMB(Wolf~ LineWidth_sc + LD1250_sc + VegHt_sc + low500_sc + Treatment + pSnow_sc + ActiveDays_sc + (Treatment|Site) + (Treatment|Month), data = det, zi=~1, family = nbinom2)
+ICtab(r0, rSite, rMonth, r2, rSiteS, rMonthS, r2S, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+```  
+  Random slope models fail to converge, so exclude. Continue modelling with 2 random effects. 
+## Model Set  
+  (note that numbered models from dredge do not correspond with numbers in table; I have listed models in order of increasing complexity, dredge did not)
+  Also: ActiveDays is also fixed in all models (including NULL)
 
+Model Name  | Covariates
+----------- | -------------------
+L0          | 1
+L1          | Treatment
+L2          | Treatment + low500
+L3          | Treatment + pSnow
+L4          | Treatment + LineWidth 
+L5          | Treatment + VegHt
+L6          | Treatment + LD1250
+L7          | Treatment + low500 + pSnow
+L8          | Treatment + low500 + LineWidth
+L9          | Treatment + low500 + VegHt
+L10         | Treatment + low500 + LD1250
+L11         | Treatment + pSnow + LineWidth
+L12         | Treatment + pSnow + VegHt
+L13         | Treatment + pSnow + LD1250
+L14         | Treatment + LineWidth + VegHt
+L15         | Treatment + LineWidth + LD1250
+L16         | Treatment + VegHt + LD1250
+L17         | Treatment + low500 + pSnow + LineWidth
+L18         | Treatment + low500 + pSnow + VegHt
+L19         | Treatment + low500 + pSnow + LD1250
+L20         | Treatment + low500 + LineWidth + VegHt
+L21         | Treatment + low500 + LineWidth + LD1250
+L22         | Treatment + low500 + VegHt + LD1250
+L23         | Treatment + pSnow + LineWidth + VegHt
+L24         | Treatment + pSnow + LineWidth + LD1250
+L24         | Treatment + pSnow + VegHt + LD1250
+L25         | Treatment + LineWidth + VegHt + LD1250
+L26         | Treatment + low500 + pSnow + LineWidth + VegHt
+L27         | Treatment + low500 + pSnow + LineWidth + LD1250
+L28         | Treatment + pSnow + LineWidth + VegHt + LD1250
+L29         | Treatment + low500 + LineWidth + vegHt + LD1250
+L30         | Treatment + low500 + pSnow + VegHt + LD1250
+L31         | Treatment + low500 + pSnow + LineWidth + VegHt + LD1250
+
+```{r, echo=FALSE, message=FALSE, results = 'hide'}
+# dredge function from MuMin generates and evaluates model sets
+global.model <- glmmTMB(Wolf~ Treatment + low500_sc + pSnow_sc + LineWidth_sc + LD1250_sc + VegHt_sc +  ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
+
+#List of all possible models including Treatment and some combination of other covariates. Runs models and returns a model selection data frame
+Treat.models <- dredge(global.model = global.model, beta = "none", evaluate = TRUE, rank = "AIC", fixed = ~cond(Treatment) + cond(ActiveDays_sc), trace = TRUE) # Does not include null model
+
+#Lists model objects
+Models <- get.models(Treat.models, subset = TRUE)
+
+## Add NULL model to list
+NULLmod <- glmmTMB(Wolf~ ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
+Models[["Nullmod"]] <- NULLmod
+names(Models)
 ```
 
-## Environmental models  
-Model Name  | Covariates
------------ | -------------------
-E1          | None
-E2          | low500 + pSnow
-E3          | low500
-E4          | pSnow
-
 ```{r, echo=FALSE}
-E1 <- glmmTMB(Wolf~1 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#2. Global model
-E2 <- glmmTMB(Wolf~low500 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#3. Lowland only
-E3 <- glmmTMB(Wolf~low500 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#4. Snow only
-E4 <- glmmTMB(Wolf~pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-ICtab(E1, E2, E3, E4, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE) 
-```  
-  E4 and E2 have very similar model weights., with the pSnow only model coming out slightly on top. This may indicate that lowland is a 'pretending variable', or unrelated. Check deviance and parameter estimates for both models.  
-```{r, echo=FALSE}
-summary(E4)
-summary(E2)
-```  
-  Deviance does not change much, and lowland habitat does not seem to have a large effect on the response variable.
-  Continue modelling Line characteristics with pSnow only, as this is the most parsimonious model
-
-## Line characteristics  
-Model Name  | Covariates
------------ | -------------------
-L1          | Treatment + pSnow
-L2          | VegHt + pSnow
-L3          | LD1250 + pSnow
-L4          | LineWidth + pSnow
-L5          | Treatment + LineWidth + pSnow
-L6          | LineWidth + VegHt + pSnow
-L7          | Treatment + LD1250 + pSnow
-L8          | LD1250 + VegHt + pSnow
-L9          | Treatment + VegHt + pSnow
-L10         | Treatment + LineWidth + VegHt + pSnow
-L11         | Treatment + LineWidth + LD1250 + pSnow
-L12         | Treatment + VegHt + LD1250 + pSnow
-L13         | LineWidth + VegHt + LD1250 + pSnow
-L14         | Treatment + LineWidth + LD1250 + VegHt + pSnow  
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
-#1. Treatment
-L1 <- glmmTMB(Wolf~Treatment + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#2. VegHt
-L2 <- glmmTMB(Wolf~ VegHt + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#3. Line density
-L3 <- glmmTMB(Wolf~ LD1250 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#4. Line Width
-L4 <- glmmTMB(Wolf~ LineWidth + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#5. Treatment + LineWidth
-L5 <- glmmTMB(Wolf~ Treatment + LineWidth + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#6. LineWidth + VegHt
-L6 <- glmmTMB(Wolf~ LineWidth + VegHt + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays,family = nbinom2)
-
-#7. Treatment + Line density
-L7 <- glmmTMB(Wolf~ Treatment + LD1250 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#8. Line density and VegHt
-L8 <- glmmTMB(Wolf~ LD1250 + VegHt + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#9. VegHt + Treatment
-L9 <- glmmTMB(Wolf~ Treatment + VegHt + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#10. Treatment, LineWidth, VegHt
-L10 <- glmmTMB(Wolf~ Treatment + LineWidth + VegHt + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#11. Treatment, LineWidth, Line density
-L11 <- glmmTMB(Wolf~ Treatment + LineWidth + LD1250 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#12. Treatment, Line density, VegHt
-L12 <- glmmTMB(Wolf~ Treatment + VegHt + LD1250 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#13. LineWidth, VegHt, Line density
-L13 <- glmmTMB(Wolf~ LineWidth + VegHt + LD1250 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#14. Global model - Treatment, Line density, VegHt, LineWidth
-L14 <-  glmmTMB(Wolf~ Treatment + LineWidth + LD1250 + VegHt + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-WolfAIC <- ICtab(E1, E2, E3, E4, L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+WolfAIC <- ICtab(Models, mnames = names(Models), type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 WolfAIC
+``` 
+```{r, echo=FALSE, results='hide'}
+summary(Models$`13`)
+summary(Models$`14`)
+
 ```
-  Six models within 2 dAIC points of each other, with model weights between 0.06 - 16%  
-  LineWidth present in 3, Treatment in 2, VegHt in 2  
+  Five models within 2 dAIC points of each other, with model weights between 7 - 18%.
+    
   
 ## Evidence Ratios and Cumulative model weight (calculating confidence intervals)
   
@@ -193,53 +211,84 @@ EvR <- function(AICwt.high, AICwt.low){
 }
 EvR(WolfAIC$weight[1], WolfAIC$weight[2])
 WolfWt <- WolfAIC$weight
-WolfER <- vector(length=17)
-for(i in 2:18){
+WolfER <- vector(length=32)
+for(i in 2:33){
   WolfER[i-1] <- EvR(WolfWt[1], WolfWt[i])
 }
 ```
 ```{r,echo=FALSE}
 WolfER <- append("", WolfER)
-ER <- as.data.frame(WolfER)
+ER <- as.data.frame(names(Models))
+colnames(ER) <- "ModelNames"
 ER$dLogLikelihood <- WolfAIC$dLogLik
 ER$dAIC <- WolfAIC$dAIC
 ER$Modelweight <- WolfAIC$weight
-ER$ModelNames <- c("L4", "L9", "L5", "L2", "L6", "L1", "E4", "L12", "L10", "E2", "L11", "L8", "L7", "L13", "L3", "L14", "E1", "E3")
-
-ER$weight.cum <- rep(NA,18)
-ER$weight.cum[1] <- ER$Modelweight[1]
+ER$CumulativeWeight <- rep(NA,33)
+ER$CumulativeWeight[1] <- ER$Modelweight[1]
 for (i in 2:length(ER$Modelweight)){
-  ER$weight.cum[i] <- ER$Modelweight[i] + ER$weight.cum[i-1]
+  ER$CumulativeWeight[i] <- ER$Modelweight[i] + ER$CumulativeWeight[i-1]
 }
+ER$EvidenceRatio <- WolfER
 
-ER <- ER %>% select(ModelNames, dLogLikelihood, dAIC, Modelweight, weight.cum, WolfER)
-colnames(ER) <- c("ModelNames", "dLogLikelihood", "dAIC", "Modelweight", "CumulativeWeight", "EvidenceRatio")
 ER
-
 ```
-###Summary Output for Top Model
-````{r, echo=FALSE}
-summary(L4)
+ Examining summaries for top 8 models (2dAIC)  
+```{r, echo=FALSE, results='hide'}
+fixef(Models$`13`)
+fixef(Models$`14`)
+fixef(Models$`9`)
+fixef(Models$`29`)
+fixef(Models$`15`)
+
+```  
+Aside from Treatment and ActiveDays, all 5 models contain pSnow. 4 contain low, 1 each contains LineWidth, VegHt, or LD
+
+### Pretending variables
+  Comparing deviance of top models - if covariate does not add much, resdiual deviance will be similar across models
+  
+ Model                                       | Est. + SE of possible pretending variables   | Residual Deviance
+---------------------------------------------|----------------------------------------------|---------------------
+Treat + pSnow + low + ActiveDays             |                                              | 1190.8
+Treat + pSnow + low + LD + ActiveDays        |     LD 0.324 +/- 0.357                       | 1190.0
+Treat + pSnow + ActiveDays                   |                                              | 1194.2
+Treat + low + pSnow + LineWidth + ActiveDays |     LineWidth 0.164 +/- 0.380                | 1190.6
+Treat + pSnow + low + VegHt + ActiveDays     |     VegHt 0.244 +/- 0.399                    | 1190.5
+
+
+
+```{r, echo=FALSE, results='hide'}
+summary(Models$`13`)
+summary(Models$`14`)
+summary(Models$`9`)
+summary(Models$`29`)
+summary(Models$`15`)
 ```
-
-
-### Plotting residuals against fitted values and predicted values for all covariates
+### Model averaging
+  Multiple models are within 2dAIC scores of  each other, suggesting that they all explain the data equally well. As my goal is to compare Treatment effects to the effects of other covariates, I do not just want the estimates given in the top model, but rather the best possible estimates for many covariates. I will therefore model average to obtain a weighted average estimate (effect size) of covariates included in models that are within 2 dAIC of one another or within 95% confidence intervals, whichever is more conservative.
 ```{r, echo=FALSE}
-
-## Residual plot for global model(L4)
-op <- par(mfrow = c(1,2))
-pred <- predict(L4, zitype = "response")
-resid <- residuals(L4)
-
-## Plot residuals against predicted --> diagonal lines characteristic of discrete data
-
-{plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
-abline(h = 0, lty = 2)  
-lines(smooth.spline(pred, resid))}
-{plot(fitted(L4), residuals(L4), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, lty = 2)
-lines(smooth.spline(fitted(L4), resid))}
-
-
-
+#List of top models
+Wolftop <- Models[1:5]
+W.averaged <- model.avg(Wolftop)
+summary(W.averaged) ## Look at full model --> parameters averaged over all models, with the coefficient set to 0 if the parameter is not present
+Est.full <- W.averaged$coefficients[1,] #Estimates for the full average
+CI95.full <- confint(W.averaged)
+WolfEffects.CI <- as.data.frame(c("Intercept", "Lowland", "pSnow", "ActiveDays", "HumanUse", "NatRegen", "SPP", "ziIntercept", "LineDens", "VegHt", "LineWidth"))
+colnames(WolfEffects.CI) <- "Predictor"
+WolfEffects.CI$Estimate <- Est.full
+WolfEffects.CI$CIlow <- CI95.full[, 1]
+WolfEffects.CI$CI.high <- CI95.full[, 2]
 ```
+
+### Predictor Effect Sizes
+```{r, echo=FALSE}
+library(ggplot2)
+ggplot(data = WolfEffects.CI, aes( x = Predictor, y = Estimate)) + geom_point() + geom_errorbar(aes(ymin=CIlow, ymax = CI.high))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("NatRegen", "SPP", "HumanUse", "Lowland", "pSnow", "LineDens", "LineWidth", "VegHt"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14)) + scale_y_continuous(limits = c(-3, 3))
+```
+## Exploring Interactions
+  Interaction coefficients describe how much the slope of the continuous variable changes at one level of the categorical relative to the reference level
+  Use top model, with pSnow and treatment interacting
+```{r, echo=FALSE}
+LTint <- glmmTMB(Wolf ~Treatment*pSnow_sc + low500_sc + VegHt_sc + ActiveDays_sc + (1 | Site) + (1 | Month), data = det, zi=~1, family = nbinom1)
+summary(LTint)
+```
+  This indicates that the main effect of snow on wolf detections decreases on HumanUse, NatRegen, and SPP lines relative to effect of snow on control. This would mean that the negative effect of snow on wolf detections is slightly offset by HumanUse lines

@@ -5,18 +5,16 @@ date: "May 13, 2018"
 output: word_document
 ---
 
-
-  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom2 distribution for Moose data, with zero-inflation and ActiveDays in the ZI model (see Ch1_Moose_modelDistribution.Rmd)    
+  Based on model selection comparison of underlying distributions and zero-inflation, I chose an nbinom2 distribution for Moose data, with zero-inflation and ActiveDays in the ZI model (see Ch1_Moose_modelDistribution.Rmd).  
+  I previously had decided to include ActiveDays in the ZI model. However, to retain the same amount of data in each model, I need to omit rows with NAs. NA rows are usually those in which cameras were inactive. Therefore, in the final dataset used in modelling, ActiveDays should have a greater effect on the count data, not the zero mass, so it should be included in the conditional model.
 Here I will: 
 1. Double check random structure using all covariates
-2. Build models with environmental covariates only  
-3. Build hypothesis models with line covariates + environmental  
+2. Build models assessing Treatment effect, including other combinations of covariates to account for additional noise and compare their effect to Treatment 
 4. Perform model selection with AIC  
 5. Calculate evidence ratios (AICwt of Best Model/ AICwt of other models)  
 6. Checking residuals of Top Model
-7. Model Averaging?
-8. Standardize parameter estimates for easy interpretation  
-Previous scale analysis showed lowland habitat and linear density measured at 1750m best explained Moose detections
+  
+Previous scale analysis showed lowland habitat at 2000m and linear density measured at 750m best explained Moose detections
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -27,6 +25,7 @@ library(lmtest)
 library(reshape)
 library(dplyr)
 library(knitr)
+library(MuMIn) #streamlining model selection
 
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
@@ -56,7 +55,7 @@ det$LD750 <- LineDens$X750m[match(det$Site, LineDens$CamStation)]
 det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
 det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
 det$LD1500 <- LineDens$X1500m[match(det$Site, LineDens$CamStation)]
-det$LD750 <- LineDens$X1750m[match(det$Site, LineDens$CamStation)]
+det$LD1750 <- LineDens$X1750m[match(det$Site, LineDens$CamStation)]
 det$LD2000 <- LineDens$X2000m[match(det$Site, LineDens$CamStation)]
 
 
@@ -67,130 +66,136 @@ det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
 det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
 
 
+### Centring and standardizing covariates
+## All continuous input variables need to be centred and standardized ((value - mean)/2SD; Gelman, 2008)
+covscale <- function(covariate){
+  centre <- (covariate - mean(covariate, na.rm = TRUE)) # where covariate is a vector of numeric input values for one covariate
+  standardize <- centre/(2*sd(covariate, na.rm = TRUE)) # Divide centred value by 2 SD
+}
 
-## Visualising patterns using predict function (predicting new data, given the best-fit model)
-## Need to first remove NAs from explanatory variables
-# newdat <-  det[ , c(1,2,12:34)] #Naming columns in df
-# newdat <- na.omit(newdat) ## Exluding NA rows, which causes lengths to differ
+summary(det$ActiveDays) #mean 18
+sd(det$ActiveDays)
+det$ActiveDays_sc <- covscale(det$ActiveDays)
+summary(det$ActiveDays_sc)
+sd(det$ActiveDays_sc)
+det$D2W_sc <- covscale(det$Dist2Water_km) #mean 2.07
+summary(det$Dist2Water_km) #mean 2.07
+sd(det$Dist2Water_km) #1.76
+summary(det$D2W_sc) #mean 0
+sd(det$D2W_sc) #SD
+
+det$pSnow_sc <- covscale(det$pSnow)
+summary(det$pSnow_sc) #NAs, probably because of NAs in pSnow --> added na.rm = TRUE to function
+det$pSnow_sc <- covscale(det$pSnow)
+summary(det$pSnow_sc)
+sd(det$pSnow_sc, na.rm = TRUE)
+det$low250_sc <- covscale(det$low250)
+det$low500_sc <- covscale(det$low500)
+det$low750_sc <- covscale(det$low750)
+det$low1000_sc <- covscale(det$low1000)
+det$low1250_sc <- covscale(det$low1250)
+det$low1500_sc <- covscale(det$low1500)
+det$low1750_sc <- covscale(det$low1750)
+det$low2000_sc <- covscale(det$low2000)
+det$LD250_sc <- covscale(det$LD250)
+det$LD500_sc <- covscale(det$LD500)
+det$LD750_sc <- covscale(det$LD750)
+det$LD1000_sc <- covscale(det$LD1000)
+det$LD1250_sc <- covscale(det$LD1250)
+det$LD1500_sc <- covscale(det$LD1500)
+det$LD1750_sc <- covscale(det$LD1750)
+det$LD2000_sc <- covscale(det$LD2000)
+det$LineWidth_sc <- covscale(det$LineWidth)
+det$VegHt_sc <- covscale(det$VegHt)
+
+summary(det[ , 36:56]) #Centred means of 0
+
+write.csv(det, "Seismic_nov2015-apr2018.csv")
+
+# Omit NA rows
+det <- na.omit(det)
 ```
-### 1. Random structure  
-  Random structure was previously assessed, but here I will confirm using all model covariates
+### 1. Random structure and Active Days 
+  Random structure was previously assessed, but here I will confirm using all model covariates. Also comparing random intercepts vs random slope 
 
-```{r, echo=FALSE}
-r0 <- glmmTMB(Moose~ LineWidth + LD1250 + VegHt + low250 + Treatment + pSnow + Dist2Water_km, data = det, zi=~ActiveDays,family = nbinom2)
-rSite <- glmmTMB(Moose~ LineWidth + LD1250 + VegHt + low250 + Treatment + pSnow + Dist2Water_km + (1|Site), data = det,zi=~ActiveDays, family = nbinom2) 
-rMonth <- glmmTMB(Moose~ LineWidth + LD1250 + VegHt + low250 + Treatment + pSnow + Dist2Water_km + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-r2 <- glmmTMB(Moose~ LineWidth + LD1250 + VegHt + low250 + Treatment + pSnow + Dist2Water_km + (1|Site) + (1|Month), data = det, zi=~ActiveDays,family = nbinom2)
+```{r, echo=FALSE, message=FALSE}
+r0 <- glmmTMB(Moose~ LineWidth_sc + LD1250_sc + VegHt_sc + low250_sc + Treatment + pSnow_sc + ActiveDays_sc, data = det, zi=~1,family = nbinom2)
+rSite <- glmmTMB(Moose~ LineWidth_sc + LD1250_sc + VegHt_sc + low250_sc + Treatment + pSnow_sc + ActiveDays_sc + (1|Site), data = det, zi=~1,  family = nbinom2) 
+rMonth <- glmmTMB(Moose~ LineWidth_sc + LD1250_sc + VegHt_sc + low250_sc + Treatment + pSnow_sc + ActiveDays_sc + (1|Month), data = det, zi=~1, family = nbinom2)
+r2 <- glmmTMB(Moose~ LineWidth_sc + LD1250_sc + VegHt_sc + low250_sc + Treatment + pSnow_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
+rSiteS <- glmmTMB(Moose~ LineWidth_sc + LD1250_sc + VegHt_sc + low250_sc + Treatment + pSnow_sc + ActiveDays_sc + (Treatment|Site), data = det,zi=~1, family = nbinom2) 
+rMonthS <- glmmTMB(Moose~ LineWidth_sc + LD1250_sc + VegHt_sc + low250_sc + Treatment + pSnow_sc + ActiveDays_sc +  (Treatment|Month), data = det, zi=~1, family = nbinom2)
+r2S <- glmmTMB(Moose~ LineWidth_sc + LD1250_sc + VegHt_sc + low250_sc + Treatment + pSnow_sc + ActiveDays_sc + (Treatment|Site) + (Treatment|Month), data = det, zi=~1, family = nbinom2)
 ICtab(r0, rSite, rMonth, r2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+```  
+  Random slope models fail to converge, so exclude. Continue modelling with 2 random effects. ActiveDays in conditional model had slightly less model weight, so continue modelling ActiveDays in ZI only.
+## Model Set  
+ (note that numbered models from dredge do not correspond with numbers in table; I have listed models in order of increasing complexity, dredge did not)
+ Also: ActiveDays is also fixed in all models (including NULL)
+
+Model Name  | Covariates
+----------- | -------------------
+L0          | 1
+L1          | Treatment
+L2          | Treatment + low250
+L3          | Treatment + pSnow
+L4          | Treatment + LineWidth 
+L5          | Treatment + VegHt
+L6          | Treatment + LD1250
+L7          | Treatment + low250 + pSnow
+L8          | Treatment + low250 + LineWidth
+L9          | Treatment + low250 + VegHt
+L10         | Treatment + low250 + LD1250
+L11         | Treatment + pSnow + LineWidth
+L12         | Treatment + pSnow + VegHt
+L13         | Treatment + pSnow + LD1250
+L14         | Treatment + LineWidth + VegHt
+L15         | Treatment + LineWidth + LD1250
+L16         | Treatment + VegHt + LD1250
+L17         | Treatment + low250 + pSnow + LineWidth
+L18         | Treatment + low250 + pSnow + VegHt
+L19         | Treatment + low250 + pSnow + LD1250
+L20         | Treatment + low250 + LineWidth + VegHt
+L21         | Treatment + low250 + LineWidth + LD1250
+L22         | Treatment + low250 + VegHt + LD1250
+L23         | Treatment + pSnow + LineWidth + VegHt
+L24         | Treatment + pSnow + LineWidth + LD1250
+L24         | Treatment + pSnow + VegHt + LD1250
+L25         | Treatment + LineWidth + VegHt + LD1250
+L26         | Treatment + low250 + pSnow + LineWidth + VegHt
+L27         | Treatment + low250 + pSnow + LineWidth + LD1250
+L28         | Treatment + pSnow + LineWidth + VegHt + LD1250
+L29         | Treatment + low250 + LineWidth + vegHt + LD1250
+L30         | Treatment + low250 + pSnow + VegHt + LD1250
+L31         | Treatment + low250 + pSnow + LineWidth + VegHt + LD1250
+
+```{r, echo=FALSE, message=FALSE, results='hide'}
+# dredge function from MuMin generatesand evaluates model sets
+global.model <- glmmTMB(Moose~  Treatment + low250_sc + pSnow_sc + LineWidth_sc + LD1250_sc + VegHt_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
+
+#List of all possible models including Treatment and some combination of other covariates. Runs models and returns a model selection data frame
+Treat.models <- dredge(global.model = global.model, beta = "none", evaluate = TRUE, rank = "AIC", fixed = ~cond(Treatment) + cond(ActiveDays_sc), trace = TRUE) # Does not include null model
+#Lists model objects
+Models <- get.models(Treat.models, subset = TRUE)
+
+## Add NULL model to list
+NULLmod <- glmmTMB(Moose~ ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom2)
+Models[["Nullmod"]] <- NULLmod
+names(Models)
 ```
+```{r,echo=FALSE}
 
-## Environmental models  
-Model Name  | Covariates
------------ | -------------------
-E1          | None
-E2          | low250 + pSnow + Dist2Water_km
-E3          | low250 + pSnow
-E4          | pSnow + Dist2Water_km
-E5          | low250 + Dist2Water_km
-E6          | low250
-E7          | pSnow
-E8          | Dist2Water_km
-
-```{r, echo=FALSE}
-E1 <- glmmTMB(Moose~1 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#2. Global model
-E2 <- glmmTMB(Moose~low250 + pSnow + Dist2Water_km + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#3. Lowland + pSnow
-E3 <- glmmTMB(Moose~low250 + pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#4. Snow + Water
-E4 <- glmmTMB(Moose~pSnow + Dist2Water_km + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#E5. low + Water
-E5 <- glmmTMB(Moose~low250 + Dist2Water_km + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#E6. Lowland only
-E6 <- glmmTMB(Moose~low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#E7. pSnow only
-E7 <- glmmTMB(Moose~pSnow + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#E8. Water only
-E8 <- glmmTMB(Moose~Dist2Water_km + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-ICtab(E1, E2, E3, E4, E5, E6, E7, E8, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE) 
-``` 
-    E6 has the most model weight and is the only model that performs better than the null, although only slightly. Examining shows that even this model does not have much explanatory power. I will continue to use only Lowland habitat.
-    
-
-## Line characteristics  
-Model Name  | Covariates
------------ | -------------------
-L1          | Treatment + low250 
-L2          | VegHt + low250 
-L3          | LD1250 + low250
-L4          | LineWidth + low250
-L5          | Treatment + LineWidth + low250
-L6          | LineWidth + VegHt + low250
-L7          | Treatment + LD1250 + low250
-L8          | LD1250 + VegHt + low250
-L9          | Treatment + VegHt + low250
-L10         | Treatment + LineWidth + VegHt + low250
-L11         | Treatment + LineWidth + LD1250 + low250
-L12         | Treatment + VegHt + LD1250 + low250
-L13         | LineWidth + VegHt + LD1250 + low250
-L14         | Treatment + LineWidth + LD1250 + VegHt + low250 
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
-#1. Treatment
-L1 <- glmmTMB(Moose~Treatment + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#2. VegHt
-L2 <- glmmTMB(Moose~ VegHt + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#3. Line density
-L3 <- glmmTMB(Moose~ LD1250 + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#4. Line Width
-L4 <- glmmTMB(Moose~ LineWidth + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#5. Treatment + LineWidth
-L5 <- glmmTMB(Moose~ Treatment + LineWidth + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#6. LineWidth + VegHt
-L6 <- glmmTMB(Moose~ LineWidth + VegHt + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays,family = nbinom2)
-
-#7. Treatment + Line density
-L7 <- glmmTMB(Moose~ Treatment + LD1250 + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#8. Line density and VegHt
-L8 <- glmmTMB(Moose~ LD1250 + VegHt + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#9. VegHt + Treatment
-L9 <- glmmTMB(Moose~ Treatment + VegHt + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#10. Treatment, LineWidth, VegHt
-L10 <- glmmTMB(Moose~ Treatment + LineWidth + VegHt + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#11. Treatment, LineWidth, Line density
-L11 <- glmmTMB(Moose~ Treatment + LineWidth + LD1250 + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#12. Treatment, Line density, VegHt
-L12 <- glmmTMB(Moose~ Treatment + VegHt + LD1250 + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#13. LineWidth, VegHt, Line density
-L13 <- glmmTMB(Moose~ LineWidth + VegHt + LD1250 + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-#14. Global model - Treatment, Line density, VegHt, LineWidth
-L14 <-  glmmTMB(Moose~ Treatment + LineWidth + LD1250 + VegHt + low250 + (1|Site) + (1|Month), data = det, zi=~ActiveDays, family = nbinom2)
-
-MooseAIC <- ICtab(E1, E2, E3, E4, E5, E6, E7, E8, L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+MooseAIC <- ICtab(Models, mnames = names(Models), type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 MooseAIC
+``` 
+```{r, echo=FALSE, results='hide'}
+summary(Models$`19`)
+
+## Compare estimates to those in model with unstandardized covariates
+unstd.mod <- glmmTMB(Moose~ LD1250 + low250 + pSnow + VegHt + Treatment + (1|Site) + (1|Month), data = det, zi=~ActiveDays_sc, family = nbinom2)
+summary(unstd.mod) ### Treatment coefficients are the same but continuous covariate coefficients are not. Significance is same
 ```
-  Four models within 2 dAIC points of each other, with model weights between 13 - 36%. Treatment in second model.  
-  
+  Five models within 2 dAIC points of each other, with model weights between 6 - 17%.
     
   
 ## Evidence Ratios and Cumulative model weight (calculating confidence intervals)
@@ -204,52 +209,81 @@ EvR <- function(AICwt.high, AICwt.low){
 }
 EvR(MooseAIC$weight[1], MooseAIC$weight[2])
 MooseWt <- MooseAIC$weight
-MooseER <- vector(length=21)
-for(i in 2:22){
+MooseER <- vector(length=32)
+for(i in 2:33){
   MooseER[i-1] <- EvR(MooseWt[1], MooseWt[i])
 }
 ```
 ```{r,echo=FALSE}
 MooseER <- append("", MooseER)
-ER <- as.data.frame(MooseER)
+ER <- as.data.frame(c(names(Models[1:12]), "Nullmod", names(Models[14:33]))) ##Ensures Nullmod is in correct place in order
+colnames(ER) <- "ModelNames"
 ER$dLogLikelihood <- MooseAIC$dLogLik
 ER$dAIC <- MooseAIC$dAIC
 ER$Modelweight <- MooseAIC$weight
-ER$ModelNames <- c("L6", "L13", "L4", "L2", "L8", "L10", "L9", "L14", "L12", "L5", "L11","E6", "E1", "L3", "E3","E5", "E8", "E7", "E2", "E4", "L1", "L7")
-ER$weight.cum <- rep(NA,22)
-ER$weight.cum[1] <- ER$Modelweight[1]
+ER$CumulativeWeight <- rep(NA,33)
+ER$CumulativeWeight[1] <- ER$Modelweight[1]
 for (i in 2:length(ER$Modelweight)){
-  ER$weight.cum[i] <- ER$Modelweight[i] + ER$weight.cum[i-1]
+  ER$CumulativeWeight[i] <- ER$Modelweight[i] + ER$CumulativeWeight[i-1]
 }
+ER$EvidenceRatio <- MooseER
 
-ER <- ER %>% select(ModelNames, dLogLikelihood, dAIC, Modelweight, weight.cum, MooseER)
-colnames(ER) <- c("ModelNames", "dLogLikelihood", "dAIC", "Modelweight", "CumulativeWeight", "EvidenceRatio")
 ER
-
 ```
-###Summary Output for Top Model
-````{r, echo=FALSE}
-summary(L6)
+ Examining summaries for top 5 models (2dAIC)  
+```{r, echo=FALSE, results='hide'}
+fixef(Models$`19`)
+fixef(Models$`23`)
+fixef(Models$`17`)
+fixef(Models$`20`)
+fixef(Models$`27`)
+```  
+ In addition to ActiveDays and Treatment, all 5 models contain VegHt. 4 models contain LineWidth, 3 contain either pSnow, LD, or low
+
+### Pretending variables
+  Comparing deviance of top models - if covariate does not add much, resdiual deviance will be similar across models
+  
+ Model                                       | Est. + SE of addtional variables             | Residual Deviance
+---------------------------------------------|----------------------------------------------|---------------------
+Treat + VegHt + LineWidth + ActiveDays       |                                              | 870.5
+Treat + VegHt + LineWidth + low + ActiveDays | Low -0.33 +/- 0.345                          | 869.6
+Treat + VegHt + ActiveDays                   |                                              | 873.8
+Treat + LD + VegHt + ActiveDays              | LD -0.26 +/- 0.34                            | 870.0
+Treat + VegHt + pSnow + ActiveDays           | pSnow -0.04 +/- 0.48                         | 870.5
+
+  Parameter estimates and deviance are similar, indicating all models are roughly equivalent to one another.
+
+```{r, echo=FALSE, results='hide'}
+summary(Models$`19`)
+summary(Models$`23`)
+summary(Models$`17`)
+summary(Models$`20`)
+summary(Models$`27`)
 ```
 
-
-### Plotting residuals against fitted values and predicted values for all covariates
+### Model averaging
+  Multiple models are within 2dAIC scores of  each other, suggesting that they all explain the data equally well. As my goal is to compare Treatment effects to the effects of other covariates, I do not just want the estimates given in the top model, but rather the best possible estimates for many covariates. I will therefore model average to obtain a weighted average estimate (effect size) of covariates included in models that are within 2 dAIC of one another or within 95% confidence intervals, whichever is more conservative.
 ```{r, echo=FALSE}
+#List of top models
+Moosetop <- Models[1:5]
+Moose.averaged <- model.avg(Moosetop)
+summary(Moose.averaged) ## Look at full model --> parameters averaged over all models, with the coefficient set to 0 if the parameter is not present
+Est.full <- Moose.averaged$coefficients[1,] #Estimates for the full average
+CI95.full <- confint(Moose.averaged)
+MooseEffects.CI <- as.data.frame(c("Intercept", "LineWidth", "VegHt",  "ActiveDays",  "HumanUse", "NatRegen", "SPP", "ziIntercept", "Lowland",  "LineDens", "pSnow")) #Reorder according to order of averaged coefs
+colnames(MooseEffects.CI) <- "Predictor"
+MooseEffects.CI$Estimate <- Est.full
+MooseEffects.CI$CIlow <- CI95.full[, 1]
+MooseEffects.CI$CI.high <- CI95.full[, 2]
+```
+### Predictor Effect Sizes
+```{r, echo=FALSE}
+library(ggplot2)
+ggplot(data = MooseEffects.CI, aes( x = Predictor, y = Estimate)) + geom_point() + geom_errorbar(aes(ymin=CIlow, ymax = CI.high))+ geom_hline(yintercept = 0) + scale_x_discrete(limits=c("NatRegen", "SPP", "HumanUse", "Lowland", "LineDens", "pSnow", "LineWidth", "VegHt"))+theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 12)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 14)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 14)) + theme(strip.text = element_text(colour = "black", size = 14))  + scale_y_continuous(limits = c(-2, 2))
+```
 
-## Residual plot for global model(L6)
-op <- par(mfrow = c(1,2))
-pred <- predict(L6, zitype = "response")
-resid <- residuals(L6)
-
-## Plot residuals against predicted --> diagonal lines characteristic of discrete data
-
-{plot(pred, resid, main = "Residuals vs. Predicted", xlab = "Predicted Values", ylab = "Residuals")
-abline(h = 0, lty = 2)  
-lines(smooth.spline(pred, resid))}
-{plot(fitted(L6), residuals(L6), main= "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, lty = 2)
-lines(smooth.spline(fitted(L6), resid))}
-
-
-
+```{r, echo=FALSE}
+plot(det$Dist2Water_km, det$Moose)
+water <- glmmTMB(Moose~Treatment + D2W_sc + ActiveDays_sc + (1|Site) + (1|Month), zi=~1, data=det, family = nbinom2)
+summary(water)
 ```
