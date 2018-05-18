@@ -133,25 +133,41 @@ Bear     | 1.376
 ## Interactions  
 ### Treatment * lowland
 ```{r, echo=FALSE, message=FALSE, warning = FALSE}
-coplot(Caribou~low1750 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(Wolf~low500 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(WTDeer~ low2000 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(Moose~low250 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(Blackbear~low500 | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Caribou~low1750 | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Wolf~low500 | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(WTDeer~ low2000 | Treatment, data = det, columns = 4,panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Moose~low250 | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Blackbear~low500 | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
 ```
 ### Treatment * LineWidth
 ```{r, echo=FALSE, message=FALSE, warning = FALSE}
-coplot(Caribou~LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(Wolf~LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(WTDeer~ LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(Moose~LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(Blackbear~LineWidth | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Caribou~LineWidth | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Wolf~LineWidth | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(WTDeer~ LineWidth | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Moose~LineWidth | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Blackbear~LineWidth | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
 ```
 ### Treatment * VegHt
 ```{r, echo=FALSE, message=FALSE, warning = FALSE}
-coplot(Caribou~VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(Wolf~VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(WTDeer~ VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(Moose~VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
-coplot(Blackbear~VegHt | Treatment, data = det, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Caribou~VegHt | Treatment, data = det,columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Wolf~VegHt | Treatment, data = det, columns = 4,panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(WTDeer~ VegHt | Treatment, data = det,columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Moose~VegHt | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Blackbear~VegHt | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+```
+### Treatment * LD750
+```{r, echo=FALSE, message=FALSE, warning = FALSE}
+coplot(Caribou~LD1750 | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Wolf~LD1250 | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(WTDeer~ LD750 | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Moose~LD1250 | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Blackbear~LD750 | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+```
+### Treatment * pSnow
+```{r, echo=FALSE, message=FALSE, warning = FALSE}
+coplot(Caribou~pSnow | Treatment, data = det,columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Wolf~pSnow | Treatment, data = det, columns = 4,panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(WTDeer~ pSnow | Treatment, data = det,columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+coplot(Moose~pSnow | Treatment, data = det, columns = 4, panel = function(x, y, ...) panel.smooth(x, y, span = .8, ...))
+
 ```
