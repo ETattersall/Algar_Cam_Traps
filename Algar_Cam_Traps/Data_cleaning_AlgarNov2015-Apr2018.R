@@ -43,10 +43,10 @@ camEff <- cameraOperation(cams60,
                           dateFormat = "%d/%m/%Y", 
                           writecsv = FALSE)
 
-sum(camEff,na.rm=T) ##7767
+sum(camEff,na.rm=T) ##7779
 
 # days per station
-summary(rowSums(camEff,na.rm=T)) # mean = 129.4, median = 203, range = 0 - 206
+summary(rowSums(camEff,na.rm=T)) # mean = 129.65, median = 203, range = 0 - 206
 
 # Nov 2017 - Apr 2018
 cams2018 <- cams %>% select(CamStation, utmE, utmN, Treatment, Session4Start, Problem3_from, Problem3_to,Session5Start)
@@ -58,7 +58,7 @@ camEff2 <- cameraOperation(cams2018,
                           dateFormat = "%d/%m/%Y", 
                           writecsv = FALSE)
 
-sum(camEff2,na.rm=T) ##8717 --> discrepancy with effort from Timelapse images (8555) could be from time of day when cameras were checked (affects camera being recorded as ACTIVE in Timelapse estimation)
+sum(camEff2,na.rm=T) ##8723 --> discrepancy with effort from Timelapse images (8555) could be from time of day when cameras were checked (affects camera being recorded as ACTIVE in Timelapse estimation)
 
 # days per station
 summary(rowSums(camEff2,na.rm=T))
@@ -73,7 +73,7 @@ camEff3 <- cameraOperation(cams_survey,
                            dateFormat = "%d/%m/%Y", 
                            writecsv = FALSE)
 
-sum(camEff3,na.rm=T) ## 34, 277 camera days
+sum(camEff3,na.rm=T) ## 34, 308 camera days
 summary(rowSums(camEff3,na.rm=T)) ## mean = 469.5, median = 432.0, range = 121 - 886
 
 ## Cams on lines only
@@ -87,8 +87,11 @@ camEff4 <- cameraOperation(seiscams,
                            dateFormat = "%d/%m/%Y", 
                            writecsv = FALSE)
 
-sum(camEff4,na.rm=T) ## 32, 371 camera days
-summary(rowSums(camEff4,na.rm=T)) #mean = 539.5 median = 513, range = 158 - 886
+sum(camEff4,na.rm=T) ## 32, 401 camera days
+summary(rowSums(camEff4,na.rm=T)) #mean = 540.0 median = 513, range = 158 - 886
+hist(rowSums(camEff4,na.rm=T))
+active <- rowSums(camEff4, na.rm = T)
+sd(active)/sqrt(sum(active))
 
 #### Data cleaning: recordTable ####
 table(rc$Species)
@@ -162,6 +165,7 @@ str(All.rec)
 
 ##Save copy of full record table
 write.csv(All.rec, "AlgarRecordTable_nov2015-apr2018.csv")
+All.rec <- read.csv("AlgarRecordTable_nov2015-apr2018.csv")
 
 # Keeping in mind that for my Ch.1 analysis I will need to exclude off line sites
 # Offline sites
@@ -184,9 +188,42 @@ colnames(sp.plot1) <- c("Species", "Total Detections")
 
 ### Frequency histograms of mammal species
 
-par(mfrow = c(1,1))## Multiple plots on same page (2 rows, 1 column)
+par(mfrow = c(1,1))
 
 ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Black bear", "Grey wolf", "Snowshoe hare",  "Moose", "Coyote", "Woodland caribou",  "Red squirrel", "Canada lynx","American marten", "Red fox", "River otter", "Wolverine", "Fisher", "Beaver"))
+
+### Detections during Nov. - Apr.
+All.rec$Date <- as.Date(All.rec$Date)
+t1 <- as.Date("2017-11-07")
+t2 <- as.Date("2018-04-11")
+Wint <- All.rec[All.rec$Date %in% t1:t2, ]
+
+sp_detect <- Wint$Species
+st_detect <- Wint$Station
+
+sp.plot2 <- rev(sort(table(sp_detect)))
+sp.plot2 <- as.data.frame(sp.plot2) ##data frame summing detections --> fix scientific names to common
+colnames(sp.plot2) <- c("Species", "Total Detections")
+
+## Full survey detections on seismic lines
+### Frequency histogram for species detections
+sp_detect <- seismic.rec$Species
+st_detect <- seismic.rec$Station
+
+sp.plot3 <- rev(sort(table(sp_detect)))
+sp.plot3 <- as.data.frame(sp.plot3) ##data frame summing detections --> fix scientific names to common
+fix(sp.plot3)
+colnames(sp.plot3) <- c("Species", "Freq")
+
+
+
+### Frequency histograms of mammal species
+
+par(mfrow = c(1,1))
+
+ggplot(data = sp.plot3, aes(x = Species, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Black bear", "Grey wolf", "Snowshoe hare",  "Moose", "Coyote", "Woodland caribou",  "Red squirrel", "Canada lynx","American marten", "Red fox", "River otter", "Wolverine", "Fisher", "Beaver"))
+
+
 
 ########### Convert to monthly detections ####
 ## Use recordTable of FULL SURVEY (All.rec)
