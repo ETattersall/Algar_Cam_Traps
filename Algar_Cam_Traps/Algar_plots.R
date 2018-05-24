@@ -16,7 +16,7 @@ str(rec)
 # Seismic only, summer
 rec$Date <- as.Date(rec$Date)
 t1 <- as.Date("2017-04-01")
-t2 <- as.Date("2017-11-10")
+t2 <- as.Date("2017-11-09")
 Seis.rec <- rec[rec$Date %in% t1:t2, ]
 
 ## Converting recorTable to site x species matrix
