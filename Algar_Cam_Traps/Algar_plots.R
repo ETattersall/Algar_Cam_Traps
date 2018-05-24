@@ -1,39 +1,163 @@
 ###### Graphing summary stats for Algar 2016.01 deployment
 ### Started 6 June, 2017 by Erin. T
+### Edited May 23, 2018 for nov 2015- apr 2018 --> both full survey and seismic only
 
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 
-### Need to edit dataframes to make treatment names consistent (Control = Research Line, Treatment = SP+P)
-fix(S2015.01)
-## S2016.01 = dataframe of detections by station and species for 2016.01 deployment
+## Loading recordTable and deployment data
+rec <- read.csv("AlgarRecordTable_nov2015-apr2018.csv")
+dep <- read.csv("Station_data/AlgarStations_DeploymentData.csv")
+str(rec)
+
+#Need 2 sets: seismic only between Apr 2017- Nov 2017, and all stations between nov 2017-apr2018
+# Seismic only, summer
+rec$Date <- as.Date(rec$Date)
+t1 <- as.Date("2017-04-01")
+t2 <- as.Date("2017-11-10")
+Seis.rec <- rec[rec$Date %in% t1:t2, ]
+
+## Converting recorTable to site x species matrix
+sp_detect <- Seis.rec$Species
+st_detect <- Seis.rec$Station
+S <- as.data.frame.matrix(table(st_detect,sp_detect)) #Creates matrix where stations = rows, species = columns
+S <- S[1:60, ] ## Seismic line sites only
+
+# species totals to compare with table(sp_detect)
+apply(S,2,sum)
+table(sp_detect)
+
+# number of sites per species
+sp.sites <- apply(S,2,function(x) sum(ifelse(x>0,1,0)))
+sp.plot2 <- as.data.frame(rev(sort(sp.sites)))
+colnames(sp.plot2) <- c("NumSites")
+# fix(sp.plot2) #Changing scientific names to common
+
+# add total count and total species (richness) for each site
+S$Total <- apply(S,1,sum)
+
+S$Richness <- apply(S[,1:19],1,function(x) sum(ifelse(x>0,1,0)))
+## Edit to Cole's code: S$Richness included total in Richness count. Adding [,1:19] to specify counting only species 
+## columns
+
+# add coordinates and treatment to dataframe (here dep is a separate dataframe with station data)
+S$utmE <- dep$utmE[match(row.names(S),dep$CamStation)]
+S$utmN <- dep$utmN[match(row.names(S),dep$CamStation)]
+
+S$Treatment <- dep$Treatment[match(row.names(S),dep$CamStation)]
 
 
-## 2015.01 deployment data,frame S2015.01
-# add coordinates and treatment to dataframe (both deployments)
-cams2016$CamStation <- toupper(cams2016$CamStation)
-S2016.01$utmE <- cams2016$utmE[match(row.names(S2016.01),cams2016$CamStation)]
-S2016.01$utmN <- cams2016$utmN[match(row.names(S2016.01),cams2016$CamStation)]
+#### Full survey, winter
+rec$Date <- as.Date(rec$Date)
+t1 <- as.Date("2017-11-10")
+t2 <- as.Date("2018-04-11")
+Wint.rec <- rec[rec$Date %in% t1:t2, ]
 
-S2016.01$Treatment <- cams2016$TreatmentType[match(row.names(S2016.01),cams2016$CamStation)]
+## Converting recorTable to site x species matrix
+sp_detect <- Wint.rec$Species
+st_detect <- Wint.rec$Station
+S2 <- as.data.frame.matrix(table(st_detect,sp_detect)) #Creates matrix where stations = rows, species = columns
+
+# species totals to compare with table(sp_detect)
+apply(S2,2,sum)
+table(sp_detect)
+
+# number of sites per species
+sp.sites <- apply(S2,2,function(x) sum(ifelse(x>0,1,0)))
+sp.plot2 <- as.data.frame(rev(sort(sp.sites)))
+colnames(sp.plot2) <- c("NumSites")
+# fix(sp.plot2) #Changing scientific names to common
+
+# add total count and total species (richness) for each site
+S2$Total <- apply(S2,1,sum)
+
+S2$Richness <- apply(S2[,1:19],1,function(x) sum(ifelse(x>0,1,0)))
+## Edit to Cole's code: S$Richness included total in Richness count. Adding [,1:19] to specify counting only species 
+## columns
+
+# add coordinates and treatment to dataframe (here dep is a separate dataframe with station data)
+S2$utmE <- dep$utmE[match(row.names(S2),dep$CamStation)]
+S2$utmN <- dep$utmN[match(row.names(S2),dep$CamStation)]
+
+S2$Treatment <- dep$Treatment[match(row.names(S2),dep$CamStation)]
+
 
 ### Box plots of total detections by treatment
-## 2016
-ggplot(data = S2016.01, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", " light blue", "purple"))
-## 2015
-ggplot(data = S2015.01, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_fill_manual(values = c("purple", "light blue"))
+## Seismic only, Apr 2017- 2018
+ggplot(data = S, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", " light green", "purple"))
+## Full survey, Nov 2017 - Apr 2018
+ggplot(data = S2, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen", "OffLine")) + scale_fill_manual(values=c("orange", "red", " light green", "dark blue", "purple"))
 
 ###### Species Richness boxplots
-## 2016
-ggplot(data = S2016.01, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", " light blue", "purple"))
-## 2015
-ggplot(data = S2015.01, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_fill_manual(values = c("purple", "light blue"))
+## Seismic only, Apr 2017- 2018
+ggplot(data = S, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen")) + scale_fill_manual(values=c("orange", "red", " light green", "purple"))
+## Full survey, Nov 2017 - Apr 2018
+ggplot(data = S2, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_x_discrete(limits=c("HumanUse", "Control", "SPP", "NatRegen", "OffLine")) + scale_fill_manual(values=c("orange", "red", " light green", "dark blue", "purple"))
 
-## winter 2015-2016
-ggplot(data = win2015, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_fill_manual(values = c("purple", "light blue"))
-##Summer 2016
-ggplot(data = summer2016, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_fill_manual(values = c("purple", "light blue"))
+
+##### Naive occupancy measures for Seismic, nov 2015-apr 2018
+## Converting recorTable to site x species matrix
+sp_detect <- rec$Species
+st_detect <- rec$Station
+S3 <- as.data.frame.matrix(table(st_detect,sp_detect)) #Creates matrix where stations = rows, species = columns
+S3 <- S3[1:60, ] ## Seismic line sites only
+
+# species totals to compare with table(sp_detect)
+apply(S3,2,sum)
+
+
+# number of sites per species
+sp.sites <- apply(S3,2,function(x) sum(ifelse(x>0,1,0)))
+sp.plot2 <- as.data.frame(rev(sort(sp.sites)))
+colnames(sp.plot2) <- c("NumSites")
+fix(sp.plot2) #Changing scientific names to common
+sp.plot2$Naiv.Occ <- sp.plot2$NumSites/60 # naive occupancy = proportion of sites where species is present
+
+## Total number of detections per species
+S.t <- as.data.frame(t(S3)) # transpose so species are rows
+S.t$Total <- rowSums(S.t)
+fix(S.t) # change species names
+
+# add total count and total species (richness) for each site
+S3$Total <- apply(S3,1,sum)
+
+S3$Richness <- apply(S3[,1:19],1,function(x) sum(ifelse(x>0,1,0)))
+## Edit to Cole's code: S$Richness included total in Richness count. Adding [,1:19] to specify counting only species 
+## columns
+
+# add coordinates and treatment to dataframe (here dep is a separate dataframe with station data)
+S3$utmE <- dep$utmE[match(row.names(S3),dep$CamStation)]
+S3$utmN <- dep$utmN[match(row.names(S3),dep$CamStation)]
+
+S3$Treatment <- dep$Treatment[match(row.names(S3),dep$CamStation)]
+
+
+## Naive Occupancy (proportion of sites where species was detected)
+ggplot(data = sp.plot2, aes(x = row.names(sp.plot2), y = Naiv.Occ)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("Wolf", "Black bear", "Moose", "WT deer", "Caribou"))
+
+## Total detections
+ggplot(data = S.t, aes(x = row.names(S.t), y = Total)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))  + scale_x_discrete(limits = c("WT deer", "Black bear", "Wolf", "Moose","Caribou"))
+
+## Spatial plots
+fix(S3) #Change to common names
+with(S3, symbols(x=utmE, y=utmN, circles=Caribou, inches=2/3, bg="royalblue3", fg="darkblue", 
+                main = "Caribou distribution"))
+with(S3, symbols(x=utmE, y=utmN, circles=Wolf, inches=2/3, bg="royalblue3", fg="darkblue", 
+                 main = "Wolf distribution"))
+with(S3, symbols(x=utmE, y=utmN, circles=Caribou, inches=2/3, bg="royalblue3", fg="darkblue", 
+                 main = "Black bear distribution"))
+with(S3, symbols(x=utmE, y=utmN, circles=Coyote, inches=2/3, bg="royalblue3", fg="darkblue", 
+                 main = "Coyote distribution"))
+with(S3, symbols(x=utmE, y=utmN, circles=Lynx, inches=2/3, bg="royalblue3", fg="darkblue", 
+                 main = "Lynx distribution"))
+with(S3, symbols(x=utmE, y=utmN, circles=Moose, inches=2/3, bg="royalblue3", fg="darkblue", 
+                 main = "Moose distribution"))
+with(S3, symbols(x=utmE, y=utmN, circles=WTDeer, inches=2/3, bg="royalblue3", fg="darkblue", 
+                 main = "White-tailed deer distribution"))
+
+############################################################################################ Code not updated past this point
 
 #### Problem with S2016.01 site by species data.frame = dropped sites with NO detections. Need to add back in
 # create a one-row matrix the same length as data
