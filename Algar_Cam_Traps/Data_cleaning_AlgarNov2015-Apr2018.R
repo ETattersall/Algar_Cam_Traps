@@ -792,4 +792,8 @@ data3$CamActive <- Day_Active$CamActive[match(data3$Site_SD, Day_Active$Site_SD)
 
 str(data3)
 
+#### Add date to daily detections
+
+data3$Datep <- DayLookup$Datep[match(data3$StudyDay, DayLookup$StudyDay)]
+
 write.csv(data3, "Algar_DailyDetections_30months.csv")
