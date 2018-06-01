@@ -13,40 +13,44 @@ dep <- read.csv("Station_data/AlgarStations_DeploymentData.csv")
 str(rec)
 
 #Need 2 sets: seismic only between Apr 2017- Nov 2017, and all stations between nov 2017-apr2018
-# Seismic only, summer
+# Summer
 rec$Date <- as.Date(rec$Date)
 t1 <- as.Date("2017-04-01")
 t2 <- as.Date("2017-11-09")
-Seis.rec <- rec[rec$Date %in% t1:t2, ]
+Sum.rec <- rec[rec$Date %in% t1:t2, ]
 
 ## Converting recorTable to site x species matrix
-sp_detect <- Seis.rec$Species
-st_detect <- Seis.rec$Station
-S <- as.data.frame.matrix(table(st_detect,sp_detect)) #Creates matrix where stations = rows, species = columns
-S <- S[1:60, ] ## Seismic line sites only
+sp_detect <- Sum.rec$Species
+st_detect <- Sum.rec$Station
+Summer <- as.data.frame.matrix(table(st_detect,sp_detect)) #Creates matrix where stations = rows, species = columns
+
 
 # species totals to compare with table(sp_detect)
-apply(S,2,sum)
+apply(Summer,2,sum)
 table(sp_detect)
 
 # number of sites per species
-sp.sites <- apply(S,2,function(x) sum(ifelse(x>0,1,0)))
+sp.sites <- apply(Summer,2,function(x) sum(ifelse(x>0,1,0)))
 sp.plot2 <- as.data.frame(rev(sort(sp.sites)))
 colnames(sp.plot2) <- c("NumSites")
-# fix(sp.plot2) #Changing scientific names to common
+fix(sp.plot2) #Changing scientific names to common
+sp.plot2$Naiv.occ <- sp.plot2$NumSites/60
+
+## Naive Occupancy (proportion of sites where species was detected)
+ggplot(data = sp.plot2, aes(x = row.names(sp.plot2), y = Naiv.occ)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("Black bear", "White-tailed deer", "Wolf", "Moose", "Woodland caribou", "Lynx", "Coyote"))
 
 # add total count and total species (richness) for each site
-S$Total <- apply(S,1,sum)
+Summer$Total <- apply(Summer,1,sum)
 
-S$Richness <- apply(S[,1:19],1,function(x) sum(ifelse(x>0,1,0)))
+Summer$Richness <- apply(Summer[,1:19],1,function(x) sum(ifelse(x>0,1,0)))
 ## Edit to Cole's code: S$Richness included total in Richness count. Adding [,1:19] to specify counting only species 
 ## columns
 
 # add coordinates and treatment to dataframe (here dep is a separate dataframe with station data)
-S$utmE <- dep$utmE[match(row.names(S),dep$CamStation)]
-S$utmN <- dep$utmN[match(row.names(S),dep$CamStation)]
+Summer$utmE <- dep$utmE[match(row.names(Summer),dep$CamStation)]
+Summer$utmN <- dep$utmN[match(row.names(Summer),dep$CamStation)]
 
-S$Treatment <- dep$Treatment[match(row.names(S),dep$CamStation)]
+Summer$Treatment <- dep$Treatment[match(row.names(Summer),dep$CamStation)]
 
 
 #### Full survey, winter
@@ -58,17 +62,20 @@ Wint.rec <- rec[rec$Date %in% t1:t2, ]
 ## Converting recorTable to site x species matrix
 sp_detect <- Wint.rec$Species
 st_detect <- Wint.rec$Station
-S2 <- as.data.frame.matrix(table(st_detect,sp_detect)) #Creates matrix where stations = rows, species = columns
+Winter <- as.data.frame.matrix(table(st_detect,sp_detect)) #Creates matrix where stations = rows, species = columns
 
 # species totals to compare with table(sp_detect)
-apply(S2,2,sum)
+apply(Winter,2,sum)
 table(sp_detect)
 
 # number of sites per species
-sp.sites <- apply(S2,2,function(x) sum(ifelse(x>0,1,0)))
-sp.plot2 <- as.data.frame(rev(sort(sp.sites)))
-colnames(sp.plot2) <- c("NumSites")
-# fix(sp.plot2) #Changing scientific names to common
+sp.sites <- apply(Winter,2,function(x) sum(ifelse(x>0,1,0)))
+sp.plot3 <- as.data.frame(rev(sort(sp.sites)))
+colnames(sp.plot3) <- c("NumSites")
+fix(sp.plot3) #Changing scientific names to common
+sp.plot3$Naiv.occ <- sp.plot3$NumSites/71
+
+ggplot(data = sp.plot2, aes(x = row.names(sp.plot2), y = Naiv.occ)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c( "White-tailed deer","Wolf", "Moose", "Woodland caribou","Lynx", "Coyote"))
 
 # add total count and total species (richness) for each site
 S2$Total <- apply(S2,1,sum)
@@ -157,88 +164,38 @@ with(S3, symbols(x=utmE, y=utmN, circles=Moose, inches=2/3, bg="royalblue3", fg=
 with(S3, symbols(x=utmE, y=utmN, circles=WTDeer, inches=2/3, bg="royalblue3", fg="darkblue", 
                  main = "White-tailed deer distribution"))
 
-############################################################################################ Code not updated past this point
+##### Relative abundance for Apr 2017 - 2018 (divided into summer and winter deployments)
 
-#### Problem with S2016.01 site by species data.frame = dropped sites with NO detections. Need to add back in
-# create a one-row matrix the same length as data
-
-temprow <- matrix(c(rep.int(NA,length(S2016.01))),nrow=2,ncol=length(S2016.01))
-
-# make it a data.frame and give cols the same names as data
-
-newrow <- data.frame(temprow)
-colnames(newrow) <- colnames(S2016.01)
-
-# rbind the empty row to data
-
-T2016.01 <- rbind(S2016.01,newrow)
-## Fill in new rows with Station data for Algar 52 and 56
-fix(T2016.01)
-## New boxplots
-ggplot(data = T2016.01, aes(x = Treatment, y = Total, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Total Detections") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", " light blue", "purple"))
-
-ggplot(data = T2016.01, aes(x = Treatment, y = Richness, fill = Treatment)) + geom_boxplot() + theme_classic() + xlab("Treatment Type") + ylab("Species Richness") + scale_x_discrete(limits=c("Human Use", "Research", "SP+P", "Nat Regen")) + scale_fill_manual(values=c("red", "light green", " light blue", "purple"))
-### Detection histograms
-sp_detect <- ani.rec$Species
-st_detect <- ani.rec$Station
-
-### Frequency histograms
-
-par(mfrow = c(1,1))## Multiple plots on same page (1 row, 1 column)
-
-sp.plot <- rev(sort(table(sp_detect))) 
-sp.plot <- as.data.frame(sp.plot)
-ggplot(data = sp.plot, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black"))
-
-##Making 2015 histogram with "Others" edited to add P_concolor
-table(ani.2015$Species == "Other")
-other.2015 <- ani.2015 %>% filter(Species == "Other") %>% select(Station, Species) ## Algar3 and Algar17 are Cougars
-ani.2015.cougar <- ani.2015 %>% select(Station, Species) ## fix THIS data frame to edit "Other"
-fix(ani.2015.cougar) ## Changed Algar3 and Algar17 "Other" to "P_concolor"
-ani.2015.cougar <- ani.2015.cougar[!ani.2015.cougar$Species == "Other", ]
-
-## Remove other "Others"
-## 2015 plot with cougars, no others
-sp.1 <- ani.2015.cougar$Species
-sp.plot1 <- rev(sort(table(sp.1)))
-sp.plot1 <- as.data.frame(sp.plot1)
-ggplot(data = sp.plot1, aes(x = sp.1, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) 
-
-### Naive occupancy (# sites species observed at/total sites)
-
-## 2016
-
-### Naive occupancy loop
-sp7 <- c("R_tarandus","C_lupus", "U_americanus", "O_virginianus", "A_alces", "C_latrans", "L_canadensis")
-naiv.occ <- NULL
-
-for (sp in sp7) {
-  spat <- as.data.frame(table(rec.2016.01[rec.2016.01$Species == sp, "Station"]))
-  stp <- spat %>% filter(Freq > 0)
-  naiv.occ[sp] <- nrow(stp)/56
-}
-naiv.occ <- as.data.frame(naiv.occ)
-
+sp7 <- c("Canis lupus", "Odocoileus virginianus", "Rangifer tarandus", "Alces alces", "Ursus americanus", "Canis latrans", "Lynx canadensis")
 ## Relative abundance loop (# detections/1000TD)
 rel.ab <- NULL
 for (sp in sp7) {
-  spat <- as.data.frame(table(rec.2016.01[rec.2016.01$Species == sp, "Station"]))
+  spat <- as.data.frame(table(Sum.rec[Sum.rec$Species == sp, "Station"]))
   stp <- spat %>% filter(Freq > 0)
-  rel.ab[sp] <- (sum(stp$Freq)/9025)*1000
+  rel.ab[sp] <- (sum(stp$Freq)/7779)*1000 #(total detections / total trap days)*1000
   }
 rel.ab <- as.data.frame(rel.ab)
+fix(rel.ab)
+rel.ab$Species <- row.names(rel.ab)
+colnames(rel.ab) <- c("RA", "Species")
 
-## Data frame of naive occupancy and relative abundance
-desc2016 <- cbind(naiv.occ, rel.ab, deparse.level = 1)
-desc2016$Species <- row.names(desc2016)
+ggplot(rel.ab, aes(x = Species, y = RA))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Black bear",  "Wolf", "Woodland caribou", "Moose", "Coyote", "Lynx"))
 
-## Naive occupancy
-ggplot(desc2016, aes(x = Species, y = naiv.occ))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("C_lupus","O_virginianus", "A_alces", "L_canadensis", "C_latrans", "R_tarandus", "U_americanus"))
+### Winter 2017-18
+sp6 <- c("Canis lupus", "Odocoileus virginianus", "Rangifer tarandus", "Alces alces", "Canis latrans", "Lynx canadensis")
+## Relative abundance loop (# detections/1000TD)
+rel.ab <- NULL
+for (sp in sp6) {
+  spat <- as.data.frame(table(Wint.rec[Wint.rec$Species == sp, "Station"]))
+  stp <- spat %>% filter(Freq > 0)
+  rel.ab[sp] <- (sum(stp$Freq)/8723)*1000 #(total detections / total trap days)*1000
+}
+rel.ab <- as.data.frame(rel.ab)
+fix(rel.ab)
+rel.ab$Species <- row.names(rel.ab)
+colnames(rel.ab) <- c("RA", "Species")
 
-## Relative abundance
-ggplot(desc2016, aes(x = Species, y = rel.ab))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("O_virginianus", "C_lupus",  "C_latrans", "L_canadensis", "A_alces", "R_tarandus", "U_americanus"))
-
-
+ggplot(rel.ab, aes(x = Species, y = RA))  + geom_bar(stat = "identity", fill = "light blue", colour = "black") + theme_classic() + xlab("Species") + ylab("Detections/1000 Trap Days") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Moose", "Wolf", "Woodland caribou", "Coyote", "Lynx"))
 
 ## Box plots for 2015 winter, 2016 summer, 2016 winter(24) for 7 target species
 ## Research and SP+P only
