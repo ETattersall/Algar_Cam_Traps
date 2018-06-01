@@ -6,11 +6,11 @@
 #############################################
 
 library(plyr)
-library(dplyr) #only load after using revalue function
+
 library(camtrapR)
 library(reshape2)	# for formatting data frames
 # library(plyr) need for renaming Treatments for consistency, but conflicts with dplyr
-library(dplyr)		# for applying functions to subsets of data frames
+library(dplyr)		# only load after using revalue function, for applying functions to subsets of data frames
 library(ggplot2)	# for data visualization
 library(stringr)	# for working with character strings
 library(tidyr)		# for data formatting functions
@@ -190,7 +190,7 @@ colnames(sp.plot1) <- c("Species", "Total Detections")
 
 par(mfrow = c(1,1))
 
-ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Black bear", "Grey wolf", "Snowshoe hare",  "Moose", "Coyote", "Woodland caribou",  "Red squirrel", "Canada lynx","American marten", "Red fox", "River otter", "Wolverine", "Fisher", "Beaver"))
+ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Sandhill crane", "Black bear", "Wolf", "Snowshoe hare",  "Moose", "Bird spp.", "Coyote", "Woodland caribou", "Human",  "Red squirrel", "Lynx","Marten", "Red fox", "River otter", "Wolverine", "Fisher", "Beaver"))
 
 ### Detections during Nov. - Apr.
 All.rec$Date <- as.Date(All.rec$Date)
@@ -266,7 +266,7 @@ maxdate.ord[,2] - mindate.ord[,2] # (Needs to be ordered by Station here)
 # convert DateStart (but note that this doesn't have time set, so will treat as midnight)
 
 data$DateStart <- min(mindate.ord[,2]) #Adding the date of first detection to record Table
-data$DateStart <- (strptime(data$DateStart, "%Y-%m-%d", tz="MST")) ##Adding a column for the first day of the study
+data$DateStart <- as.POSIXct(strptime(data$DateStart, "%Y-%m-%d", tz="MST")) ##Adding a column for the first day of the study
 DateStart <- min(data$DateStart) # The first detection from all stations - 2015-11-05 - first detection of the deployment
 str(data)
 
@@ -314,7 +314,7 @@ summary(d)
 
 data$count <- 1 #add count column - 1 detection per row (does not take multiple individuals/detection into consideration)
 names(data)
-data2 <- data[c(1,2,15:17)] ## new data frame only containing site, species, study day, treatment, and detection count
+data2 <- data[c(2,3,16:18)] ## new data frame only containing site, species, study day, treatment, and detection count
 head(data2)
 str(data2)
 # data2$Species <- as.factor(data2$Species) # If Species is listed as character
@@ -329,7 +329,7 @@ d.deer <- data2 %>%
   group_by(Station, StudyDay) %>%        ## Arrange data first by Station, then by StudyDay (both in ascending order)
   summarise(sum(count, na.rm = TRUE))    ## Summarise the detection count for that day, add to new column in data frame
 colnames(d.deer) <- c("Site","StudyDay","WTDeer") ##Renaming columns (ignore Warnings, function will add colname)
-glimpse(d.deer) #262 days of deer detections (where some days have multiple detections)
+glimpse(d.deer) #560 days of deer detections (where some days have multiple detections)
 plot(d.deer$StudyDay, d.deer$WTDeer, xlim=c(0,900)) ##Mostly 1 detection/day, up to 7
 
 d.bear <- data2 %>%
@@ -337,7 +337,7 @@ d.bear <- data2 %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.bear) <- c("Site","StudyDay","Blackbear")
-glimpse(d.bear) #178 obs
+glimpse(d.bear) #315 obs
 plot(d.bear$StudyDay, d.bear$Blackbear, xlim=c(0,900)) #Up to 4 detections in a day, 2 summer seasons
 
 
@@ -347,7 +347,7 @@ d.caribou <- data2 %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.caribou) <- c("Site","StudyDay","Caribou")
-glimpse(d.caribou) #76
+glimpse(d.caribou) #137
 plot(d.caribou$StudyDay, d.caribou$Caribou, xlim=c(0,900)) # As many as 3 in a day (once)
 
 d.moose <- data2 %>%
@@ -355,7 +355,7 @@ d.moose <- data2 %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.moose) <- c("Site","StudyDay","Moose")
-glimpse(d.moose) #112 obs
+glimpse(d.moose) #182 obs
 plot(d.moose$StudyDay, d.moose$Moose, xlim=c(0,900)) # As many as 3 in a day
 
 d.coyote <- data2 %>%
@@ -363,7 +363,7 @@ d.coyote <- data2 %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.coyote) <- c("Site","StudyDay","Coyote")
-glimpse(d.coyote) #40 obs
+glimpse(d.coyote) #131 obs
 plot(d.coyote$StudyDay, d.coyote$Coyote, xlim=c(0,900)) #1 3-det. and 1 4-det. data point
 
 d.lynx <- data2 %>%
@@ -371,24 +371,24 @@ d.lynx <- data2 %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.lynx) <- c("Site","StudyDay","Lynx")
-glimpse(d.lynx) # 15 obs
-plot(d.lynx$StudyDay, d.lynx$Lynx, xlim=c(0,900)) # only 1-detection days
+glimpse(d.lynx) # 71 obs
+plot(d.lynx$StudyDay, d.lynx$Lynx, xlim=c(0,900)) # 2 2-detection days
 
 d.wolf <- data2 %>%
   filter(Species == "Canis lupus") %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.wolf) <- c("Site","StudyDay","Wolf")
-glimpse(d.wolf) # 121 obs
+glimpse(d.wolf) # 295 obs
 plot(d.wolf$StudyDay, d.wolf$Wolf, xlim=c(0,900)) #2 3-det. days, many 1 and 2
 
-## Add in other species of interest --> Humans, snowshoe hare?
+## Add in other species of interest --> Humans, snowshoe hare, squirrels
 d.hare <- data2 %>%
   filter(Species == "Lepus americanus") %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.hare) <- c("Site","StudyDay","Hare")
-glimpse(d.hare) # 121 obs
+glimpse(d.hare) # 183 obs
 plot(d.hare$StudyDay, d.hare$Hare, xlim=c(0,900)) #up to 4 detections/day
 
 d.human <- data2 %>%
@@ -396,8 +396,17 @@ d.human <- data2 %>%
   group_by(Station, StudyDay) %>% 
   summarise(sum(count, na.rm = TRUE))
 colnames(d.human) <- c("Site","StudyDay","Human")
-glimpse(d.human) # 121 obs
+glimpse(d.human) # 67 obs
 plot(d.human$StudyDay, d.human$Human, xlim=c(0,900)) #up to 4 detections/day
+
+
+d.squirrel <- data2 %>%
+  filter(Species == "Tamiasciurus hudsonicus") %>%
+  group_by(Station, StudyDay) %>% 
+  summarise(sum(count, na.rm = TRUE))
+colnames(d.squirrel) <- c("Site","StudyDay","Squirrel")
+glimpse(d.squirrel) #68
+plot(d.squirrel$StudyDay, d.squirrel$Squirrel, xlim=c(0,900)) 
 
 #### Adding species detections counts to a master data frame ####
 
@@ -410,6 +419,7 @@ colnames(data3) <- c("Site","StudyDay","Site_SD")
 data3$Treatment <- data2$Treatment[match(data3$Site,data2$Station)]
 str(data3)
 head(data3)
+summary(data3)
 
 d.deer$Site_SD <- paste(d.deer$Site,d.deer$StudyDay) ## Adding Site/studyDay column to relate detection data between data frames
 data3$WTDeer <- d.deer$WTDeer[match(data3$Site_SD,d.deer$Site_SD)] ##Matching Site_SD between data frames 
@@ -439,6 +449,9 @@ data3$Hare <- d.hare$Hare[match(data3$Site_SD,d.hare$Site_SD)]
 d.human$Site_SD <- paste(d.human$Site,d.human$StudyDay)
 data3$Human <- d.human$Human[match(data3$Site_SD,d.human$Site_SD)]
 
+d.squirrel$Site_SD <- paste(d.squirrel$Site,d.squirrel$StudyDay)
+data3$Squirrel <- d.squirrel$Squirrel[match(data3$Site_SD,d.squirrel$Site_SD)]
+
 summary(data3)
 
 data3[is.na(data3)] <- 0 ## Converting NAs to 0's
@@ -454,6 +467,8 @@ sum(data3$Wolf) #334
 sum(data3$Moose) #196
 sum(data3$Hare) #211
 sum(data3$Human) #94
+
+write.csv(data3, "Algar_DailyDetections_30months.csv")
 
 ####--- aggregate species detection data by month ####
 data$Site_SD <- paste(data$Station,data$StudyDay)
@@ -687,6 +702,7 @@ write.csv(DayLookup,"DayLookup.csv")
 
 #############################################################
 ###--- Sampling effort (# of hours per camera) per year, per month, per week, per day
+DayLookup <- read.csv("DayLookup.csv")
 glimpse(DayLookup)
 
 # create vectors for grouping variables, all with length 886 to go with study days
@@ -752,3 +768,28 @@ det3 <- read.csv("MonthlyDetections_nov2015-nov2017.csv")
 seismic$Dist2Water_km <- det3$Dist2water_km[match(seismic$Site, det3$Site)]
 
 write.csv(seismic, "Seismic_nov2015-apr2018.csv")
+
+
+#####################Save ActiveDays per Day (either 1 or 0) to Algar_DailyDetections_30months.csv (data3)
+class(Day.eff)
+head(Day.eff)
+Day.eff <- as.data.frame(Day.eff)
+str(Day.eff)
+table(is.na(Day.eff)) #No NAs
+
+head(Day.eff)
+
+### Gather by Yr_Month to create 2 columns
+Day_Active <- as.data.frame(row.names(Day.eff)) #Need column of site names to match Yr_Months after gathering
+colnames(Day_Active) <- "Site"
+Day_Active <- cbind(Day_Active,Day.eff)
+Day_Active <- gather(data = Day_Active, key = "StudyDay", value = "CamActive", -Site, factor_key = TRUE)
+str(Day_Active)
+
+### Add Active days to data3 dataframe
+Day_Active$Site_SD <- paste(Day_Active$Site, Day_Active$StudyDay)
+data3$CamActive <- Day_Active$CamActive[match(data3$Site_SD, Day_Active$Site_SD)]
+
+str(data3)
+
+write.csv(data3, "Algar_DailyDetections_30months.csv")
