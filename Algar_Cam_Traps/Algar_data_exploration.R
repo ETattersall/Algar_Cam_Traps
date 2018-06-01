@@ -169,3 +169,10 @@ hist(dat$low500)
 
 #### Step 4: Zeroes in data: addressed in previous steps ####
 
+
+
+##### Plotting prop lowland surrounding stations
+cams <- read.csv("Station_data/AlgarStations_DeploymentData.csv")
+low$Treatment <- cams$Treatment[match(low$CamStation, cams$CamStation)]
+plot(low$Treatment, low$low500, ylab="",xlab="")
+### No lowland habitat measures around Offline sites because I haven't extracted that yet...
