@@ -181,7 +181,7 @@ Models <- get.models(Treat.models, subset = TRUE)
 ## Add NULL model to list
 NULLmod <- glmmTMB(WTDeer~ ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom1)
 Models[["Nullmod"]] <- NULLmod
-glimpse(Models)
+
 names(Models)
 ```
 ```{r,echo=FALSE}
