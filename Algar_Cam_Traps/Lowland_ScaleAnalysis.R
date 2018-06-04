@@ -65,8 +65,9 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
-lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
+op <- par(mar = c(5,5,4,2) + 0.1)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "Wolf", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
 
 ### Caribou models
 Caribou.0 <- glmmTMB(Caribou~1, data = det, family = nbinom2)
@@ -107,8 +108,9 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
-lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
+op <- par(mar = c(5,5,4,2) + 0.1)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "Caribou", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
 
 ### WTDeer models
 WTDeer.0 <- glmmTMB(WTDeer~1, data = det, family = nbinom2)
@@ -149,8 +151,9 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
-lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
+op <- par(mar = c(5,5,4,2) + 0.1)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "WT Deer", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
 
 ### Moose models
 Moose.0 <- glmmTMB(Moose~1, data = det, family = nbinom2)
@@ -191,8 +194,9 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
-lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
+op <- par(mar = c(5,5,4,2) + 0.1)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "Moose", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
 
 
 ## Blackbear, truncated season
@@ -238,5 +242,6 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight")
-lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1), pch=16)
+op <- par(mar = c(5,5,4,2) + 0.1)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "Black bear", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
