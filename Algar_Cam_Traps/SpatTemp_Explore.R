@@ -279,6 +279,7 @@ w.deer <- day %>%
 colnames(w.deer) <- c("Site","Treatment","YrWk","WTDeer")
 summary(w.deer)
 table(w.deer$WTDeer)
+sum(w.deer$WTDeer==0, na.rm = TRUE)/nrow(w.deer) # 95%
 
 w.Wolf <- day %>%
   group_by(Site, Treatment, YrWk) %>% 
@@ -286,6 +287,7 @@ w.Wolf <- day %>%
 colnames(w.Wolf) <- c("Site","Treatment","YrWk","Wolf")
 summary(w.Wolf)
 table(w.Wolf$Wolf)
+sum(w.Wolf$Wolf==0, na.rm = TRUE)/nrow(w.Wolf) # 98%
 
 w.Blackbear <- day %>%
   group_by(Site, Treatment, YrWk) %>% 
@@ -293,6 +295,7 @@ w.Blackbear <- day %>%
 colnames(w.Blackbear) <- c("Site","Treatment","YrWk","Blackbear")
 summary(w.Blackbear)
 table(w.Blackbear$Blackbear)
+sum(w.Blackbear$Blackbear==0, na.rm = TRUE)/nrow(w.Blackbear) #97%
 
 w.Coyote <- day %>%
   group_by(Site, Treatment, YrWk) %>% 
