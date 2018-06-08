@@ -31,6 +31,11 @@ nov <- nov[1:60,]
 #### Veg. Height - from Nov. 2017 ####
 ## Avg. Veg Height measured 
 nov$LineVeg_Ht_avg <- rowMeans(nov[ , 24:26], na.rm = TRUE)
+## Examining offline vegetation
+plot(nov$TreatmentType, nov$LineVeg_Ht_avg)
+OL <- nov %>% filter(TreatmentType == "OffLine")
+summary(OL$LineVeg_Ht_avg)
+
 det$VegHt <- nov$LineVeg_Ht_avg[match(det$Site, nov$SiteID)]
 
 #### Add Line Width ####
