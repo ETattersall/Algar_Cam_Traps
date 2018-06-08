@@ -32,6 +32,17 @@ Smat <- as.data.frame.matrix(table(st_detect,sp_detect)) #Creates matrix where s
 colnam <- make.names(colnames(Smat),unique = TRUE)
 colnames(Smat) <- colnam
 
+
+##### Detection plot for predators
+Smat.t <- t(Smat)
+det <-  as.data.frame(rowSums(Smat.t, na.rm = FALSE))
+det <- cbind.data.frame(c("Coyote", "Wolf", "Lynx", "Black bear"), det[c(3,4,11,18), ]) #Predators only
+colnames(det) <- c("Species", "Detections")
+
+ggplot(data = det, aes(x = Species, y = Detections)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c( "Black bear","Wolf", "Coyote", "Lynx")) + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 14)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 15)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 15)) + theme(strip.text = element_text(colour = "black", size = 14))
+
+
+
 ### Summer records (for bear overlap)
 rec$Month <- as.factor(format(as.Date(rec$Datep), "%m"))
 class(rec$Month) #factor
