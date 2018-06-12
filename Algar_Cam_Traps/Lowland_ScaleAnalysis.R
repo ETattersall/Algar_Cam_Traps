@@ -143,7 +143,7 @@ WTDeertab
 class(WTDeertab) <- "data.frame"
 
 
-WTDeertab$scale <- c(200,1750,1500,500,1250,1000,250,750,"NULL") #ordered according to ICtab 
+WTDeertab$scale <- c(2000,1750,1500,500,1250,1000,250,750,"NULL") #ordered according to ICtab 
 
 #Remove NULL row
 tab <- WTDeertab %>% filter(scale != "NULL")
