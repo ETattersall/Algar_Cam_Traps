@@ -245,3 +245,116 @@ tab$scale <- as.numeric(tab$scale)
 op <- par(mar = c(5,5,4,2) + 0.1)
 plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "Black bear", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
 lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
+
+###################################################################################
+## Double checking scale analysis, using multivariate models rather than univariate
+## In particular, scale analyses were inconclusive for moose and wolves when assessing effects of linear density
+## Also using updated data
+library(MuMIn) #streamlining model selection
+
+det <- read.csv("Seismic_nov2015-apr2018.csv")
+det$X.3 <- NULL
+det$X.1 <- NULL
+det$X.2 <- NULL
+det$X <- NULL
+
+
+
+sp <- read.csv("Spatial_covariates.csv")
+
+det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
+det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
+
+LineDens <- read.csv("AlgarStationsLD_Lines.csv")
+
+det$low250 <- low$low250[match(det$Site, low$CamStation)]
+det$low500 <- low$low500[match(det$Site, low$CamStation)]
+det$low750 <- low$low750[match(det$Site, low$CamStation)]
+det$low1000 <- low$low1000[match(det$Site, low$CamStation)]
+det$low1250 <- low$low1250[match(det$Site, low$CamStation)]
+det$low1500 <- low$low1500[match(det$Site, low$CamStation)]
+det$low1750 <- low$low1750[match(det$Site, low$CamStation)]
+det$low2000 <- low$low2000[match(det$Site, low$CamStation)]
+
+det$LD250 <- LineDens$X250m[match(det$Site, LineDens$CamStation)]
+det$LD500 <- LineDens$X500m[match(det$Site, LineDens$CamStation)]
+det$LD750 <- LineDens$X750m[match(det$Site, LineDens$CamStation)]
+det$LD1000 <- LineDens$X1000m[match(det$Site, LineDens$CamStation)]
+det$LD1250 <- LineDens$X1250m[match(det$Site, LineDens$CamStation)]
+det$LD1500 <- LineDens$X1500m[match(det$Site, LineDens$CamStation)]
+det$LD1750 <- LineDens$X1750m[match(det$Site, LineDens$CamStation)]
+det$LD2000 <- LineDens$X2000m[match(det$Site, LineDens$CamStation)]
+
+## Standardize and centre covariates
+covscale <- function(covariate){
+  centre <- (covariate - mean(covariate, na.rm = TRUE)) # where covariate is a vector of numeric input values for one covariate
+  standardize <- centre/(2*sd(covariate, na.rm = TRUE)) # Divide centred value by 2 SD
+}
+det$low250_sc <- covscale(det$low250)
+det$low500_sc <- covscale(det$low500)
+det$low750_sc <- covscale(det$low750)
+det$low1000_sc <- covscale(det$low1000)
+det$low1250_sc <- covscale(det$low1250)
+det$low1500_sc <- covscale(det$low1500)
+det$low1750_sc <- covscale(det$low1750)
+det$low2000_sc <- covscale(det$low2000)
+det$LD250_sc <- covscale(det$LD250)
+det$LD500_sc <- covscale(det$LD500)
+det$LD750_sc <- covscale(det$LD750)
+det$LD1000_sc <- covscale(det$LD1000)
+det$LD1250_sc <- covscale(det$LD1250)
+det$LD1500_sc <- covscale(det$LD1500)
+det$LD1750_sc <- covscale(det$LD1750)
+det$LD2000_sc <- covscale(det$LD2000)
+det$LineWidth_sc <- covscale(det$LineWidth)
+det$VegHt_sc <- covscale(det$VegHt)
+det$pSnow_sc <- covscale(det$pSnow)
+det$ActiveDays_sc <- covscale(det$ActiveDays)
+
+### Check multivariate models with Moose, Wolf ~ spatial covariates measured at scales between 250 - 2000 m
+## Include known influential covariates, but not global model
+# Moose --> Line width & veght included
+Moose.0 <- glmmTMB(Moose~1, data = det, family = nbinom2)
+Moose.250 <- glmmTMB(Moose~low250_sc + LD250_sc + LineWidth_sc + VegHt_sc, data = det, family = nbinom2)
+Moose.500 <- glmmTMB(Moose~low500_sc + LD500_sc + LineWidth_sc + VegHt_sc, data = det, family = nbinom2)
+Moose.750 <- glmmTMB(Moose~low750_sc + LD750_sc + LineWidth_sc + VegHt_sc, data = det, family = nbinom2)
+Moose.1000 <- glmmTMB(Moose~low1000_sc + LD1000_sc + LineWidth_sc + VegHt_sc, data = det, family = nbinom2)
+Moose.1250 <- glmmTMB(Moose~low1250_sc + LD1250_sc + LineWidth_sc + VegHt_sc, data = det, family = nbinom2)
+Moose.1500 <- glmmTMB(Moose~low1500_sc + LD1500_sc + LineWidth_sc + VegHt_sc, data = det, family = nbinom2)
+Moose.1750 <- glmmTMB(Moose~low1750_sc + LD1750_sc + LineWidth_sc + VegHt_sc, data = det, family = nbinom2)
+Moose.2000 <- glmmTMB(Moose~low2000_sc + LD2000_sc + LineWidth_sc + VegHt_sc, data = det, family = nbinom2)
+
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500", "1750", "2000")
+Moosetab <- ICtab(Moose.0,Moose.250,Moose.500,Moose.750,Moose.1000,Moose.1250, Moose.1500, Moose.1750, Moose.2000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Moosetab
+
+## 2000 m scale wins
+summary(Moose.2000) ## All effects are in same direction and relatively same sizes, 
+
+## Use full, zero- inflated model with 2000 m scale
+MooseZI <- glmmTMB(Moose~Treatment + low2000_sc + LD2000_sc + LineWidth_sc + VegHt_sc + pSnow_sc + ActiveDays_sc + (1|Site) + (1|Month), zi=~1, data = det, family = nbinom2)
+
+summary(MooseZI) ##Effect sizes are comparable to model averaged effects --> keep the original scales
+
+
+Wolf.0 <- glmmTMB(Wolf~1, data = det, family = nbinom2)
+Wolf.250 <- glmmTMB(Wolf~low250_sc + LD250_sc + pSnow_sc + Treatment, data = det, family = nbinom2)
+Wolf.500 <- glmmTMB(Wolf~low500_sc + LD500_sc + pSnow_sc + Treatment, data = det, family = nbinom2)
+Wolf.750 <- glmmTMB(Wolf~low750_sc + LD750_sc +  pSnow_sc + Treatment, data = det, family = nbinom2)
+Wolf.1000 <- glmmTMB(Wolf~low1000_sc + LD1000_sc + pSnow_sc + Treatment, data = det, family = nbinom2)
+Wolf.1250 <- glmmTMB(Wolf~low1250_sc + LD1250_sc +  pSnow_sc + Treatment, data = det, family = nbinom2)
+Wolf.1500 <- glmmTMB(Wolf~low1500_sc + LD1500_sc + pSnow_sc + Treatment, data = det, family = nbinom2)
+Wolf.1750 <- glmmTMB(Wolf~low1750_sc + LD1750_sc + pSnow_sc + Treatment, data = det, family = nbinom2)
+Wolf.2000 <- glmmTMB(Wolf~low2000_sc + LD2000_sc + pSnow_sc + Treatment, data = det, family = nbinom2)
+
+modnames <- c("NULL","250m", "500m", "750m", "1000m", "1250m", "1500", "1750", "2000")
+Wolftab <- ICtab(Wolf.0,Wolf.250,Wolf.500,Wolf.750,Wolf.1000,Wolf.1250, Wolf.1500, Wolf.1750, Wolf.2000, mnames = modnames, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Wolftab
+## Effects of lowland drive model selection --> 500m beats other with ~20% more model weight
+
+## Full ZI model with LD and low measured at 500m
+WolfZI <- glmmTMB(Wolf~Treatment + low500_sc + LD500_sc + pSnow_sc + ActiveDays_sc + (1|Site) + (1|Month), zi=~1, data = det, family = nbinom2)
+
+summary(WolfZI) ## LD has
+
+#### Given that lowland and linear density aren't strong effects for either of these species, and effect estimates don't change much when the scale is changed, I will keep the original scale analysis results
