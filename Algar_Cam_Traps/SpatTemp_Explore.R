@@ -72,6 +72,8 @@ Bmat$Station <- row.names(Bmat)
 ## How many stations do predators overlap at?
 ## Boxplots compare number of detections at overlap sites --> do not indicate avoidance, may just be a product of abundance
 
+## Bear sites
+Bear.pres <- Bmat %>% filter(Ursus.americanus>0) %>% select(Ursus.americanus, Station)
 ## Wolves and bears - 38 sites of overlap
 Wobear <- Bmat %>% filter(Canis.lupus>0 & Ursus.americanus>0) %>% select(Canis.lupus, Ursus.americanus, Station)
 ## Sites that only have wolves, no bears
@@ -99,6 +101,10 @@ ggplot(data = Lynbear.boxplot, aes(x = Species, y = Detections, fill = Species))
 ###### Wolves and Coyotes - 21 sites of overlap
 Coywolf<- Smat %>% filter(Canis.lupus>0 & Canis.latrans>0) %>% select(Canis.lupus, Canis.latrans, Station)
 
+
+## Coyote sites
+Coyote.pres <- Smat %>% filter(Canis.latrans>0) %>% select(Canis.latrans, Station)
+
 ## Sites that only have wolves, no coyotes
 Wolf1.coyote0 <- Smat %>% filter(Canis.lupus>0 & Canis.latrans==0) %>% select(Canis.lupus, Canis.latrans, Station) #25
 
@@ -112,6 +118,9 @@ ggplot(data = Coywolf.boxplot, aes(x = Species, y = Detections, fill = Species))
 
 ###### Wolves and Lynx - 23 sites of overlap
 Lynwolf<- Smat %>% filter(Canis.lupus>0 & Lynx.canadensis>0) %>% select(Canis.lupus, Lynx.canadensis, Station)
+
+## Lynx sites
+Lynx.pres <- Smat %>% filter(Lynx.canadensis>0) %>% select(Lynx.canadensis, Station)
 
 ## Sites that only have wolves, no Lynx
 Wolf1.Lynx0 <- Smat %>% filter(Canis.lupus>0 & Lynx.canadensis==0) %>% select(Canis.lupus, Lynx.canadensis, Station) #23
