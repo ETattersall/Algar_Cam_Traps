@@ -182,7 +182,7 @@ st_detect <- All.rec$Station
 sp.plot1 <- rev(sort(table(sp_detect)))
 sp.plot1 <- as.data.frame(sp.plot1) ##data frame summing detections --> fix scientific names to common
 fix(sp.plot1)
-colnames(sp.plot1) <- c("Species", "Total Detections")
+colnames(sp.plot1) <- c("Species", "Freq")
 
 
 
@@ -190,7 +190,7 @@ colnames(sp.plot1) <- c("Species", "Total Detections")
 
 par(mfrow = c(1,1))
 
-ggplot(data = sp.plot1, aes(x = sp_detect, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Sandhill crane", "Black bear", "Wolf", "Snowshoe hare",  "Moose", "Bird spp.", "Coyote", "Woodland caribou", "Human",  "Red squirrel", "Lynx","Marten", "Red fox", "River otter", "Wolverine", "Fisher", "Beaver"))
+ggplot(data = sp.plot1, aes(x = Species, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Sandhill crane", "Black bear", "Grey wolf", "Snowshoe hare",  "Moose", "Bird spp.", "Coyote", "Woodland caribou", "Human",  "Red squirrel", "Lynx","American marten", "Red fox", "Cougar", "River otter", "Wolverine", "Fisher", "Beaver"))
 
 ### Detections during Nov. - Apr.
 All.rec$Date <- as.Date(All.rec$Date)
