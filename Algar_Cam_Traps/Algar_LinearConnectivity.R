@@ -323,10 +323,10 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-op <- par(mar = c(5,5,4,2) + 0.1)
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "Wolf", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "AICweight", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
 lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
-
+title("Wolf", line = -4, cex.main = 4)
 
 ### 5km comes out on top, but only slightly
 
@@ -393,9 +393,11 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-op <- par(mar = c(5,5,4,2) + 0.1)
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "Caribou", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "AICweight", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
 lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
+title("Caribou", line = -4, cex.main = 4)
+title(xlab = "Scale (m)", line = 4, cex.lab = 4)
 
 
 ### WTDeer models
@@ -462,10 +464,11 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-op <- par(mar = c(5,5,4,2) + 0.1)
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "WT Deer", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "AICweight", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
 lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
-
+title("WT Deer", line = -4, cex.main = 4)
+title(xlab = "Scale (m)", line = 4, cex.lab = 4)
 
 
 ### Moose models
@@ -532,10 +535,11 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-op <- par(mar = c(5,5,4,2) + 0.1)
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "Moose", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
 lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
-
+title("Moose", line = -4, cex.main = 4)
+title(xlab = "Scale (m)", line = 4, cex.lab = 4)
 
 
 ### Bears: need truncated season
@@ -624,9 +628,10 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 # Plot weight for each scale
-op <- par(mar = c(5,5,4,2) + 0.1)
-plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "Scale (m)", ylab = "AICweight", main = "Black bear", pch=16, cex = 1, cex.axis = 2, cex.lab = 2, cex.main = 2)
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
 lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
+title("Black bear", line = -4, cex.main = 4)
 
 
 
