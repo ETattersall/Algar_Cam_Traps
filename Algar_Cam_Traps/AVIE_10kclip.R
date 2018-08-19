@@ -19,7 +19,7 @@ require(tidyr) #for gather function
 require(ggplot2) #for plotting data across scales
 
 # Spatial data for Algar located on Algar Project Google Drive
-setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/GIS data")
+setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/3. Data/3.1 GIS")
 
 # External hard drive directory (when working on lab computer)
 setwd("F:/AVIE_dataR")
@@ -28,6 +28,9 @@ setwd("F:/AVIE_dataR")
 # for the new AVIE data (Algar + 10k buffer)
 # Should be able to relate Veg_Simple from old AVIE to new
 # Need to create a field that aggregates moisture regime and FCComplex in both lookup and new AVIE attribute table
+
+
+#### If lookup tables are available ######
 
 ## Load in lookup table from AVIE_DeerTypes
 #Lookup using dominant forest cover + moisture regime (shouldn't need this one)
@@ -38,10 +41,17 @@ VS.DOM$X.2 <- NULL
 
 ## Load in attribute table for AVIE_with_DeerTypes for comparison
 DeerTypes <- read.csv("AVIE_with_DeerTypes.csv")
+#######
+## No lookup table --> open AVIE_with_DeerTypes layer
+DeerTypes <- readOGR(dsn = "Algar_data_DPan/data.gdb", layer = "AVIE_with_DeerTypes")
+DeerTypes <- DeerTypes@data ## attribute table
+colnames(DeerTypes)
+
 unique(DeerTypes$MOIST_REG) #3 levels: m,w,a
 unique(DeerTypes$FC_COMPLEX) #148 levels
 unique(DeerTypes$FC_DOM)#40 levels
 unique(DeerTypes$FC_SUBDOM)#24 levels
+unique(DeerTypes$Deer_Type)
 DeerTypes$MOIST_FC <- paste(DeerTypes$MOIST_REG, DeerTypes$FC_COMPLEX)
 unique(DeerTypes$MOIST_FC) #164. Matches lookup table
 
@@ -49,6 +59,15 @@ unique(DeerTypes$MOIST_FC) #164. Matches lookup table
 VS.complex <- read.csv("AVIE_VegSimpleLookUpFCCOMPLEX.csv")
 #New column combining moisture and forest cover
 VS.complex$MOIST_FC <- paste(VS.complex$MOIST_REG, VS.complex$FC_COMPLEX)
+
+### Combine FC_DOM, "Deer_Type", and "Veg_Type" to compare
+tree <- cbind.data.frame(DeerTypes$FC_DOM, DeerTypes$Deer_Type)
+tree$Veg_Type <- DeerTypes$Veg_Type
+tree$Veg_Simple <- DeerTypes$Veg_Simple
+colnames(tree) <- c("DOM", "Deer", "Veg")
+
+unique(tree$Veg)
+unique(tree$Deer)
 
 # Load in new AVIE layer
 AVIE <- readOGR("AVIE_data", "AVIE_Algar_10k_Clip")
