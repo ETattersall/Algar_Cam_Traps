@@ -65,6 +65,8 @@ sp <- read.csv("Spatial_covariates.csv")
 det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
 det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
 
+LT <- lm(low250_sc~Treatment, data=det)
+summary(LT)
 
 ### Centring and standardizing covariates
 ## All continuous input variables need to be centred and standardized ((value - mean)/2SD; Gelman, 2008)

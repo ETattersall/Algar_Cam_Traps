@@ -291,4 +291,10 @@ ggplot(data = WolfEffects.CI, aes( x = Predictor, y = Estimate)) + geom_point() 
 LTint <- glmmTMB(Wolf ~Treatment*pSnow_sc + low500_sc + VegHt_sc + ActiveDays_sc + (1 | Site) + (1 | Month), data = det, zi=~1, family = nbinom1)
 summary(LTint)
 ```
-  This indicates that the main effect of snow on wolf detections decreases on HumanUse, NatRegen, and SPP lines relative to effect of snow on control. This would mean that the negative effect of snow on wolf detections is slightly offset by HumanUse lines
+  This indicates that the main effect of snow on wolf detections decreases on HumanUse, NatRegen, and SPP lines relative to effect of snow on control. This would mean that the slightly negative main effect of snow on control lines has a stronger negative effect on all the other lines 
+  
+## Compare with AIC
+```{r, echo=FALSE}
+# Add interaction model to Models list
+Models[["Snow-Treat"]] <- LTint
+```

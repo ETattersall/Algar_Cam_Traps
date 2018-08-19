@@ -289,5 +289,12 @@ ggplot(data = WTDEffects.CI, aes( x = Predictor, y = Estimate)) + geom_point() +
 ```{r, echo=FALSE}
 VTint <- glmmTMB(WTDeer~low2000_sc + ActiveDays_sc + Treatment*LD750_sc + (1 | Site) + (1 | Month), zi=~1, data=det, family=nbinom1)
 summary(VTint)
+
+VTint <- glmmTMB(WTDeer~LD750_sc + ActiveDays_sc + Treatment*low2000_sc + (1 | Site) + (1 | Month), zi=~1, data=det, family=nbinom1)
+summary(VTint)
+
+
+
 ```
   Interpreted as SPP decreasing the main increasing effect of LineDens on detections. Will not include as according to the coplot this effect may be driven by one control site only (high linear density and high number of detections). Also, I did not include this interaction a priori but rather after examining effects of Treatment and LineDens separately.
+  Treatment*Lowland: Treatment and lowland habitat have significant main effects, but not significant interactions. This means that relative to control lines, other treatments to do not significantly change the negative influence of lowland habitat
