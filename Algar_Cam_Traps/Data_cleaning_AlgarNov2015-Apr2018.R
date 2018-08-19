@@ -93,6 +93,22 @@ hist(rowSums(camEff4,na.rm=T))
 active <- rowSums(camEff4, na.rm = T)
 sd(active)/sqrt(sum(active))
 
+## Seismic cams between Nov 2017 - Apr 2018
+# Need a data frame specific to this period
+cams60.2018 <- cams[1:60,] %>% select(CamStation, utmE, utmN, Treatment,Session4Start, Problem3_from, Problem3_to, Session5Start)
+
+camEff5 <- cameraOperation(cams60.2018, 
+                           stationCol = "CamStation", 
+                           setupCol = "Session4Start", 
+                           retrievalCol = "Session5Start",
+                           hasProblems = TRUE,
+                           dateFormat = "%d/%m/%Y", 
+                           writecsv = FALSE)
+
+sum(camEff5,na.rm=T) ## 6816 camera days
+summary(rowSums(camEff5,na.rm=T)) #mean = 113.6 median = 152, range = 0 - 153
+
+
 #### Data cleaning: recordTable ####
 table(rc$Species)
 summary(rc$Date)
@@ -118,6 +134,13 @@ write.csv(rc2017.02, "2017.02_rawrecordTable.csv")
 # 685 - 41 = 644 independent detections in Session4
 rc2017.02 <- rc2017.02[42:685,]
 table(rc2017.02$Species) ## 11 non-human mammal species detected
+
+## Determining seismic only detections between Nov 2017- Apr 2018 -- order by stations and subtract Algar 61-73
+rc2017.02 <- rc2017.02[order(rc2017.02$Station),]
+## Find row of first occurrence of offline sites -- create a column counting rows (order mixes up assigned row numbers)
+rc2017.02$RowNum <- 1:nrow(rc2017.02) ## Off-line detections are rows 444 - 644:
+### 443 seismic detections, 200 offline
+
 
 ## Continue working with rc --> recordTable for Apr 2017 - Apr 2018. This ensures that Algar43 detections are included
 rc <- rc[order(rc$Station, rc$DateTimeOriginal), ]
@@ -175,6 +198,7 @@ offline <- All.rec[which(All.rec$Station == "Algar61" | All.rec$Station == "Alga
 seismic.rec <- anti_join(All.rec, offline, by = "FileName")
 table(seismic.rec$Species)
 
+
 ### Frequency histogram for species detections
 sp_detect <- All.rec$Species
 st_detect <- All.rec$Station
@@ -215,13 +239,17 @@ sp.plot3 <- as.data.frame(sp.plot3) ##data frame summing detections --> fix scie
 fix(sp.plot3)
 colnames(sp.plot3) <- c("Species", "Freq")
 
+sum(sp.plot3$Freq) ## 2924 independent detections
+## Mammals = 2924 - 501 sandhill crane - 173 bird spp. - 94 humans
+2924-501-173-94 #2156
+
 
 
 ### Frequency histograms of mammal species
 
 par(mfrow = c(1,1))
 
-ggplot(data = sp.plot3, aes(x = Species, y = Freq)) + geom_bar(stat = "identity", fill = "lightblue", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black")) + scale_x_discrete(limits = c("White-tailed deer", "Black bear", "Grey wolf", "Snowshoe hare",  "Moose", "Coyote", "Woodland caribou",  "Red squirrel", "Canada lynx","American marten", "Red fox", "River otter", "Wolverine", "Fisher", "Beaver"))
+ggplot(data = sp.plot3, aes(x = Species, y = Freq)) + geom_bar(stat = "identity", fill = "grey", colour = "black") + theme_classic() + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 55, hjust = 1, colour = "black", size = 18)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(axis.title.x=element_blank()) + scale_x_discrete(limits = c("White-tailed deer", "Black bear", "Grey wolf", "Snowshoe hare",  "Moose", "Coyote", "Woodland caribou",  "Red squirrel", "Canada lynx","American marten", "Red fox", "Cougar", "Fisher", "Wolverine", "River otter", "Beaver"))
 
 
 
