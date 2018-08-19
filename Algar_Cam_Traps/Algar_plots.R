@@ -142,10 +142,10 @@ S3$Treatment <- dep$Treatment[match(row.names(S3),dep$CamStation)]
 
 
 ## Naive Occupancy (proportion of sites where species was detected)
-ggplot(data = sp.plot2, aes(x = row.names(sp.plot2), y = Naiv.Occ)) + geom_bar(stat = "identity", fill = "grey", colour = "black") + theme_classic() + xlab("Species") + ylab("Naive Occupancy") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 16)) + scale_x_discrete(limits = c("Wolf", "Black bear", "Moose", "WT deer", "Caribou")) + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 16)) + theme(axis.text.y = element_text(size = 14))
+ggplot(data = sp.plot2, aes(x = row.names(sp.plot2), y = Naiv.Occ)) + geom_bar(stat = "identity", fill = "grey", colour = "black") + theme_classic() + ylab("Proportion of sites with detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + scale_x_discrete(limits = c("Wolf", "Black bear", "Moose", "WT Deer", "Caribou")) + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 20)) + theme(axis.text.y = element_text(size = 18))
 
 ## Total detections
-ggplot(data = S.t, aes(x = row.names(S.t), y = Total)) + geom_bar(stat = "identity", fill = "grey", colour = "black") + theme_classic() + xlab("Species") + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 16))  + scale_x_discrete(limits = c("WT deer", "Black bear", "Wolf", "Moose","Caribou")) + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 16)) + theme(axis.text.y = element_text(size = 14))
+ggplot(data = S.t, aes(x = row.names(S.t), y = Total)) + geom_bar(stat = "identity", fill = "grey", colour = "black") + theme_classic() + ylab("Total Detections") + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20))  + scale_x_discrete(limits = c("WT Deer", "Black bear", "Wolf", "Moose","Caribou")) + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 20)) + theme(axis.text.y = element_text(size = 18))
 
 ## Spatial plots
 fix(S3) #Change to common names
