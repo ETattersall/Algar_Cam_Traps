@@ -48,6 +48,9 @@ sp <- read.csv("Spatial_covariates.csv")
 
 det$VegHt <- sp$VegHt[match(det$Site, sp$Site)]
 det$LineWidth <- sp$LineWidth[match(det$Site, sp$Site)]
+### Remove all extra nonsense columns (1:10)
+det <- det[11:66]
+
 ```
 
 ## Checking outliers
