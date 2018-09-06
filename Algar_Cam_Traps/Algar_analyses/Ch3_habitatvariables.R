@@ -1,6 +1,6 @@
 ############################################
 ## Ch3_habitatvariables.R
-## Creating habitat variables based on Fisher & Burton habitat classes (species, % canopy, and moisture regime)
+## Creating habitat variables based on dominant tree species and moisture regime
 ## Extract habitat types around stations at 8 different buffer scales (250-2000 m)
 
 require(raster)
@@ -53,100 +53,70 @@ summary(AVIEData) # sP1_PER mean = 7.9 (med = 9), SP2_PER mean = 0.9 (med = 0), 
 
 ### Populate Habitat attribute according to Fisher and Burton's reclassifications (with alterations for simplicity, noted here)
 
-## Nest ifelse statement-- Tamarack: Lt >= 70%, Pine: Pj >=70%, upland decid: Aw, Pb, Bw >= 70%
-## Dominant species (SP1, column 5) has to be Lt, and Per column has to be >=70%
+### Simpler solution: Habitat classes based on Dominant tree species, moisture regime: Upland and Lowland classes for spruce and deciduous, (plus pine and tamarack separate?) 
+## Clear Habitat field to start fresh
+colnames(AVIEData)
+AVIEData$Habitat <- rep(NA, nrow(AVIEData))
+
+## What moisture classes are expressed in Pine dominated stands?
+Pjm <- AVIEData %>% filter(SP1== "Pj") %>% select(MOIST_REG)
+table(Pjm) ## 960 mesic, 43 wet --> keep as standalone without moisture class
 
 
-AVIEData$Habitat <- ifelse(test = is.na(AVIEData[ , 5]), yes = "Non-forest", 
-                           no = ifelse(test = AVIEData[ , 5] == "Lt" & AVIEData[ , 6] >= 7, yes = "Tamarack", 
-            no = ifelse(test = AVIEData[ , 5] == "Pj" & AVIEData[ , 6] >= 7,yes = "Pine", 
-                                      no = ifelse(test = AVIEData[ , 5] == "Aw" & AVIEData[ , 6] >= 7| AVIEData[ , 5] == "Pb" & AVIEData[ , 6] >= 7 | AVIEData[ , 5] == "Bw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d", yes = "UpDecid", 
-                                                  no = ifelse(test = AVIEData[ , 5] == "Aw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Pb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Bw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w", yes = "LowDecid", 
-                                                              no = ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Sw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Fb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d", yes = "UpSpruce", no = ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Sw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Fb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w", yes = "LowSpruce", 
-                           no = ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData[ , 7] == "Aw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Sb" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Aw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Sw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Pj" & AVIEData[ , 7] == "Aw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Pj" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Bw" & AVIEData[ , 7] == "Lt" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Lt" & AVIEData[ , 7] == "Bw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Bw" & AVIEData[ , 7] == "Sw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Bw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Pb" & AVIEData[ , 7] == "Sw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Pb" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d", yes = "UpMix", 
-                                       no = ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData[ , 7] == "Aw" &  AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Sb" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Aw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Sw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Pj" & AVIEData[ , 7] == "Aw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Pj" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w"  | AVIEData[ , 5] == "Bw" & AVIEData[ , 7] == "Lt" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Lt" & AVIEData[ , 7] == "Bw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Bw" & AVIEData[ , 7] == "Sw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Bw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Pb" & AVIEData[ , 7] == "Sw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Pb" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w", yes = "LowMix", no = NA)))))))))
-
-table(AVIEData$Habitat) ## --> LowMix not coming out?
-AVIEData[which(AVIEData$Habitat == "LowMix"), ] ## ZERO LowMixes
-
-## Checking that ifelse statement is working properly 
-print(head(AVIEData[ , c(2,5,6,7,8,154)], 100))
-table(is.na(AVIEData$Habitat)) #840 after adding common mixedwoods
-
-## Checking remaining mixedwood classes
-AVIEData[which(is.na(AVIEData$Habitat)), c(5,6,7,8,154)]
+## What moisture classes are expressed in Tamarack dominated stands?
+Ltm <- AVIEData %>% filter(SP1== "Lt") %>% select(MOIST_REG)
+table(Ltm) ## 1504 wet, 1 mesic LOL --> Tamarack also without Moisture class
 
 
-## Code chunks for each class
-## Tamarack: Lt >= 7
-Tamarack <- ifelse(test = AVIEData[ , 5] == "Lt", yes = "Tamarack", no = NA)
+### Populate Habitat field if criteria are met by creating vectors of POLY_NUMS for each class and assigning class names to those cells?
 
-## Pine: Pj >= 7
-Pine <- ifelse(test = AVIEData[ , 5] == "Pj", yes = "Pine", 
-       no = NA)
+## 1. Create dataframe of POLY_NUMs and associated Habitat classes 
+## 2. Combine all dataframes into Habitat data frame (check that unique poly_nums matches number of rows in AVIEData)
+## 3. Match POLY_NUMS in Habitat data frame to POLY_NUMs in AVIEData to create AVIEData$Habitat
 
-## Non-forest = SP1 == NA
-Nonforest <- ifelse(test = is.na(AVIEData[ , 5]), yes = "Non-forest", no = NA)
+## Pine: Dominant species Pine, cover > 70%
+Pine <- AVIEData %>% filter(SP1== "Pj") %>% select(POLY_NUM) ##creates vector of POLY_NUMS
+class(Pine) # data frame
+Pine$Habitat <- rep("Pine", nrow(Pine))
+head(Pine)
 
-## Up decid: Sp1 and Sp2 == Aw, Pb or Bw and SP1_PER >= 70) and moist == m or d
-UpDecid <- ifelse(test = AVIEData[ , 5] == "Aw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Pb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Bw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d", yes = "UpDecid", no = NA)
+## Tamarack
+Tamarack <- AVIEData %>% filter(SP1== "Lt") %>% select(POLY_NUM)
+Tamarack$Habitat <- rep("Tamarack", nrow(Tamarack))
+head(Tamarack)
 
-## Low decid: same as up decid except moisture regime is w or a
-LowDecid <- ifelse(test = AVIEData[ , 5] == "Aw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Pb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Bw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w", yes = "LowDecid", no = NA)
+## UpSpruce: SP1 = Sb, Sw, or Fb and moist = m or d
+UpSpruce <- AVIEData %>% filter(SP1== "Sb" | SP1 == "Sw" | SP1== "Fb") %>% filter(MOIST_REG == "m" | MOIST_REG == "d") %>% select(POLY_NUM)
+UpSpruce$Habitat <- rep("UpSpruce", nrow(UpSpruce))
+head(UpSpruce)
 
-## Up. spruce: SP1 = Sb, Sw, or Fb >= 7 and moist = m or d
-UpSpruce <- ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Sw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Fb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d", yes = "UpSpruce", no = NA)
+## LowSpruce: SP1 = Sb, Sw, or Fb and moist = a or w
+LowSpruce <- AVIEData %>% filter(SP1== "Sb" | SP1 == "Sw" | SP1== "Fb") %>% filter(MOIST_REG == "a" | MOIST_REG == "w") %>% select(POLY_NUM)
+LowSpruce$Habitat <- rep("LowSpruce", nrow(LowSpruce))
+head(LowSpruce)
 
-## Low. spruce: same as UpSpruce except moist = a or w
-LowSpruce <- ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Sw" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Fb" & AVIEData[ , 6] >= 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w", yes = "LowSpruce", no = NA)
+## LowDecid: SP1 == Aw, Pb or Bw and and moist == a or w
+LowDecid <- AVIEData %>% filter(SP1== "Aw" | SP1 == "Pb" | SP1== "Bw") %>% filter(MOIST_REG == "a" | MOIST_REG == "w") %>% select(POLY_NUM)
+LowDecid$Habitat <- rep("LowDecid", nrow(LowDecid))
+head(LowDecid)
 
-LowSpruce <- cbind.data.frame(AVIEData$POLY_NUM,LowSpruce)
-colnames(LowSpruce) <- c("POLY_NUM", "LowSpruce")
+## UpDecid: SP1 == Aw, Pb or Bw and and moist == m or d
+UpDecid <- AVIEData %>% filter(SP1== "Aw" | SP1 == "Pb" | SP1== "Bw") %>% filter(MOIST_REG == "m" | MOIST_REG == "d") %>% select(POLY_NUM)
+UpDecid$Habitat <- rep("UpDecid", nrow(UpDecid))
+head(UpDecid)
 
+## Non forest: SP1 == NA
+Nonforest <- AVIEData %>% filter(is.na(SP1)) %>% select(POLY_NUM)
+Nonforest$Habitat <- rep("Nonforest", nrow(Nonforest))
+head(Nonforest)
 
-## Up. Mixedwood: 30 possible combinations of conifers and decid. starting with the most common, with SP1 canopy cover between 4 and 6
-UpMix <- ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData[ , 7] == "Aw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Sb" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Aw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Sw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Pj" & AVIEData[ , 7] == "Aw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Pj" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Bw" & AVIEData[ , 7] == "Lt" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Lt" & AVIEData[ , 7] == "Bw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Bw" & AVIEData[ , 7] == "Sw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Bw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Pb" & AVIEData[ , 7] == "Sw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Pb" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d", yes = "UpMix", no = NA)
+### Does sum of all dataframes == rows in AVIEData?
+sum(nrow(Pine), nrow(Tamarack), nrow(UpDecid), nrow(LowDecid), nrow(UpSpruce), nrow(LowSpruce), nrow(Nonforest)) ##YES IT DOES
 
-head(UpMix, 200) ## Working
-table(is.na(UpMix))
+## combine all in dataframe
+Habitat <- rbind.data.frame(Pine,Tamarack,LowSpruce,UpSpruce,LowDecid,UpDecid,Nonforest)
+length(unique(Habitat$POLY_NUM)) ## unique numbers of POLY_NUM == rows in AVIEData
+table(Habitat$Habitat)
 
-## LowMix: same as up except moist. regime
-LowMix <- ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData[ , 7] == "Aw" &  AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Sb" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Aw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Sw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Pj" & AVIEData[ , 7] == "Aw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Aw" & AVIEData[ , 7] == "Pj" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w"  | AVIEData[ , 5] == "Bw" & AVIEData[ , 7] == "Lt" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Lt" & AVIEData[ , 7] == "Bw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Bw" & AVIEData[ , 7] == "Sw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Bw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Pb" & AVIEData[ , 7] == "Sw" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Sw" & AVIEData[ , 7] == "Pb" & AVIEData[ , 6] < 7 & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w", yes = "LowMix", no = NA)
-head(LowMix, 200)
-table(is.na(LowMix))
-
-
-#### For some reason Lowland mixedwood is not included when code is run (appears to be working correctly)
-## Mixedwood overall makes up very little of Algar landscape -- exclude completely and incorporate into other categories?
-## Habitat covariates therefore based on Dominant forest cover and moisture regime
-## Removing canopy cover requirements and mixedwood
-AVIEData$Habitat <- ifelse(test = is.na(AVIEData[ , 5]), yes = "Non-forest", 
-                           no = ifelse(test = AVIEData[ , 5] == "Lt", yes = "Tamarack", 
-                           no = ifelse(test = AVIEData[ , 5] == "Pj",yes = "Pine", 
-                           no = ifelse(test = AVIEData[ , 5] == "Aw"| AVIEData[ , 5] == "Pb" | AVIEData[ , 5] == "Bw" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d", yes = "UpDecid", 
-                           no = ifelse(test = AVIEData[ , 5] == "Aw" & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Pb" & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Bw" & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w", yes = "LowDecid", 
-                           no = ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Sw"  & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d" | AVIEData[ , 5] == "Fb" & AVIEData$MOIST_REG == "m" | AVIEData$MOIST_REG == "d", yes = "UpSpruce", 
-                           no = ifelse(test = AVIEData[ , 5] == "Sb" & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Sw" & AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w" | AVIEData[ , 5] == "Fb"& AVIEData$MOIST_REG == "a" | AVIEData$MOIST_REG == "w", yes = "LowSpruce", no = NA)))))))
-
-table(AVIEData$Habitat)
-
-
-## Checking that ifelse statement is working properly 
-print(head(AVIEData[ , c(2,5,6,7,8,154)], 100))
-table(is.na(AVIEData$Habitat)) ## No NAs, but LowSpruce ALSO not coming out
-
-
-### Merge AVIEData$Habitat with AVIE spatialpolygons dataframe
-class(AVIE)
-
-AVIE.hab <- sp::merge(AVIE,AVIEData$Habitat, by = "POLY_NUM") ## ran out of memory space... create lookup table to perform join in Arc
-
-habitat <- cbind.data.frame(AVIEData$POLY_NUM, AVIEData$Habitat)
-colnames(habitat) <- c("POLY_NUM", "HabitatClass")
-
-write.csv(habitat, "AVIE_Habitat_LookUp.csv")
-
-##### Nested ifelse is dropping LowSpruce and LowMix. Create individual vecotors of each and merge??
-
-Habitat <- cbind.data.frame(AVIEData$POLY_NUM,LowSpruce, LowDecid, LowMix, Tamarack, Pine, UpSpruce, UpDecid, UpMix, Nonforest)
-## Putting all vectors together shows significant overlap between all Lowland classes
+## Export Habitat as LookUp table to perform spatial join in Arc
+write.csv(Habitat, "AVIE_Habitat_LookUp.csv")
