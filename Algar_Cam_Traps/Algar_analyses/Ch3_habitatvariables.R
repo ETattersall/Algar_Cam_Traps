@@ -120,3 +120,26 @@ table(Habitat$Habitat)
 
 ## Export Habitat as LookUp table to perform spatial join in Arc
 write.csv(Habitat, "AVIE_Habitat_LookUp.csv")
+
+
+##### Sep. 18, 2018--> Measuring prop.habitat at various buffer sizes around cameras
+## Re-writing AVIE shapefile in R env. with the one with  habitat classes
+setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/3. Data")
+AVIE <- readOGR(dsn = "3.1 GIS", layer = "AVIE_10k_Habitat")
+summary(AVIE) #tmerc, Habitat = Habitat_1
+
+## Loading in Algar camera station points
+Algcoord <- readOGR("3.1 GIS", "AlgarSites_April2017")
+summary(Algcoord) #in utm
+
+#### Extracting landcover data for that buffer ####
+# comparing CRS between layers
+proj4string(Algcoord) # NAD83 utm zone 12
+proj4string(AVIE)# NAD83 tmerc
+
+# Converting AVIE to UTM
+AVIE_UTM <- spTransform(AVIE, CRSobj = CRS(proj4string(Algcoord)))
+proj4string(AVIE_UTM)
+AVIE <- AVIE_UTM #Overwrite original AVIE CRS
+
+#### Extracting proportions of 6 habitat types at 8 buffer sizes
