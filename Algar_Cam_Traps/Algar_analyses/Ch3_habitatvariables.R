@@ -74,26 +74,21 @@ table(Ltm) ## 1504 wet, 1 mesic LOL --> Tamarack also without Moisture class
 ## 2. Combine all dataframes into Habitat data frame (check that unique poly_nums matches number of rows in AVIEData)
 ## 3. Match POLY_NUMS in Habitat data frame to POLY_NUMs in AVIEData to create AVIEData$Habitat
 
-## Pine: Dominant species Pine, cover > 70%
-Pine <- AVIEData %>% filter(SP1== "Pj") %>% select(POLY_NUM) ##creates vector of POLY_NUMS
-class(Pine) # data frame
-Pine$Habitat <- rep("Pine", nrow(Pine))
-head(Pine)
 
 ## Tamarack
 Tamarack <- AVIEData %>% filter(SP1== "Lt") %>% select(POLY_NUM)
 Tamarack$Habitat <- rep("Tamarack", nrow(Tamarack))
 head(Tamarack)
 
-## UpSpruce: SP1 = Sb, Sw, or Fb and moist = m or d
-UpSpruce <- AVIEData %>% filter(SP1== "Sb" | SP1 == "Sw" | SP1== "Fb") %>% filter(MOIST_REG == "m" | MOIST_REG == "d") %>% select(POLY_NUM)
-UpSpruce$Habitat <- rep("UpSpruce", nrow(UpSpruce))
-head(UpSpruce)
+## UpCon: SP1 = Sb, Sw, Pj, or Fb and moist = m or d
+UpCon <- AVIEData %>% filter(SP1== "Sb" | SP1 == "Sw" | SP1== "Fb"| SP1== "Pj") %>% filter(MOIST_REG == "m" | MOIST_REG == "d") %>% select(POLY_NUM)
+UpCon$Habitat <- rep("UpCon", nrow(UpCon))
+head(UpCon)
 
-## LowSpruce: SP1 = Sb, Sw, or Fb and moist = a or w
-LowSpruce <- AVIEData %>% filter(SP1== "Sb" | SP1 == "Sw" | SP1== "Fb") %>% filter(MOIST_REG == "a" | MOIST_REG == "w") %>% select(POLY_NUM)
-LowSpruce$Habitat <- rep("LowSpruce", nrow(LowSpruce))
-head(LowSpruce)
+## LowCon: SP1 = Sb, Sw, Pj, or Fb and moist = a or w
+LowCon <- AVIEData %>% filter(SP1== "Sb" | SP1 == "Sw" | SP1== "Fb" | SP1== "Pj") %>% filter(MOIST_REG == "a" | MOIST_REG == "w") %>% select(POLY_NUM)
+LowCon$Habitat <- rep("LowCon", nrow(LowCon))
+head(LowCon)
 
 ## LowDecid: SP1 == Aw, Pb or Bw and and moist == a or w
 LowDecid <- AVIEData %>% filter(SP1== "Aw" | SP1 == "Pb" | SP1== "Bw") %>% filter(MOIST_REG == "a" | MOIST_REG == "w") %>% select(POLY_NUM)
@@ -111,16 +106,32 @@ Nonforest$Habitat <- rep("Nonforest", nrow(Nonforest))
 head(Nonforest)
 
 ### Does sum of all dataframes == rows in AVIEData?
-sum(nrow(Pine), nrow(Tamarack), nrow(UpDecid), nrow(LowDecid), nrow(UpSpruce), nrow(LowSpruce), nrow(Nonforest)) ##YES IT DOES
+sum(nrow(Tamarack), nrow(UpDecid), nrow(LowDecid), nrow(UpCon), nrow(LowCon), nrow(Nonforest)) ##YES IT DOES
 
 ## combine all in dataframe
-Habitat <- rbind.data.frame(Pine,Tamarack,LowSpruce,UpSpruce,LowDecid,UpDecid,Nonforest)
+Habitat <- rbind.data.frame(Tamarack,LowCon,UpCon,LowDecid,UpDecid,Nonforest)
 length(unique(Habitat$POLY_NUM)) ## unique numbers of POLY_NUM == rows in AVIEData
 table(Habitat$Habitat)
+head(Habitat)
+## Order by Poly_Num
+Habitat <- Habitat[order(habitat$POLY_NUM),]
+head(Habitat)
 
-## Export Habitat as LookUp table to perform spatial join in Arc
-write.csv(Habitat, "AVIE_Habitat_LookUp.csv")
+###Add habitat covariate to AVIE data
+summary(AVIE@data$Habitat) ## Buncha NAs
+AVIE@data$Habitat <- Habitat$Habitat[match(Habitat$POLY_NUM,AVIE@data$POLY_NUM)]
+summary(AVIE@data$Habitat)
+table(AVIE@data$Habitat)
+head(AVIE@data)
 
+
+## Write onto shapefile for visualization in Arc
+ogrDrivers()
+writeOGR(AVIE, dsn = "AVIE_InnotechMar2018", layer = "AVIE_Habitatclasses_Algar", driver = "ESRI Shapefile")
+
+############ matching did not work. Need to go back to spatial join method in Arc
+## Export habitat as look up table
+write.csv(Habitat, "Habitat_LookUp.csv")
 
 ##### Sep. 18, 2018--> Measuring prop.habitat at various buffer sizes around cameras
 ## Re-writing AVIE shapefile in R env. with the one with  habitat classes
@@ -143,3 +154,48 @@ proj4string(AVIE_UTM)
 AVIE <- AVIE_UTM #Overwrite original AVIE CRS
 
 #### Extracting proportions of 6 habitat types at 8 buffer sizes
+## returns a list of 60 proportions of Open forest (b/c at 250 m, not all sites have Dense forest)
+propHab <- function(spPoints, spDF, buffer){
+  start.time<-paste("start time:", Sys.time())
+  b <- gBuffer(spPoints, width = buffer, byid = TRUE) ## creating buffer around spPoints
+  i <- raster::intersect(spDF,b) ## clipping sp object to buffer
+  i.data <- i@data %>% select(CamStation, utmE,utmN, Treatment, lat_decdeg,lon_decdeg, Habitat_1) ## extracting camera data and cover variable
+  i.data$Area <- gArea(i, byid= TRUE) ## Adding polygon area to dataset
+  i.data$Percent_Cover <- i.data$Area/bufferArea(buffer) ## calculating percent cover based on total area of buffer
+  i.data <- aggregate(.~ CamStation + utmE + utmN + Treatment + lat_decdeg + lon_decdeg + Habitat_1, data = i.data, sum) # Aggregate same land cover polygons at each site
+  i.data <- i.data[with(i.data, order(CamStation)), ] ## Order dataset by CamStation
+  end.time<-paste("end time:", Sys.time())
+  
+  print(start.time)
+  
+  print(end.time)
+  
+  return(i.data)
+}
+
+## Test function at 250 m buffer
+Hab.data <- propHab(Algcoord, AVIE, 250)
+
+## Check which habitat types are NOT represented at every camera station with a 250m buffer 
+LowSpruce <- Hab.data %>% filter(Habitat_1 == "LowSpruce") ## 58 stations
+unique(LowSpruce$CamStation) ## missing Algar15, Algar 49
+UpDecid <- Hab.data %>% filter(Habitat_1 == "UpDecid") ## 8 stations
+Tamarack <- Hab.data %>% filter(Habitat_1 == "Tamarack") ## 35 stations
+UpSpruce <- Hab.data %>% filter(Habitat_1 == "UpSpruce") ## 18 stations
+LowDecid <- Hab.data %>% filter(Habitat_1 == "LowDecid") ## 0 stations -- would be easy to drop then...
+Pine <- Hab.data %>% filter(Habitat_1 == "Pine") ## 17 stations
+
+## None are represented at all stations. In order of decreasing abundance: LowSpruce, Tamarack, UpSpruce, Pine, UpDecid, LowDecid
+
+## Do the same for largest scale (overwriting is fine for now)
+Hab.data <- Hab.data <- propHab(Algcoord, AVIE, 2000)
+
+## Check which habitat types are NOT represented at every camera station with a 250m buffer 
+LowSpruce <- Hab.data %>% filter(Habitat_1 == "LowSpruce") ## 60 stations
+UpDecid <- Hab.data %>% filter(Habitat_1 == "UpDecid") ## 51 stations
+Tamarack <- Hab.data %>% filter(Habitat_1 == "Tamarack") ## 59 stations
+UpSpruce <- Hab.data %>% filter(Habitat_1 == "UpSpruce") ## 54 stations
+LowDecid <- Hab.data %>% filter(Habitat_1 == "LowDecid") ## 22 stations 
+Pine <- Hab.data %>% filter(Habitat_1 == "Pine") ## 45 stations
+
+## In order of decreasing abundance: LowSpruce, Tamarack, UpSpruce, UpDecid, Pine, LowDecid
