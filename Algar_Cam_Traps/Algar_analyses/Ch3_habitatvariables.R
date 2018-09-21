@@ -134,9 +134,9 @@ writeOGR(AVIE, dsn = "AVIE_InnotechMar2018", layer = "AVIE_Habitatclasses_Algar"
 write.csv(Habitat, "Habitat_LookUp.csv")
 
 ##### Sep. 18, 2018--> Measuring prop.habitat at various buffer sizes around cameras
-## Re-writing AVIE shapefile in R env. with the one with  habitat classes
+## AVIE WITH Habitat classes saved as 'Algar_Habitatclasses
 setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/3. Data")
-AVIE <- readOGR(dsn = "3.1 GIS", layer = "AVIE_10k_Habitat")
+AVIE <- readOGR(dsn = "3.1 GIS", layer = "Algar_Habitatclasses")
 summary(AVIE) #tmerc, Habitat = Habitat_1
 
 ## Loading in Algar camera station points
@@ -154,16 +154,23 @@ proj4string(AVIE_UTM)
 AVIE <- AVIE_UTM #Overwrite original AVIE CRS
 
 #### Extracting proportions of 6 habitat types at 8 buffer sizes
-## returns a list of 60 proportions of Open forest (b/c at 250 m, not all sites have Dense forest)
+#Function for calculating total area of a buffer
+bufferArea <- function(r){
+  Area <- pi*(r)^2
+  print(Area)
+}
+
+
+## returns a list of Habitat polygons associated with each camera station (clipped to desired buffer size)
 propHab <- function(spPoints, spDF, buffer){
   start.time<-paste("start time:", Sys.time())
   b <- gBuffer(spPoints, width = buffer, byid = TRUE) ## creating buffer around spPoints
   i <- raster::intersect(spDF,b) ## clipping sp object to buffer
   i.data <- i@data %>% select(CamStation, utmE,utmN, Treatment, lat_decdeg,lon_decdeg, Habitat_1) ## extracting camera data and cover variable
-  i.data$Area <- gArea(i, byid= TRUE) ## Adding polygon area to dataset
-  i.data$Percent_Cover <- i.data$Area/bufferArea(buffer) ## calculating percent cover based on total area of buffer
+  i.data$Percent_Cover <- gArea(i, byid= TRUE)/bufferArea(buffer) ## calculating percent cover based on total area of buffer
   i.data <- aggregate(.~ CamStation + utmE + utmN + Treatment + lat_decdeg + lon_decdeg + Habitat_1, data = i.data, sum) # Aggregate same land cover polygons at each site
   i.data <- i.data[with(i.data, order(CamStation)), ] ## Order dataset by CamStation
+  i.data <- spread(i.data, key = Habitat_1, value = Percent_Cover, fill = 0) ## Spreads each habitat class into its own column and collapsing stations into single row, inserting 0's where a habitat class does not appear at a station
   end.time<-paste("end time:", Sys.time())
   
   print(start.time)
@@ -174,28 +181,48 @@ propHab <- function(spPoints, spDF, buffer){
 }
 
 ## Test function at 250 m buffer
-Hab.data <- propHab(Algcoord, AVIE, 250)
+Habdata250 <- propHab(Algcoord, AVIE, 250) ##LowDecid not represented because it does not appear at any stations at the 250 m scale
+summary(Habdata250) ## LowCon has highest mean, followed by Tamarack, UpCon, UpDecid
 
-## Check which habitat types are NOT represented at every camera station with a 250m buffer 
-LowSpruce <- Hab.data %>% filter(Habitat_1 == "LowSpruce") ## 58 stations
-unique(LowSpruce$CamStation) ## missing Algar15, Algar 49
-UpDecid <- Hab.data %>% filter(Habitat_1 == "UpDecid") ## 8 stations
-Tamarack <- Hab.data %>% filter(Habitat_1 == "Tamarack") ## 35 stations
-UpSpruce <- Hab.data %>% filter(Habitat_1 == "UpSpruce") ## 18 stations
-LowDecid <- Hab.data %>% filter(Habitat_1 == "LowDecid") ## 0 stations -- would be easy to drop then...
-Pine <- Hab.data %>% filter(Habitat_1 == "Pine") ## 17 stations
+## Add scale to column name for habitat classes (will clarify things when aggregating data)
+colnames(Habdata250)
+colnames(Habdata250) <- c("CamStation", "utmE", "utmN", "Treatment", "lat_decdeg","lon_decdeg", "LowCon250", "Nonforest250", "Tamarack250", "UpCon250", "UpDecid250")
 
-## None are represented at all stations. In order of decreasing abundance: LowSpruce, Tamarack, UpSpruce, Pine, UpDecid, LowDecid
+## Check if habitat classes sum to 1
+sum(Habdata[,7:11]) ## Should be 60 -- each row should sum to 1 -- but it is 59.01. Close enough?
 
-## Do the same for largest scale (overwriting is fine for now)
-Hab.data <- Hab.data <- propHab(Algcoord, AVIE, 2000)
+### Create data frames for other scales
+Habdata500 <- propHab(Algcoord, AVIE, 500)
+colnames(Habdata500) <- c("CamStation", "utmE", "utmN", "Treatment", "lat_decdeg","lon_decdeg", "LowCon500", "LowDecid500","Nonforest500", "Tamarack500", "UpCon500", "UpDecid500")
 
-## Check which habitat types are NOT represented at every camera station with a 250m buffer 
-LowSpruce <- Hab.data %>% filter(Habitat_1 == "LowSpruce") ## 60 stations
-UpDecid <- Hab.data %>% filter(Habitat_1 == "UpDecid") ## 51 stations
-Tamarack <- Hab.data %>% filter(Habitat_1 == "Tamarack") ## 59 stations
-UpSpruce <- Hab.data %>% filter(Habitat_1 == "UpSpruce") ## 54 stations
-LowDecid <- Hab.data %>% filter(Habitat_1 == "LowDecid") ## 22 stations 
-Pine <- Hab.data %>% filter(Habitat_1 == "Pine") ## 45 stations
+Habdata750 <- propHab(Algcoord, AVIE, 750)
+colnames(Habdata750) <- c("CamStation", "utmE", "utmN", "Treatment", "lat_decdeg","lon_decdeg", "LowCon750", "LowDecid750","Nonforest750", "Tamarack750", "UpCon750", "UpDecid750")
 
-## In order of decreasing abundance: LowSpruce, Tamarack, UpSpruce, UpDecid, Pine, LowDecid
+Habdata1000 <- propHab(Algcoord, AVIE, 1000)
+colnames(Habdata1000) <- c("CamStation", "utmE", "utmN", "Treatment", "lat_decdeg","lon_decdeg", "LowCon1000", "LowDecid1000","Nonforest1000", "Tamarack1000", "UpCon1000", "UpDecid1000")
+
+Habdata1250 <- propHab(Algcoord, AVIE, 1250)
+colnames(Habdata1250) <- c("CamStation", "utmE", "utmN", "Treatment", "lat_decdeg","lon_decdeg", "LowCon1250", "LowDecid1250","Nonforest1250", "Tamarack1250", "UpCon1250", "UpDecid1250")
+
+Habdata1500 <- propHab(Algcoord, AVIE, 1500)
+colnames(Habdata11500) <- c("CamStation", "utmE", "utmN", "Treatment", "lat_decdeg","lon_decdeg", "LowCon1500", "LowDecid1500","Nonforest1500", "Tamarack1500", "UpCon1500", "UpDecid1500")
+
+Habdata1750 <- propHab(Algcoord, AVIE, 1750)
+colnames(Habdata1750) <- c("CamStation", "utmE", "utmN", "Treatment", "lat_decdeg","lon_decdeg", "LowCon1750", "LowDecid1750","Nonforest1750", "Tamarack1750", "UpCon1750", "UpDecid1750")
+
+Habdata2000 <- propHab(Algcoord, AVIE, 2000)
+colnames(Habdata2000) <- c("CamStation", "utmE", "utmN", "Treatment", "lat_decdeg","lon_decdeg", "LowCon2000", "LowDecid2000","Nonforest2000", "Tamarack2000", "UpCon2000", "UpDecid2000")
+
+
+### Aggregate into one data frame
+Habdata <- cbind.data.frame(Habdata250, Habdata500[,7:12], Habdata750[,7:12], Habdata1000[,7:12], Habdata1250[,7:12], Habdata1500[,7:12], Habdata1750[,7:12], Habdata2000[,7:12])
+
+## Aggregate with forest openness data for all data needed to run core models
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+
+pOpen <- read.csv("propOpenForest_Algar60.csv")
+head(pOpen)
+
+Habdata <- cbind.data.frame(Habdata, pOpen[ , 3:10])
+
+write.csv(Habdata, "Algar_HabitatData_8scales.csv")

@@ -22,7 +22,7 @@ require(tidyr) #for gather function
 require(ggplot2) #for plotting data across scales
 
 setwd("C:/Users/ETattersall/Google Drive/Algar Seismic Restoration Project/3. Data")
-AVIE <- readOGR(dsn = "3.1 GIS", layer = "AVIE_10k_Habitat")
+AVIE <- readOGR(dsn = "3.1 GIS", layer = "Algar_Habitatclasses")
 summary(AVIE) #tmerc, Habitat = Habitat_1
 
 
@@ -34,10 +34,13 @@ Dense$DENSE <- rep("Dense", nrow(Dense))
 Open <- AVIE@data %>% filter(DENSITY == "A" | DENSITY == "B") %>% select(POLY_NUM)
 Open$DENSE <- rep("Open", nrow(Open))
 
-DENSE <- rbind.data.frame(Dense, Open) ## row numbers does not match original data frame because of DENSITY obs. that are NA
+DENSE <- rbind.data.frame(Dense, Open) ## row numbers do not match original data frame because of DENSITY obs. that are NA
 
 ## Add DENSE variable to spatial data frame
 AVIE@data$DENSE <- DENSE$DENSE[match(AVIE@data$POLY_NUM, DENSE$POLY_NUM)]
+
+## Check to see if it worked
+writeOGR(AVIE, dsn = "3.1 GIS", layer = "Algar_OpenForest", driver = "ESRI Shapefile") ## Yes -- 'Open' forest matches A and B and 'Dense' forest matches C and D
 
 colnames(AVIE@data)
 str(AVIE@data$DENSE)
