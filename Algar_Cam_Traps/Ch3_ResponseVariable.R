@@ -25,17 +25,29 @@ rec <- read.csv(file.choose()) # record table
 
 str(daily) # Number of detections each day. Also included binary 'cam active'
 summary(daily) ## Total number of detections per site per day, for 886 days (not every camera active for whole time)
+summary(rec)
+## Rec includes offline sites?
+unique(rec$Station) ## Yes. Will need to exclude
+
+colnames(daily) ## Remove X's
+daily$X <- NULL
+daily$X.1 <- NULL
+
+### Exclude OffLine sites
+daily <- daily %>% filter(Treatment != "OffLine")
+summary(daily)
+
 
 ### Total number of detections summed for each species?
-colSums(daily[, 6:15]) ## Matches total number of detections
+colSums(daily[, 5:14]) ## Matches total number of detections for each species
 
 ### Converting detections to binary occurrences
 
-Occ <- as.data.frame(ifelse(daily[ , 6:15] > 0, 1, 0))
+Occ <- as.data.frame(ifelse(daily[ , 5:14] > 0, 1, 0))
 str(Occ)
 summary(Occ)
 colSums(Occ) ## Only decreases total counts slightly (moreso for deer, wolves, hare)
-Occ <- cbind.data.frame(daily[,1:5], Occ, daily[,16:17]) ## Adding non-detection rows
+Occ <- cbind.data.frame(daily[,1:4], Occ, daily[,15:16]) ## Adding non-detection rows
 str(Occ)
 
 
@@ -92,9 +104,10 @@ end.time - start.time
 #### Occasion length of 1 day works for models with few parameters, but not with >5
 
 ### Could remove days when camera was inactive: CamActive is either a 1 or 0 when occasion length is a day, and 0 - Cam Active hugely increases # zeroes --> confirm
-plot(Occ$CamActive, Occ$Lynx) ## Cam Active and Lynx are bot 0's or 1's
+plot(Occ$CamActive, Occ$Lynx) ## Cam Active and Lynx are both 0's or 1's
 
 ActCams <- Occ %>% filter(CamActive == 1) ## Cuts observations almost in half
+str(ActCams)
 
 ## Try lynx model again without CamActive (ZI -- go big!!)
 start.time <- Sys.time()
@@ -106,3 +119,144 @@ summary(f4az)
 
 ## Conclusions: Need to run full model at 1-day occasion length to see if those models will run. Remove CamActive = 0 cuts out loads of zeroes so models actually run (with 4 parameters anyway). Should also help to standardize and center covariates
 
+
+##### Sep 21, 2018: Testing 1-day occasion length in modelling habitat variables ####
+### 1- occasion length - ActCams
+
+## Habitat variables
+Hab <- read.csv("Algar_HabitatData_8scales.csv")
+
+### There are 54 columns of interest in Hab -- too many to 'match' over to ActCams at one time. Match each scale separately?
+
+## Register each scale as separate data frame
+## Occasion length 1 day, Scale 250 m == Day1.250
+Day1.250 <- ActCams
+
+
+Day1.250$LowCon250 <- Hab$LowCon250[match(Day1.250$Site, Hab$CamStation)]
+Day1.250$Tamarack250 <- Hab$Tamarack250[match(Day1.250$Site, Hab$CamStation)]
+Day1.250$UpCon250 <- Hab$UpCon250[match(Day1.250$Site, Hab$CamStation)]
+Day1.250$UpDecid250 <- Hab$UpDecid250[match(Day1.250$Site, Hab$CamStation)]
+Day1.250$pOpen250 <- Hab$pOpen250[match(Day1.250$Site, Hab$CamStation)]
+
+
+## 500 m 
+Day1.500 <- ActCams
+
+
+Day1.500$LowCon500 <- Hab$LowCon500[match(Day1.500$Site, Hab$CamStation)]
+Day1.500$Tamarack500 <- Hab$Tamarack500[match(Day1.500$Site, Hab$CamStation)]
+Day1.500$UpCon500 <- Hab$UpCon500[match(Day1.500$Site, Hab$CamStation)]
+Day1.500$UpDecid500 <- Hab$UpDecid500[match(Day1.500$Site, Hab$CamStation)]
+Day1.500$pOpen500 <- Hab$pOpen500[match(Day1.500$Site, Hab$CamStation)]
+Day1.500$LowDecid500 <- Hab$LowDecid500[match(Day1.500$Site, Hab$CamStation)]
+
+## Before registering all scales, check first to see if full model will run
+## Scaling input variables
+covscale <- function(covariate){
+  centre <- (covariate - mean(covariate, na.rm = TRUE)) # where covariate is a vector of numeric input values for one covariate
+  standardize <- centre/(2*sd(covariate, na.rm = TRUE)) # Divide centred value by 2 SD
+}
+
+Day1.250$LowCon250_sc <- covscale(Day1.250$LowCon250)
+Day1.250$Tamarack250_sc <- covscale(Day1.250$Tamarack250)
+Day1.250$UpCon250_sc <- covscale(Day1.250$UpCon250)
+Day1.250$UpDecid250_sc <- covscale(Day1.250$UpDecid250)
+Day1.250$pOpen250_sc <- covscale(Day1.250$pOpen250)
+
+## Full model = all standardized habitat variables, random effect of Site and treatment, zero inflation. Will test Lynx first because they have fewest detections
+L1.250 <- glmmTMB(Lynx~LowCon250_sc + Tamarack250_sc + UpCon250_sc + UpDecid250_sc + pOpen250_sc + (1|Site), data = Day1.250, zi = ~1, family = 'binomial')
+summary(L1.250) ### MODEL ACTUALLY RAN SUCCESSFULLY!!!!
+
+## Try 500 --> including LowDecid
+## Standardize input variables
+
+Day1.500$LowCon500_sc <- covscale(Day1.500$LowCon500)
+Day1.500$Tamarack500_sc <- covscale(Day1.500$Tamarack500)
+Day1.500$UpCon500_sc <- covscale(Day1.500$UpCon500)
+Day1.500$UpDecid500_sc <- covscale(Day1.500$UpDecid500)
+Day1.500$LowDecid500_sc <- covscale(Day1.500$LowDecid500)
+Day1.500$pOpen500_sc <- covscale(Day1.500$pOpen500)
+
+print(paste("start time", Sys.time()))
+L1.500.1 <- glmmTMB(Lynx~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc + (1|Site), data = Day1.500, zi = ~1, family = 'binomial')
+print(paste("end time", Sys.time()))
+
+summary(L1.500.1)
+
+###Warning message:
+## In doTryCatch(return(expr), name, parentenv, handler) :
+##  restarting interrupted promise evaluation
+
+### Try 500 m (includes LowDecid) plus Treatment as random effect
+print(paste("start time", Sys.time()))
+L1.500.2 <- glmmTMB(Lynx~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc + (1|Site) + (1|Treatment), data = Day1.500, zi = ~1, family = 'binomial')
+print(paste("end time", Sys.time()))
+
+summary(L1.500.2)
+
+### Compare above to model without any random effects
+print(paste("start time", Sys.time()))
+L1.500.0 <- glmmTMB(Lynx~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc, data = Day1.500, zi = ~1, family = 'binomial')
+print(paste("end time", Sys.time()))
+
+summary(L1.500.0)
+
+ICtab(L1.500.0, L1.500.1, L1.500.2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+### Site random effect has lowest AIC
+
+
+#### Coyotes --> does 1 day occasion length work?
+## No random variables
+print(paste("start time", Sys.time()))
+C1.500.0 <- glmmTMB(Coyote~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc, data = Day1.500, zi = ~1, family = 'binomial')
+print(paste("end time", Sys.time()))
+
+
+
+## 1 random variable
+print(paste("start time", Sys.time()))
+C1.500.1 <- glmmTMB(Coyote~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc + (1|Site), data = Day1.500, zi = ~1, family = 'binomial')
+print(paste("end time", Sys.time()))
+
+
+
+## 2 random variables
+print(paste("start time", Sys.time()))
+C1.500.2 <- glmmTMB(Coyote~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc + (1|Site) + (1|Treatment), data = Day1.500, zi = ~1, family = 'binomial')
+print(paste("end time", Sys.time()))
+
+
+ICtab(C1.500.0, C1.500.1, C1.500.2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+
+summary(C1.500.1)
+
+
+#### Black bears --> does 1 day occasion length work?
+## No random variables
+print(paste("start time", Sys.time()))
+B1.500.0 <- glmmTMB(Blackbear~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc, data = Day1.500, zi = ~1, family = 'binomial')
+print(paste("end time", Sys.time()))
+
+
+
+## 1 random variable
+print(paste("start time", Sys.time()))
+B1.500.1 <- glmmTMB(Blackbear~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc + (1|Site), data = Day1.500, zi = ~1, family = 'binomial')
+print(paste("end time", Sys.time()))
+
+
+
+## 2 random variables
+print(paste("start time", Sys.time()))
+B1.500.2 <- glmmTMB(Blackbear~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc + (1|Site) + (1|Treatment), data = Day1.500, zi = ~1, family = 'binomial')
+print(paste("end time", Sys.time()))
+summary(B1.500.2)
+#Model did not converge
+
+
+ICtab(B1.500.0, B1.500.1, B1.500.2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+summary(B1.500.1)
+
+#### All species' models ran successfully with 1 day occasion length!! Single random effect of Site performed best with model selection
+###### Con
