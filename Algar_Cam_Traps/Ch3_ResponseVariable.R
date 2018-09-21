@@ -233,6 +233,15 @@ summary(C1.500.1)
 
 
 #### Black bears --> does 1 day occasion length work?
+
+### Need to remove Winter days to account for hibernation! First separate month from Datep
+Day1.500$Month <- as.factor(format(as.Date(Day1.500$Datep), "%b")) ## Month abbreviation used because idk if 'filter works on numbers, even if they're factors
+class(Day1.500$Month)
+unique(Day1.500$Month)
+
+## Extract summer months -- Apr - Oct
+Day1.500 <- Day1.500 %>% filter(Month == "Apr" | Month == "May" | Month == "Jun" | Month == "Jul" | Month == "Aug" | Month == "Sep" | Month == "Oct")
+
 ## No random variables
 print(paste("start time", Sys.time()))
 B1.500.0 <- glmmTMB(Blackbear~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc, data = Day1.500, zi = ~1, family = 'binomial')
@@ -252,11 +261,39 @@ print(paste("start time", Sys.time()))
 B1.500.2 <- glmmTMB(Blackbear~LowCon500_sc + Tamarack500_sc + UpCon500_sc + UpDecid500_sc + LowDecid500_sc + pOpen500_sc + (1|Site) + (1|Treatment), data = Day1.500, zi = ~1, family = 'binomial')
 print(paste("end time", Sys.time()))
 summary(B1.500.2)
-#Model did not converge
+
 
 
 ICtab(B1.500.0, B1.500.1, B1.500.2, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 summary(B1.500.1)
 
 #### All species' models ran successfully with 1 day occasion length!! Single random effect of Site performed best with model selection
-###### Con
+###### Test if zero inflation is appropriate. Use ActCams
+
+## Proportion of zeros
+table(is.na(ActCams$Lynx)) # no NAs
+table(is.na(ActCams$Coyote)) # no NAs
+
+### Bears - extract summer months only
+ActCams$Month <- as.factor(format(as.Date(ActCams$Datep), "%b")) ## Month abbreviation used because idk if 'filter works on numbers, even if they're factors
+class(ActCams$Month)
+unique(ActCams$Month)
+
+## Extract summer months -- Apr - Oct
+Bears <- ActCams %>% filter(Month == "Apr" | Month == "May" | Month == "Jun" | Month == "Jul" | Month == "Aug" | Month == "Sep" | Month == "Oct")
+
+##
+table(is.na(Bears$Blackbear)) ## no NAs
+
+table(ActCams$Lynx == 0) ## 32324 0's --> super frickin zero-inflated
+table(ActCams$Coyote == 0) ## 32264 0's --> same
+table(Bears$Blackbear == 0) ## 13669 0's
+
+sum(ActCams$Lynx==0, na.rm = TRUE)/nrow(ActCams) ## 99.8% zeros -- zero-inflated
+sum(ActCams$Coyote==0, na.rm = TRUE)/nrow(ActCams) ## 99.6% zeros -- zero-inflated
+sum(Bears$Blackbear==0, na.rm = TRUE)/nrow(Bears) ## 97.8% zeros -- zero-inflated
+
+### Save occurrence data --> ActCams and Bears
+write.csv(ActCams, "Algar60_speciesOccurrence.csv")
+write.csv(Bears, "Algar60_speciesOccurrence_SUMMER.csv")
+
