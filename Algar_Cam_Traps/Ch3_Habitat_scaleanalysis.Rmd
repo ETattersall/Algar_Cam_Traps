@@ -1,17 +1,18 @@
-########################################
-## Ch3_Habitat_scaleanalysis.R
-## Multivariate scale analysis to determine appropriate scales of measurement for each species
-## Started Sep. 21, 2018
-########################################
-
-
+---
+title: "Ch3_Habitat_scaleanalysis.R"
+output: html_notebook
+---
+ Multivariate scale analysis to determine appropriate scales of measurement for each species
+ 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyr)		# for data formatting functions
 library(dplyr)
 library(glmmTMB)
 library(bbmle)
-
-
-
+```
+ 1. Create data frames for each scale (16 in total, since I need to duplicate separately for Bears)
+ 2. Create lists of data frames
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 
 Occ <- read.csv("Algar60_speciesOccurrence.csv")
@@ -207,9 +208,6 @@ Bears2000$UpCon <- Hab_scaled$UpCon2000[match(Bears2000$Site, Hab_scaled$CamStat
 Bears2000$UpDecid <- Hab_scaled$UpDecid2000[match(Bears2000$Site, Hab_scaled$CamStation)]
 Bears2000$pOpen <- Hab_scaled$pOpen2000[match(Bears2000$Site, Hab_scaled$CamStation)]
 
-
-
-
 #### 2. Create lists of data frames ####
 ## 250 m models contain fewer variables; leave out of list
 Lynx.Coyote.names<- c("Occ500", "Occ750", "Occ1000", "Occ1250", "Occ1500", "Occ1750", "Occ2000")
@@ -218,11 +216,12 @@ names(Lynx.Coyote.df) <- Lynx.Coyote.names
 Bears.names <-  c( "Bears500", "Bears750", "Bears1000", "Bears1250", "Bears1500", "Bears1750", "Bears2000")
 Bears.df <-  c( Bears500, Bears750, Bears1000, Bears1250, Bears1500, Bears1750, Bears2000)
 names(Bears.df) <- Bears.names
+```
 
 
 
-
-### 3. Write and run function to fit models and model selection
+ 3. Write and run function to fit models and model selection
+```{r, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
 ## The models for 250 m will have a different number of variables because LowDecid is not represented at 250 m. Will have to run 250 m model separately and append it
 ## Also append a null model
 
@@ -267,23 +266,12 @@ class(L500)
 ## List of model names
 mod.names <- c("0", "250", "500", "750", "1000", "1250", "1500", "1750", "2000")
 
+```
 
-
+  Results for Lynx
+```{r, warning=FALSE, error=FALSE}
 Lynx.AIC <- ICtab(L0, L250, L500, L750 ,L1000, L1250,L1500,L1750,L2000, mnames = mod.names,type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 Lynx.AIC
-##      dAIC df weight
-# L1500  0.0 9  0.5533
-# L1750  2.6 9  0.1486
-# L1250  3.0 9  0.1218
-# L1000  3.6 9  0.0906
-# L750   5.3 9  0.0397
-# L2000  5.4 9  0.0377
-# L250   9.7 8  0.0042
-# L500   9.8 9  0.0041
-# L0    30.2 3  <0.001
-
-
-
 ### Plotting model weights (ratio of AIC of one model to AIC of top model)
 # Plotting model weights for each scale to determine best scale
 class(Lynx.AIC) <- "data.frame"
@@ -307,6 +295,4 @@ title(ylab = "AIC weight", cex.lab = 4)
 
 
 summary(L1500)
-
-### Transferred to Rmd doc of same name so figures and results can be saved
-
+```
