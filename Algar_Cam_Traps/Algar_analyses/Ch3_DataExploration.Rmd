@@ -1,0 +1,108 @@
+---
+title: "Ch3_DataExploration"
+author: "Erin Tattersall"
+date: "September 25, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2) #for plotting magic
+library(dplyr) #for data management convenience
+library(tidyr) #for data management (gather function)
+library(fmsb)
+```
+
+ Data Exploration
+   A protocol for checking input variables for outliers, collinearities, interactions, etc, as outlined by Zuur et al. (2010)
+
+# Habitat covariates (checking collinearities should be done prior to scale analysis)
+```{r, echo = FALSE}
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+
+Occ <- read.csv("Algar60_speciesOccurrence.csv")
+Bears <- read.csv("Algar60_speciesOccurrence_SUMMER.csv") ## Truncated for summer -- for Black bears
+Hab <- read.csv("Algar_HabitatData_8scales.csv")
+head(Occ)
+head(Hab)
+head(Bears)
+Occ$X <- NULL
+Bears$X <- NULL
+Hab$X <- NULL
+
+str(Hab)
+```
+
+## 1. Check outliers
+```{r}
+## Gather all habitat variables of same scale together (just do for 250 m for now)
+d250 <- gather(data = Hab, key = HabitatType, value = propCover, c(7,9,10,11,54))
+d250 <- d250[,57:58] ## Isolate scale of interest
+bp250 <- ggplot(data=d250, aes(x = HabitatType, y = propCover, fill = HabitatType)) + geom_boxplot() +theme_classic() + theme(legend.position = "none")
+bp250
+```
+  A few uncommonly high UpDecid, two low pOpen
+  
+## Collinearities
+```{r}
+## 250 m Pairwise plots (Black bear)
+pairs(Hab[, c(7,9,10,11,54)]) ## subset for columns of  250 m habitat variables (do each scale separately so its not crazy big)
+```
+```{r}
+## 1500 m Pairwise plot (Lynx)
+pairs(Hab[ , c(36,37,39,40,41,59)])
+
+```
+```{r}
+## 1750 m Pairwise plot (Coyote)
+pairs(Hab[ , c(42,43,45,46,47,60)])
+
+```
+### Variance Inflation Factors (VIF)
+  A VIF of 1 = safely discount correlation
+#### Black bears
+```{r, echo = FALSE}
+# req. response and predictors on same df
+
+Bears250 <- Bears
+
+
+Bears250$LowCon <- Hab$LowCon250[match(Bears250$Site, Hab$CamStation)]
+Bears250$Tamarack <- Hab$Tamarack250[match(Bears250$Site, Hab$CamStation)]
+Bears250$UpCon <- Hab$UpCon250[match(Bears250$Site, Hab$CamStation)]
+Bears250$UpDecid <- Hab$UpDecid250[match(Bears250$Site, Hab$CamStation)]
+Bears250$pOpen <- Hab$pOpen250[match(Bears250$Site, Hab$CamStation)]
+
+Occ1500 <- Occ
+
+
+Occ1500$LowCon <- Hab$LowCon1500[match(Occ1500$Site, Hab$CamStation)]
+Occ1500$LowDecid <- Hab$LowDecid1500[match(Occ1500$Site, Hab$CamStation)]
+Occ1500$Tamarack <- Hab$Tamarack1500[match(Occ1500$Site, Hab$CamStation)]
+Occ1500$UpCon <- Hab$UpCon1500[match(Occ1500$Site, Hab$CamStation)]
+Occ1500$UpDecid <- Hab$UpDecid1500[match(Occ1500$Site, Hab$CamStation)]
+Occ1500$pOpen <- Hab$pOpen1500[match(Occ1500$Site, Hab$CamStation)]
+
+Occ1750 <- Occ
+
+
+Occ1750$LowCon <- Hab$LowCon1750[match(Occ1750$Site, Hab$CamStation)]
+Occ1750$LowDecid <- Hab$LowDecid1750[match(Occ1750$Site, Hab$CamStation)]
+Occ1750$Tamarack <- Hab$Tamarack1750[match(Occ1750$Site, Hab$CamStation)]
+Occ1750$UpCon <- Hab$UpCon1750[match(Occ1750$Site, Hab$CamStation)]
+Occ1750$UpDecid <- Hab$UpDecid1750[match(Occ1750$Site, Hab$CamStation)]
+Occ1750$pOpen <- Hab$pOpen1750[match(Occ1750$Site, Hab$CamStation)]
+```
+```{r}
+lm.Bear <-lm(Blackbear~LowCon + Tamarack + UpCon + UpDecid + pOpen, data = Bears250) 
+VIF(lm.Bear)
+```
+#### Lynx
+```{r}
+lm.Lynx <-lm(Lynx~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen, data = Occ1500) 
+VIF(lm.Lynx)
+```
+#### Coyote
+```{r}
+lm.Coyote <-lm(Coyote~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen, data = Occ1750) 
+VIF(lm.Coyote)
+```
