@@ -1,0 +1,479 @@
+---
+title: "Ch3_Habitat_scaleanalysis.R"
+output: html_notebook
+---
+ Multivariate scale analysis to determine appropriate scales of measurement for each species
+ 
+```{r, message=FALSE, warning=FALSE}
+library(tidyr)		# for data formatting functions
+library(dplyr)
+library(glmmTMB)
+library(bbmle)
+
+```
+ 1. Create data frames for each scale (16 in total, since I need to duplicate separately for Bears)
+ 2. Create lists of data frames
+```{r, message=FALSE, warning=FALSE}
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+
+Occ <- read.csv("Algar60_speciesOccurrence.csv")
+Bears <- read.csv("Algar60_speciesOccurrence_SUMMER.csv")
+Hab <- read.csv("Algar_HabitatData_8scales.csv")
+
+
+#### Standardize and scale input variables FIRST
+## covscale function
+covscale <- function(covariate){
+  centre <- (covariate - mean(covariate, na.rm = TRUE)) # where covariate is a vector of numeric input values for one covariate
+  standardize <- centre/(2*sd(covariate, na.rm = TRUE)) # Divide centred value by 2 SD
+}
+
+Hab_scaled <- cbind.data.frame(Hab[ ,1:7], lapply(Hab[ , 8:62], covscale))
+
+
+
+#### 1. Create data frames for each scale (16 in total, since I need to duplicate separately for Bears) ####
+#a. 250 m 
+Occ250 <- Occ
+
+
+Occ250$LowCon <- Hab_scaled$LowCon250[match(Occ250$Site, Hab_scaled$CamStation)]
+Occ250$Tamarack <- Hab_scaled$Tamarack250[match(Occ250$Site, Hab_scaled$CamStation)]
+Occ250$UpCon <- Hab_scaled$UpCon250[match(Occ250$Site, Hab_scaled$CamStation)]
+Occ250$UpDecid <- Hab_scaled$UpDecid250[match(Occ250$Site, Hab_scaled$CamStation)]
+Occ250$pOpen <- Hab_scaled$pOpen250[match(Occ250$Site, Hab_scaled$CamStation)]
+
+
+#b. 500 m 
+Occ500 <- Occ
+
+
+Occ500$LowCon <- Hab_scaled$LowCon500[match(Occ500$Site, Hab_scaled$CamStation)]
+Occ500$LowDecid <- Hab_scaled$LowDecid500[match(Occ500$Site, Hab_scaled$CamStation)]
+Occ500$Tamarack <- Hab_scaled$Tamarack500[match(Occ500$Site, Hab_scaled$CamStation)]
+Occ500$UpCon <- Hab_scaled$UpCon500[match(Occ500$Site, Hab_scaled$CamStation)]
+Occ500$UpDecid <- Hab_scaled$UpDecid500[match(Occ500$Site, Hab_scaled$CamStation)]
+Occ500$pOpen <- Hab_scaled$pOpen500[match(Occ500$Site, Hab_scaled$CamStation)]
+
+#c. 750 m
+Occ750 <- Occ
+
+
+Occ750$LowCon <- Hab_scaled$LowCon750[match(Occ750$Site, Hab_scaled$CamStation)]
+Occ750$LowDecid <- Hab_scaled$LowDecid750[match(Occ750$Site, Hab_scaled$CamStation)]
+Occ750$Tamarack <- Hab_scaled$Tamarack750[match(Occ750$Site, Hab_scaled$CamStation)]
+Occ750$UpCon <- Hab_scaled$UpCon750[match(Occ750$Site, Hab_scaled$CamStation)]
+Occ750$UpDecid <- Hab_scaled$UpDecid750[match(Occ750$Site, Hab_scaled$CamStation)]
+Occ750$pOpen <- Hab_scaled$pOpen750[match(Occ750$Site, Hab_scaled$CamStation)]
+
+#d. 1000 m 
+Occ1000 <- Occ
+
+
+Occ1000$LowCon <- Hab_scaled$LowCon1000[match(Occ1000$Site, Hab_scaled$CamStation)]
+Occ1000$LowDecid <- Hab_scaled$LowDecid1000[match(Occ1000$Site, Hab_scaled$CamStation)]
+Occ1000$Tamarack <- Hab_scaled$Tamarack1000[match(Occ1000$Site, Hab_scaled$CamStation)]
+Occ1000$UpCon <- Hab_scaled$UpCon1000[match(Occ1000$Site, Hab_scaled$CamStation)]
+Occ1000$UpDecid <- Hab_scaled$UpDecid1000[match(Occ1000$Site, Hab_scaled$CamStation)]
+Occ1000$pOpen <- Hab_scaled$pOpen1000[match(Occ1000$Site, Hab_scaled$CamStation)]
+
+#e. 1250 m 
+Occ1250 <- Occ
+
+
+Occ1250$LowCon <- Hab_scaled$LowCon1250[match(Occ1250$Site, Hab_scaled$CamStation)]
+Occ1250$LowDecid <- Hab_scaled$LowDecid1250[match(Occ1250$Site, Hab_scaled$CamStation)]
+Occ1250$Tamarack <- Hab_scaled$Tamarack1250[match(Occ1250$Site, Hab_scaled$CamStation)]
+Occ1250$UpCon <- Hab_scaled$UpCon1250[match(Occ1250$Site, Hab_scaled$CamStation)]
+Occ1250$UpDecid <- Hab_scaled$UpDecid1250[match(Occ1250$Site, Hab_scaled$CamStation)]
+Occ1250$pOpen <- Hab_scaled$pOpen1250[match(Occ1250$Site, Hab_scaled$CamStation)]
+
+#f. 1500 m
+Occ1500 <- Occ
+
+
+Occ1500$LowCon <- Hab_scaled$LowCon1500[match(Occ1500$Site, Hab_scaled$CamStation)]
+Occ1500$LowDecid <- Hab_scaled$LowDecid1500[match(Occ1500$Site, Hab_scaled$CamStation)]
+Occ1500$Tamarack <- Hab_scaled$Tamarack1500[match(Occ1500$Site, Hab_scaled$CamStation)]
+Occ1500$UpCon <- Hab_scaled$UpCon1500[match(Occ1500$Site, Hab_scaled$CamStation)]
+Occ1500$UpDecid <- Hab_scaled$UpDecid1500[match(Occ1500$Site, Hab_scaled$CamStation)]
+Occ1500$pOpen <- Hab_scaled$pOpen1500[match(Occ1500$Site, Hab_scaled$CamStation)]
+
+#g. 1750 m 
+Occ1750 <- Occ
+
+
+Occ1750$LowCon <- Hab_scaled$LowCon1750[match(Occ1750$Site, Hab_scaled$CamStation)]
+Occ1750$LowDecid <- Hab_scaled$LowDecid1750[match(Occ1750$Site, Hab_scaled$CamStation)]
+Occ1750$Tamarack <- Hab_scaled$Tamarack1750[match(Occ1750$Site, Hab_scaled$CamStation)]
+Occ1750$UpCon <- Hab_scaled$UpCon1750[match(Occ1750$Site, Hab_scaled$CamStation)]
+Occ1750$UpDecid <- Hab_scaled$UpDecid1750[match(Occ1750$Site, Hab_scaled$CamStation)]
+Occ1750$pOpen <- Hab_scaled$pOpen1750[match(Occ1750$Site, Hab_scaled$CamStation)]
+
+#h. 2000 m 
+Occ2000 <- Occ
+
+
+Occ2000$LowCon <- Hab_scaled$LowCon2000[match(Occ2000$Site, Hab_scaled$CamStation)]
+Occ2000$LowDecid <- Hab_scaled$LowDecid2000[match(Occ2000$Site, Hab_scaled$CamStation)]
+Occ2000$Tamarack <- Hab_scaled$Tamarack2000[match(Occ2000$Site, Hab_scaled$CamStation)]
+Occ2000$UpCon <- Hab_scaled$UpCon2000[match(Occ2000$Site, Hab_scaled$CamStation)]
+Occ2000$UpDecid <- Hab_scaled$UpDecid2000[match(Occ2000$Site, Hab_scaled$CamStation)]
+Occ2000$pOpen <- Hab_scaled$pOpen2000[match(Occ2000$Site, Hab_scaled$CamStation)]
+
+#### Bears
+#a. 250 m 
+Bears250 <- Bears
+
+
+Bears250$LowCon <- Hab_scaled$LowCon250[match(Bears250$Site, Hab_scaled$CamStation)]
+Bears250$Tamarack <- Hab_scaled$Tamarack250[match(Bears250$Site, Hab_scaled$CamStation)]
+Bears250$UpCon <- Hab_scaled$UpCon250[match(Bears250$Site, Hab_scaled$CamStation)]
+Bears250$UpDecid <- Hab_scaled$UpDecid250[match(Bears250$Site, Hab_scaled$CamStation)]
+Bears250$pOpen <- Hab_scaled$pOpen250[match(Bears250$Site, Hab_scaled$CamStation)]
+
+#b. 500 m 
+Bears500 <- Bears
+
+
+Bears500$LowCon <- Hab_scaled$LowCon500[match(Bears500$Site, Hab_scaled$CamStation)]
+Bears500$LowDecid <- Hab_scaled$LowDecid500[match(Bears500$Site, Hab_scaled$CamStation)]
+Bears500$Tamarack <- Hab_scaled$Tamarack500[match(Bears500$Site, Hab_scaled$CamStation)]
+Bears500$UpCon <- Hab_scaled$UpCon500[match(Bears500$Site, Hab_scaled$CamStation)]
+Bears500$UpDecid <- Hab_scaled$UpDecid500[match(Bears500$Site, Hab_scaled$CamStation)]
+Bears500$pOpen <- Hab_scaled$pOpen500[match(Bears500$Site, Hab_scaled$CamStation)]
+
+#c. 750 m
+Bears750 <- Bears
+
+
+Bears750$LowCon <- Hab_scaled$LowCon750[match(Bears750$Site, Hab_scaled$CamStation)]
+Bears750$LowDecid <- Hab_scaled$LowDecid750[match(Bears750$Site, Hab_scaled$CamStation)]
+Bears750$Tamarack <- Hab_scaled$Tamarack750[match(Bears750$Site, Hab_scaled$CamStation)]
+Bears750$UpCon <- Hab_scaled$UpCon750[match(Bears750$Site, Hab_scaled$CamStation)]
+Bears750$UpDecid <- Hab_scaled$UpDecid750[match(Bears750$Site, Hab_scaled$CamStation)]
+Bears750$pOpen <- Hab_scaled$pOpen750[match(Bears750$Site, Hab_scaled$CamStation)]
+
+#d. 1000 m 
+Bears1000 <- Bears
+
+
+Bears1000$LowCon <- Hab_scaled$LowCon1000[match(Bears1000$Site, Hab_scaled$CamStation)]
+Bears1000$LowDecid <- Hab_scaled$LowDecid1000[match(Bears1000$Site, Hab_scaled$CamStation)]
+Bears1000$Tamarack <- Hab_scaled$Tamarack1000[match(Bears1000$Site, Hab_scaled$CamStation)]
+Bears1000$UpCon <- Hab_scaled$UpCon1000[match(Bears1000$Site, Hab_scaled$CamStation)]
+Bears1000$UpDecid <- Hab_scaled$UpDecid1000[match(Bears1000$Site, Hab_scaled$CamStation)]
+Bears1000$pOpen <- Hab_scaled$pOpen1000[match(Bears1000$Site, Hab_scaled$CamStation)]
+
+#e. 1250 m 
+Bears1250 <- Bears
+
+
+Bears1250$LowCon <- Hab_scaled$LowCon1250[match(Bears1250$Site, Hab_scaled$CamStation)]
+Bears1250$LowDecid <- Hab_scaled$LowDecid1250[match(Bears1250$Site, Hab_scaled$CamStation)]
+Bears1250$Tamarack <- Hab_scaled$Tamarack1250[match(Bears1250$Site, Hab_scaled$CamStation)]
+Bears1250$UpCon <- Hab_scaled$UpCon1250[match(Bears1250$Site, Hab_scaled$CamStation)]
+Bears1250$UpDecid <- Hab_scaled$UpDecid1250[match(Bears1250$Site, Hab_scaled$CamStation)]
+Bears1250$pOpen <- Hab_scaled$pOpen1250[match(Bears1250$Site, Hab_scaled$CamStation)]
+
+#f. 1500 m
+Bears1500 <- Bears
+
+
+Bears1500$LowCon <- Hab_scaled$LowCon1500[match(Bears1500$Site, Hab_scaled$CamStation)]
+Bears1500$LowDecid <- Hab_scaled$LowDecid1500[match(Bears1500$Site, Hab_scaled$CamStation)]
+Bears1500$Tamarack <- Hab_scaled$Tamarack1500[match(Bears1500$Site, Hab_scaled$CamStation)]
+Bears1500$UpCon <- Hab_scaled$UpCon1500[match(Bears1500$Site, Hab_scaled$CamStation)]
+Bears1500$UpDecid <- Hab_scaled$UpDecid1500[match(Bears1500$Site, Hab_scaled$CamStation)]
+Bears1500$pOpen <- Hab_scaled$pOpen1500[match(Bears1500$Site, Hab_scaled$CamStation)]
+
+#g. 1750 m 
+Bears1750 <- Bears
+
+
+Bears1750$LowCon <- Hab_scaled$LowCon1750[match(Bears1750$Site, Hab_scaled$CamStation)]
+Bears1750$LowDecid <- Hab_scaled$LowDecid1750[match(Bears1750$Site, Hab_scaled$CamStation)]
+Bears1750$Tamarack <- Hab_scaled$Tamarack1750[match(Bears1750$Site, Hab_scaled$CamStation)]
+Bears1750$UpCon <- Hab_scaled$UpCon1750[match(Bears1750$Site, Hab_scaled$CamStation)]
+Bears1750$UpDecid <- Hab_scaled$UpDecid1750[match(Bears1750$Site, Hab_scaled$CamStation)]
+Bears1750$pOpen <- Hab_scaled$pOpen1750[match(Bears1750$Site, Hab_scaled$CamStation)]
+
+#h. 2000 m 
+Bears2000 <- Bears
+
+
+Bears2000$LowCon <- Hab_scaled$LowCon2000[match(Bears2000$Site, Hab_scaled$CamStation)]
+Bears2000$LowDecid <- Hab_scaled$LowDecid2000[match(Bears2000$Site, Hab_scaled$CamStation)]
+Bears2000$Tamarack <- Hab_scaled$Tamarack2000[match(Bears2000$Site, Hab_scaled$CamStation)]
+Bears2000$UpCon <- Hab_scaled$UpCon2000[match(Bears2000$Site, Hab_scaled$CamStation)]
+Bears2000$UpDecid <- Hab_scaled$UpDecid2000[match(Bears2000$Site, Hab_scaled$CamStation)]
+Bears2000$pOpen <- Hab_scaled$pOpen2000[match(Bears2000$Site, Hab_scaled$CamStation)]
+
+#### 2. Create lists of data frames ####
+## 250 m models contain fewer variables; leave out of list
+Lynx.Coyote.names<- c("Occ500", "Occ750", "Occ1000", "Occ1250", "Occ1500", "Occ1750", "Occ2000")
+Lynx.Coyote.df <- list(Occ500,Occ750, Occ1000, Occ1250, Occ1500, Occ1750, Occ2000)
+names(Lynx.Coyote.df) <- Lynx.Coyote.names
+Bears.names <-  c( "Bears500", "Bears750", "Bears1000", "Bears1250", "Bears1500", "Bears1750", "Bears2000")
+Bears.df <-  list(Bears500, Bears750, Bears1000, Bears1250, Bears1500, Bears1750, Bears2000)
+names(Bears.df) <- Bears.names
+```
+
+
+
+ 3. Write and run function to fit models and model selection
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+## The models for 250 m will have a different number of variables because LowDecid is not represented at 250 m. Will have to run 250 m model separately and append it
+## Also append a null model
+
+##a. Lynx
+
+## NULL model
+L0 <- glmmTMB(Lynx~1 +(1|Site), data=Occ250, zi =~1, family = "binomial") ## Run with Occ250, though in practice shouldn't matter which dataset is used as none of the scaled variables are called in the NULL
+## 250 m model
+L250 <- glmmTMB(Lynx~LowCon + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=Occ250, zi =~1, family = "binomial")
+summary(L250)
+
+## Function to run 500 - 2000 m models
+Lynx.model <- function(x){
+  model.lynx <- glmmTMB(Lynx~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=x, zi =~1, family = "binomial")
+}
+
+
+## Run function through vector
+Sys.time()
+L.500.2000 <- lapply(Lynx.Coyote.df, Lynx.model)
+Sys.time()
+
+## Run time: 27 minutes, 58 seconds
+
+## Append Null and 250 m models to list
+class(L.500.2000)
+Lynx.models <- list(L0, L250, L.500.2000)
+class(Lynx.models)
+
+
+##AIC table of all Lynx models --> ICtab won't work for a List. Extract each element into its own object
+L500 <- L.500.2000[[1]]
+L750 <- L.500.2000[[2]]
+L1000 <- L.500.2000[[3]]
+L1250 <- L.500.2000[[4]]
+L1500 <- L.500.2000[[5]]
+L1750 <- L.500.2000[[6]]
+L2000 <- L.500.2000[[7]]
+
+class(L500)
+
+## List of model names
+mod.names <- c("0", "250", "500", "750", "1000", "1250", "1500", "1750", "2000")
+
+```
+
+  Results for Lynx
+```{r, warning=FALSE, error=FALSE}
+Lynx.AIC <- ICtab(L0, L250, L500, L750 ,L1000, L1250,L1500,L1750,L2000, mnames = mod.names,type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Lynx.AIC
+```
+```{r, warning=FALSE, error=FALSE}
+### Plotting model weights (ratio of AIC of one model to AIC of top model)
+# Plotting model weights for each scale to determine best scale
+class(Lynx.AIC) <- "data.frame"
+
+
+Lynx.AIC$scale <- c(1500,1750,1250,1000,750,2000,250,500,"NULL") #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Lynx.AIC %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+
+
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
+title("Lynx", line = -4, cex.main = 5)
+title(xlab = "Scale (m)", line = 4, cex.lab = 4)
+title(ylab = "AIC weight", cex.lab = 4)
+```
+```{r, warning=FALSE, error=FALSE}
+
+summary(L1500)
+```
+Significant variables: LowCon,Tamarack, UpCon, pOpen
+
+ Results for Coyote
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+## NULL model
+C0 <- glmmTMB(Coyote~1 +(1|Site), data=Occ250, zi =~1, family = "binomial") ## Run with Occ250, though in practice shouldn't matter which dataset is used as none of the scaled variables are called in the NULL
+summary(C0)
+## 250 m model
+Sys.time()
+C250 <- glmmTMB(Coyote~LowCon + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=Occ250, zi =~1, family = "binomial")
+Sys.time()
+summary(C250)
+
+## Function to run 500 - 2000 m models
+Coyote.model <- function(x){
+  model.coyote <- glmmTMB(Coyote~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=x, zi =~1, family = "binomial")
+}
+
+
+## Run function through vector
+Sys.time()
+C.500.2000 <- lapply(Lynx.Coyote.df, Coyote.model)
+Sys.time()
+
+## Run time: 27 minutes, 58 seconds
+
+## Append Null and 250 m models to list
+class(C.500.2000)
+Coyote.models <- list(C0, C250, C.500.2000)
+class(Coyote.models)
+
+
+##AIC table of all Coyote models --> ICtab won't work for a List. Extract each element into its own object
+C500 <- C.500.2000[[1]]
+C750 <- C.500.2000[[2]]
+C1000 <- C.500.2000[[3]]
+C1250 <- C.500.2000[[4]]
+C1500 <- C.500.2000[[5]]
+C1750 <- C.500.2000[[6]]
+C2000 <- C.500.2000[[7]]
+
+class(C500)
+
+## List of model names
+mod.names <- c("0", "250", "500", "750", "1000", "1250", "1500", "1750", "2000")
+
+```
+
+```{r, warning=FALSE, error=FALSE}
+Coyote.AIC <- ICtab(C0, C250, C500, C750 ,C1000, C1250,C1500,C1750,C2000, mnames = mod.names,type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Coyote.AIC
+```
+ 3 models failed to run properly: 250 m, 750 m, 1250 m. Examine individually (C250 did not have errors/warnings)
+```{r, }
+summary(C250)
+summary(C750)
+summary(C1250)
+```
+  No standard errors produced for the intercept (conditional or zi model) in any of the above models. No errors given. Continue plotting weights without them.
+```{r, warning=FALSE, error=FALSE}
+### Plotting model weights (ratio of AIC of one model to AIC of top model)
+# Plotting model weights for each scale to determine best scale
+class(Coyote.AIC) <- "data.frame"
+
+
+Coyote.AIC$scale <- c(1750,2000,1500,1000,500,"NULL",250,750,1250) #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Coyote.AIC %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+
+
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
+title("Coyote", line = -4, cex.main = 5)
+title(xlab = "Scale (m)", line = 4, cex.lab = 4)
+title(ylab = "AIC weight", cex.lab = 4)
+```
+1750 m and 2000 m are within 2 dAIC of each other, 1750 m has higher weight. Similar outcomes (pOpen is most influential variable) --> stick with 1750 m 
+```{r, warning=FALSE, error=FALSE}
+
+summary(C1750)
+```
+Results for BlackBear
+```{r, message=FALSE, error=FALSE, warning=FALSE}
+## NULL model
+B0 <- glmmTMB(Blackbear~1 +(1|Site), data=Bears250, zi =~1, family = "binomial") ## Run with Bears250, though in practice shouldn't matter which dataset is used as none of the scaled variables are called in the NULL
+summary(B0)
+## 250 m model
+Sys.time()
+B250 <- glmmTMB(Blackbear~LowCon + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=Bears250, zi =~1, family = "binomial")
+Sys.time()
+summary(B250)
+
+## Function to run 500 - 2000 m models
+Bear.model <- function(x){
+  model.bear <- glmmTMB(Blackbear~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=x, zi =~1, family = "binomial")
+}
+
+
+## Run function through vector
+Sys.time()
+B.500.2000 <- lapply(Bears.df, Bear.model)
+Sys.time()
+
+## Run time: 27 minutes, 58 seconds
+
+## Append Null and 250 m models to list
+class(B.500.2000)
+Bear.models <- list(B0, B250, B.500.2000)
+class(Bear.models)
+
+
+##AIC table of all Coyote models --> ICtab won't work for a List. Extract each element into its own object
+B500 <- B.500.2000[[1]]
+B750 <- B.500.2000[[2]]
+B1000 <- B.500.2000[[3]]
+B1250 <- B.500.2000[[4]]
+B1500 <- B.500.2000[[5]]
+B1750 <- B.500.2000[[6]]
+B2000 <- B.500.2000[[7]]
+
+class(B500)
+
+## List of model names
+mod.names <- c("0", "250", "500", "750", "1000", "1250", "1500", "1750", "2000")
+
+```
+```{r, warning=FALSE, error=FALSE}
+Bear.AIC <- ICtab(B0, B250, B500, B750 ,B1000, B1250,B1500,B1750,B2000, mnames = mod.names,type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Bear.AIC
+```
+```{r, warning=FALSE, error=FALSE}
+### Plotting model weights (ratio of AIC of one model to AIC of top model)
+# Plotting model weights for each scale to determine best scale
+class(Bear.AIC) <- "data.frame"
+
+
+Bear.AIC$scale <- c(250, 500, 0, 750, 2000, 1000, 1750, 1500, 1250) #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Bear.AIC %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+
+
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
+title("Black bear", line = -4, cex.main = 5)
+title(xlab = "Scale (m)", line = 4, cex.lab = 4)
+title(ylab = "AIC weight", cex.lab = 4)
+```
+```{r, warning=FALSE, error=FALSE}
+
+summary(B250)
+```
+Need to save significant variables to response variable data frames
+  Lynx        |  LowCon1500, UpCon1500, pOpen1500
+  Coyote      |  pOpen1750
+  Black bear  | pOpen250
+```{r}
+Occ$LowCon1500 <- Hab$LowCon1500[match(Occ$Site, Hab$CamStation)]
+Occ$UpCon1500 <- Hab$UpCon1500[match(Occ$Site, Hab$CamStation)]
+Occ$pOpen1500 <- Hab$pOpen1500[match(Occ$Site, Hab$CamStation)]
+
+Occ$pOpen1750 <- Hab$pOpen1750[match(Occ$Site, Hab$CamStation)]
+
+Bears$pOpen250 <- Hab$pOpen250[match(Bears$Site, Hab$CamStation)]
+
+write.csv(Occ, "Algar60_speciesOccurrence.csv")
+write.csv(Bears, "Algar60_speciesOccurrence_SUMMER.csv")
+```
