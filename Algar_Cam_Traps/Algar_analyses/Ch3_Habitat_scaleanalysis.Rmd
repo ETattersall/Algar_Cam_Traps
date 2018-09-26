@@ -2,7 +2,7 @@
 title: "Ch3_Habitat_scaleanalysis.R"
 output: html_notebook
 ---
- Multivariate scale analysis to determine appropriate scales of measurement for each species
+ Multivariate scale analysis of habitat variables to determine appropriate scales of measurement for each species
  
 ```{r, message=FALSE, warning=FALSE}
 library(tidyr)		# for data formatting functions
