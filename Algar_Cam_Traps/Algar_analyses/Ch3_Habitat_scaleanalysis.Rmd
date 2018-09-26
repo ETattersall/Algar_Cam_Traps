@@ -462,6 +462,7 @@ title(ylab = "AIC weight", cex.lab = 4)
 summary(B250)
 ```
 Need to save significant variables to response variable data frames
+
   Species     |    
 --------------|----------------------------------
   Lynx        |  LowCon1500, UpCon1500, pOpen1500
