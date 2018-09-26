@@ -468,6 +468,7 @@ Need to save significant variables to response variable data frames
   Lynx        |  LowCon1500, UpCon1500, pOpen1500
   Coyote      |  pOpen1750
   Black bear  | pOpen250
+  
 ```{r}
 Occ$LowCon1500 <- Hab$LowCon1500[match(Occ$Site, Hab$CamStation)]
 Occ$UpCon1500 <- Hab$UpCon1500[match(Occ$Site, Hab$CamStation)]
