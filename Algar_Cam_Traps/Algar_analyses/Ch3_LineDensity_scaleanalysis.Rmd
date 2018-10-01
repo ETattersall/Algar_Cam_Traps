@@ -243,3 +243,20 @@ title(ylab = "AIC weight", cex.lab = 4)
 
 summary(B1500)
 ```
+ Top scales are: 1500 m for Black bear and Lynx, 1750 m for Coyote. Add these to data frames for further analyses
+```{r}
+## Re-load data frames so they DO NOT have all LD scales attached
+Occ <- read.csv("Algar60_speciesOccurrence.csv")
+Bears <- read.csv("Algar60_speciesOccurrence_SUMMER.csv")
+
+Occ$LD1500 <- Lines$X1500m[match(Occ$Site, Lines$CamStation)]
+Occ$LD1750 <- Lines$X1750m[match(Occ$Site, Lines$CamStation)]
+
+Bears$LD1750 <- Lines$X1750m[match(Bears$Site, Lines$CamStation)]
+
+str(Occ)
+str(Bears)
+
+write.csv(Occ, "Algar60_speciesOccurrence.csv")
+write.csv(Bears, "Algar60_speciesOccurrence_SUMMER.csv")
+```
