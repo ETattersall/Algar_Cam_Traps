@@ -1,0 +1,245 @@
+---
+title: "Ch3_LineDens_scaleanalysis"
+output: html_notebook
+---
+
+Scale analysis for linear density by including Linear Density measured at 8 different scales in the core model already built for each species.
+
+1. Add line density to core model -- 8 candidate models per species.
+2. Model selection.
+3. Check collinearities (should be none)
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyr)		# for data formatting functions
+library(dplyr)
+library(glmmTMB)
+library(bbmle)
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data") ## NOTE: setwd() needs to be set in the R env., separately from the R notebook environment (copy past command into console)
+getwd()
+
+Occ <- read.csv("Algar60_speciesOccurrence.csv")
+Bears <- read.csv("Algar60_speciesOccurrence_SUMMER.csv")
+##Significant habitat variables didn't save for some reason
+Lines <- read.csv("AlgarStationLineDensity_8scales.csv")
+
+str(Occ)
+str(Bears)
+Occ$X.2 <- NULL
+Occ$X.1 <- NULL
+Occ$X <- NULL
+
+Bears$X.1 <- NULL
+Bears$X <- NULL
+
+## Attach LD data to Occ and Bears
+Occ$LD250 <- Lines$X250m[match(Occ$Site, Lines$CamStation)]
+Occ$LD500 <- Lines$X500m[match(Occ$Site, Lines$CamStation)]
+Occ$LD750 <- Lines$X750m[match(Occ$Site, Lines$CamStation)]
+Occ$LD1000 <- Lines$X1000m[match(Occ$Site, Lines$CamStation)]
+Occ$LD1250 <- Lines$X1250m[match(Occ$Site, Lines$CamStation)]
+Occ$LD1500 <- Lines$X1500m[match(Occ$Site, Lines$CamStation)]
+Occ$LD1750 <- Lines$X1750m[match(Occ$Site, Lines$CamStation)]
+Occ$LD2000 <- Lines$X2000m[match(Occ$Site, Lines$CamStation)]
+
+Bears$LD250 <- Lines$X250m[match(Bears$Site, Lines$CamStation)]
+Bears$LD500 <- Lines$X500m[match(Bears$Site, Lines$CamStation)]
+Bears$LD750 <- Lines$X750m[match(Bears$Site, Lines$CamStation)]
+Bears$LD1000 <- Lines$X1000m[match(Bears$Site, Lines$CamStation)]
+Bears$LD1250 <- Lines$X1250m[match(Bears$Site, Lines$CamStation)]
+Bears$LD1500 <- Lines$X1500m[match(Bears$Site, Lines$CamStation)]
+Bears$LD1750 <- Lines$X1750m[match(Bears$Site, Lines$CamStation)]
+Bears$LD2000 <- Lines$X2000m[match(Bears$Site, Lines$CamStation)]
+
+
+#### Standardize and scale input variables FIRST
+## covscale function
+covscale <- function(covariate){
+  centre <- (covariate - mean(covariate, na.rm = TRUE)) # where covariate is a vector of numeric input values for one covariate
+  standardize <- centre/(2*sd(covariate, na.rm = TRUE)) # Divide centred value by 2 SD
+}
+
+
+## Apply covscale to input variables in Occ and Bears
+Occ_sc <- cbind.data.frame(Occ[ ,1:17], lapply(Occ[ , 18:29], covscale))
+Bears_sc <- cbind.data.frame(Bears[ ,1:17], lapply(Bears[ , 18:26], covscale))
+```
+
+Lynx: core model is Lynx~LowCon + UpCon + pOpen at 1500m
+```{r,message=FALSE, error=FALSE, warning=FALSE}
+## Register core model for comparison, then 8 models that only change in the scale at which LD is measured
+Sys.time()
+L0 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+L250 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD250 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+L500 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+L750 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+L1000 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1000 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+L1250 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1250 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+L1500 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+L1750 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+L2000 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD2000 + (1|Site), data=Occ, zi =~1, family = "binomial")
+Sys.time()
+```
+  Results for Lynx
+```{r, warning=FALSE, error=FALSE}
+Lynx.AIC <- ICtab(L0, L250, L500, L750 ,L1000, L1250,L1500,L1750,L2000,type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Lynx.AIC
+summary(L1750)
+```
+```{r, warning=FALSE, error=FALSE}
+### Plotting model weights (ratio of AIC of one model to AIC of top model)
+# Plotting model weights for each scale to determine best scale
+class(Lynx.AIC) <- "data.frame"
+
+
+Lynx.AIC$scale <- c("1750", "2000", "1000", "1250", "1500", "750", "500","NULL", "250") #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Lynx.AIC %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+
+##Save Lynx.AIC table for future figures (move to Figures folder in Ch.3_Interactions)
+write.csv(tab, "LDscaleanalysis_Lynx.csv")
+
+
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
+title("Lynx", line = -4, cex.main = 5)
+title(xlab = "Scale (m)", line = 4, cex.lab = 4)
+title(ylab = "AIC weight", cex.lab = 4)
+### Having trouble running full plotting code in R Notebook. Copied to script
+
+```
+```{r, warning=FALSE, error=FALSE}
+
+summary(L1750)
+```
+
+Coyote: core model is Coyote ~ pOpen1750
+```{r, ,message=FALSE, error=FALSE, warning=FALSE}
+## Register core model for comparison, then 8 models that only change in the scale at which LD is measured
+Sys.time()
+C0 <- glmmTMB(Coyote~ pOpen1750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+C250 <- glmmTMB(Coyote~ pOpen1750 + LD250 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+C500 <- glmmTMB(Coyote~ pOpen1750 + LD500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+C750 <- glmmTMB(Coyote~pOpen1750 + LD750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+C1000 <- glmmTMB(Coyote~pOpen1750 + LD1000 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+C1250 <- glmmTMB(Coyote~pOpen1750 + LD1250 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+C1500 <- glmmTMB(Coyote~pOpen1750 + LD1500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+C1750 <- glmmTMB(Coyote~ pOpen1750 + LD1750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+
+C2000 <- glmmTMB(Coyote~ pOpen1750 + LD2000 + (1|Site), data=Occ, zi =~1, family = "binomial")
+Sys.time()
+```
+  Results for Coyote
+```{r, warning=FALSE, error=FALSE}
+Coyote.AIC <- ICtab(C0, C250, C500, C750 ,C1000, C1250,C1500,C1750,C2000, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Coyote.AIC
+```
+```{r, warning=FALSE, error=FALSE}
+### Plotting model weights (ratio of AIC of one model to AIC of top model)
+# Plotting model weights for each scale to determine best scale
+class(Coyote.AIC) <- "data.frame"
+
+
+Coyote.AIC$scale <- c("1500", "1750", "2000","1250", "1000", "750", "500", "NULL", "250") #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Coyote.AIC %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+
+##Save Coyote.AIC table for future figures (move to Figures folder in Ch.3_Interactions)
+write.csv(tab, "LDscaleanalysis_Coyote.csv")
+
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
+title("Coyote", line = -4, cex.main = 5)
+title(xlab = "Scale (m)", line = 4, cex.lab = 4)
+title(ylab = "AIC weight", cex.lab = 4)
+```
+```{r, warning=FALSE, error=FALSE}
+
+summary(C1500)
+```
+
+Blackbear: core model is Blackbear ~ pOpen250
+```{r, ,message=FALSE, error=FALSE, warning=FALSE}
+## Register core model for comparison, then 8 models that only change in the scale at which LD is measured
+Sys.time()
+B0 <- glmmTMB(Blackbear~ pOpen250 + (1|Site), data=Bears, zi =~1, family = "binomial")
+
+B250 <- glmmTMB(Blackbear~ pOpen250 + LD250 + (1|Site), data=Bears, zi =~1, family = "binomial")
+
+B500 <- glmmTMB(Blackbear~ pOpen250 + LD500 + (1|Site), data=Bears, zi =~1, family = "binomial")
+
+B750 <- glmmTMB(Blackbear~pOpen250 + LD750 + (1|Site), data=Bears, zi =~1, family = "binomial")
+
+B1000 <- glmmTMB(Blackbear~pOpen250 + LD1000 + (1|Site), data=Bears, zi =~1, family = "binomial")
+
+B1250 <- glmmTMB(Blackbear~pOpen250 + LD1250 + (1|Site), data=Bears, zi =~1, family = "binomial")
+
+B1500 <- glmmTMB(Blackbear~pOpen250 + LD1500 + (1|Site), data=Bears, zi =~1, family = "binomial")
+
+B1750 <- glmmTMB(Blackbear~ pOpen250 + LD1750 + (1|Site), data=Bears, zi =~1, family = "binomial")
+
+B2000 <- glmmTMB(Blackbear~ pOpen250 + LD2000 + (1|Site), data=Bears, zi =~1, family = "binomial")
+Sys.time()
+```
+  Results for Blackbear
+```{r, warning=FALSE, error=FALSE}
+Blackbear.AIC <- ICtab(B0, B250, B500, B750 ,B1000, B1250,B1500,B1750,B2000, type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
+Blackbear.AIC
+```
+```{r, warning=FALSE, error=FALSE}
+### Plotting model weights (ratio of AIC of one model to AIC of top model)
+# Plotting model weights for each scale to determine best scale
+class(Blackbear.AIC) <- "data.frame"
+
+
+Blackbear.AIC$scale <- c("1500", "1750", "2000", "1250", "1000", "750", "NULL", "250", "500") #ordered according to ICtab 
+
+#Remove NULL row
+tab <- Blackbear.AIC %>% filter(scale != "NULL")
+str(tab)
+#Convert to numeric
+tab$scale <- as.numeric(tab$scale)
+
+##Save Blackbear.AIC table for future figures (move to Figures folder in Ch.3_Interactions)
+write.csv(tab, "LDscaleanalysis_Blackbear.csv")
+
+
+op <- par(mar = c(6,6,5,3) + 0.2)
+plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
+lines(tab$scale[order(tab$scale)], tab$weight[order(tab$scale)], xlim=range(tab$scale), ylim=c(0,1))
+title("Blackbear", line = -4, cex.main = 5)
+title(xlab = "Scale (m)", line = 4, cex.lab = 4)
+title(ylab = "AIC weight", cex.lab = 4)
+```
+```{r, warning=FALSE, error=FALSE}
+
+summary(B1500)
+```
