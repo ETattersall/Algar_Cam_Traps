@@ -288,6 +288,9 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 
+##Save Lynx.AIC table for future figures (move to Figures folder in Ch.3_Interactions)
+write.csv(tab, "Habitatscaleanalysis_Lynx.csv")
+
 
 op <- par(mar = c(6,6,5,3) + 0.2)
 plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
@@ -373,6 +376,9 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 
+##Save Coyote.AIC table for future figures (move to Figures folder in Ch.3_Interactions)
+write.csv(tab, "Habitatscaleanalysis_Coyote.csv")
+
 
 op <- par(mar = c(6,6,5,3) + 0.2)
 plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
@@ -449,6 +455,9 @@ str(tab)
 #Convert to numeric
 tab$scale <- as.numeric(tab$scale)
 
+##Save Blackbear.AIC table for future figures (move to Figures folder in Ch.3_Interactions)
+write.csv(tab, "Habitatscaleanalysis_Blackbear.csv")
+
 
 op <- par(mar = c(6,6,5,3) + 0.2)
 plot(tab$scale, tab$weight, xlim=range(tab$scale), ylim=c(0,1), xlab = "", ylab = "", pch=20, cex = 4, cex.axis = 2, cex.lab = 4)
@@ -478,6 +487,12 @@ Occ$pOpen1750 <- Hab$pOpen1750[match(Occ$Site, Hab$CamStation)]
 
 Bears$pOpen250 <- Hab$pOpen250[match(Bears$Site, Hab$CamStation)]
 
+str(Occ)
+str(Bears)
+
+getwd()
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+getwd() ## Make sure Knit Directory is set to Current Working Directory
 write.csv(Occ, "Algar60_speciesOccurrence.csv")
 write.csv(Bears, "Algar60_speciesOccurrence_SUMMER.csv")
 ```
