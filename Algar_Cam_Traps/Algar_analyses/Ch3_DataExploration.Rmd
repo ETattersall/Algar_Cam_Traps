@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data"))
 library(ggplot2) #for plotting magic
 library(dplyr) #for data management convenience
 library(tidyr) #for data management (gather function)
@@ -15,21 +16,38 @@ library(fmsb)
  Data Exploration
    A protocol for checking input variables for outliers, collinearities, interactions, etc, as outlined by Zuur et al. (2010)
 
-# Habitat covariates (checking collinearities should be done prior to scale analysis)
+# Habitat covariates and linear density (checking collinearities of LD will be done after scale analysis to check if top LD scale is collinear with any variables in core models)
 ```{r, echo = FALSE}
-setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
 
 Occ <- read.csv("Algar60_speciesOccurrence.csv")
 Bears <- read.csv("Algar60_speciesOccurrence_SUMMER.csv") ## Truncated for summer -- for Black bears
-Hab <- read.csv("Algar_HabitatData_8scales.csv")
-head(Occ)
-head(Hab)
-head(Bears)
+
+## Significant variables for habitat and LD should already be added to Occ and Bears
+Hab <- read.csv("Algar_HabitatData_8scales.csv") 
+Lines <- read.csv("AlgarStationLineDensity_8scales.csv")
+str(Occ)
+str(Hab)
+str(Bears)
+str(Lines)
 Occ$X <- NULL
 Bears$X <- NULL
 Hab$X <- NULL
+Lines$X <- NULL
 
-str(Hab)
+
+### Snow Presence/Absence
+Snow <- read.csv("SnowPresence_daily.csv")
+str(Snow)
+## Remove OffLine Sites -- find first row number of Algar61
+head(which(Snow$Station=="Algar61")) ##3158
+
+Snow <- Snow[1:32157,]
+table(Snow$Station) ## Only includes Algar 1-60
+## Now snow is shorter than Occ --> missing inactive days?
+
+## Match Snow to Occ (should include NAs)
+
+
 ```
 
 ## 1. Check outliers
@@ -40,12 +58,12 @@ d250 <- d250[,57:58] ## Isolate scale of interest
 bp250 <- ggplot(data=d250, aes(x = HabitatType, y = propCover, fill = HabitatType)) + geom_boxplot() +theme_classic() + theme(legend.position = "none")
 bp250
 ```
-  A few uncommonly high UpDecid, two low pOpen
+  A few uncommonly high UpDecid, two low pOpen.
   
 ## Collinearities
 ```{r}
 ## 250 m Pairwise plots (Black bear)
-pairs(Hab[, c(7,9,10,11,54)]) ## subset for columns of  250 m habitat variables (do each scale separately so its not crazy big)
+pairs(Hab[, c(7,9,10,11,54)]) ## subset for columns of  1250 m habitat variables (do each scale separately so its not crazy big)
 ```
 ```{r}
 ## 1500 m Pairwise plot (Lynx)
