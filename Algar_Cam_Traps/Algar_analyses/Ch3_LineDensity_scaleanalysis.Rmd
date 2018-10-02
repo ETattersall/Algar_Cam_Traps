@@ -252,7 +252,8 @@ Bears <- read.csv("Algar60_speciesOccurrence_SUMMER.csv")
 Occ$LD1500 <- Lines$X1500m[match(Occ$Site, Lines$CamStation)]
 Occ$LD1750 <- Lines$X1750m[match(Occ$Site, Lines$CamStation)]
 
-Bears$LD1750 <- Lines$X1750m[match(Bears$Site, Lines$CamStation)]
+Bears$LD1500 <- Lines$X1500m[match(Bears$Site, Lines$CamStation)]
+
 
 str(Occ)
 str(Bears)
