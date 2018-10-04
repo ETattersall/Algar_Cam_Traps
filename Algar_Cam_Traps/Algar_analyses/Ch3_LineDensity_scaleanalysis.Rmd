@@ -72,23 +72,23 @@ Lynx: core model is Lynx~LowCon + UpCon + pOpen at 1500m
 ```{r,message=FALSE, error=FALSE, warning=FALSE}
 ## Register core model for comparison, then 8 models that only change in the scale at which LD is measured
 Sys.time()
-L0 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+L0 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + (1|Site), data=Occ, family = "binomial")
 
-L250 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD250 + (1|Site), data=Occ, zi =~1, family = "binomial")
+L250 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD250 + (1|Site), data=Occ, family = "binomial")
 
-L500 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+L500 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD500 + (1|Site), data=Occ, family = "binomial")
 
-L750 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+L750 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD750 + (1|Site), data=Occ, family = "binomial")
 
-L1000 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1000 + (1|Site), data=Occ, zi =~1, family = "binomial")
+L1000 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1000 + (1|Site), data=Occ, family = "binomial")
 
-L1250 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1250 + (1|Site), data=Occ, zi =~1, family = "binomial")
+L1250 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1250 + (1|Site), data=Occ, family = "binomial")
 
-L1500 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+L1500 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1500 + (1|Site), data=Occ, family = "binomial")
 
-L1750 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+L1750 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD1750 + (1|Site), data=Occ, family = "binomial")
 
-L2000 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD2000 + (1|Site), data=Occ, zi =~1, family = "binomial")
+L2000 <- glmmTMB(Lynx~LowCon1500 + UpCon1500 + pOpen1500 + LD2000 + (1|Site), data=Occ, family = "binomial")
 Sys.time()
 ```
   Results for Lynx
@@ -133,23 +133,23 @@ Coyote: core model is Coyote ~ pOpen1750
 ```{r, ,message=FALSE, error=FALSE, warning=FALSE}
 ## Register core model for comparison, then 8 models that only change in the scale at which LD is measured
 Sys.time()
-C0 <- glmmTMB(Coyote~ pOpen1750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+C0 <- glmmTMB(Coyote~ pOpen1750 + (1|Site), data=Occ, family = "binomial")
 
-C250 <- glmmTMB(Coyote~ pOpen1750 + LD250 + (1|Site), data=Occ, zi =~1, family = "binomial")
+C250 <- glmmTMB(Coyote~ pOpen1750 + LD250 + (1|Site), data=Occ, family = "binomial")
 
-C500 <- glmmTMB(Coyote~ pOpen1750 + LD500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+C500 <- glmmTMB(Coyote~ pOpen1750 + LD500 + (1|Site), data=Occ, family = "binomial")
 
-C750 <- glmmTMB(Coyote~pOpen1750 + LD750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+C750 <- glmmTMB(Coyote~pOpen1750 + LD750 + (1|Site), data=Occ, family = "binomial")
 
-C1000 <- glmmTMB(Coyote~pOpen1750 + LD1000 + (1|Site), data=Occ, zi =~1, family = "binomial")
+C1000 <- glmmTMB(Coyote~pOpen1750 + LD1000 + (1|Site), data=Occ, family = "binomial")
 
-C1250 <- glmmTMB(Coyote~pOpen1750 + LD1250 + (1|Site), data=Occ, zi =~1, family = "binomial")
+C1250 <- glmmTMB(Coyote~pOpen1750 + LD1250 + (1|Site), data=Occ, family = "binomial")
 
-C1500 <- glmmTMB(Coyote~pOpen1750 + LD1500 + (1|Site), data=Occ, zi =~1, family = "binomial")
+C1500 <- glmmTMB(Coyote~pOpen1750 + LD1500 + (1|Site), data=Occ, family = "binomial")
 
-C1750 <- glmmTMB(Coyote~ pOpen1750 + LD1750 + (1|Site), data=Occ, zi =~1, family = "binomial")
+C1750 <- glmmTMB(Coyote~ pOpen1750 + LD1750 + (1|Site), data=Occ, family = "binomial")
 
-C2000 <- glmmTMB(Coyote~ pOpen1750 + LD2000 + (1|Site), data=Occ, zi =~1, family = "binomial")
+C2000 <- glmmTMB(Coyote~ pOpen1750 + LD2000 + (1|Site), data=Occ, family = "binomial")
 Sys.time()
 ```
   Results for Coyote
@@ -190,23 +190,23 @@ Blackbear: core model is Blackbear ~ pOpen250
 ```{r, ,message=FALSE, error=FALSE, warning=FALSE}
 ## Register core model for comparison, then 8 models that only change in the scale at which LD is measured
 Sys.time()
-B0 <- glmmTMB(Blackbear~ pOpen250 + (1|Site), data=Bears, zi =~1, family = "binomial")
+B0 <- glmmTMB(Blackbear~ pOpen250 + (1|Site), data=Bears, family = "binomial")
 
-B250 <- glmmTMB(Blackbear~ pOpen250 + LD250 + (1|Site), data=Bears, zi =~1, family = "binomial")
+B250 <- glmmTMB(Blackbear~ pOpen250 + LD250 + (1|Site), data=Bears, family = "binomial")
 
-B500 <- glmmTMB(Blackbear~ pOpen250 + LD500 + (1|Site), data=Bears, zi =~1, family = "binomial")
+B500 <- glmmTMB(Blackbear~ pOpen250 + LD500 + (1|Site), data=Bears, family = "binomial")
 
-B750 <- glmmTMB(Blackbear~pOpen250 + LD750 + (1|Site), data=Bears, zi =~1, family = "binomial")
+B750 <- glmmTMB(Blackbear~pOpen250 + LD750 + (1|Site), data=Bears, family = "binomial")
 
-B1000 <- glmmTMB(Blackbear~pOpen250 + LD1000 + (1|Site), data=Bears, zi =~1, family = "binomial")
+B1000 <- glmmTMB(Blackbear~pOpen250 + LD1000 + (1|Site), data=Bears, family = "binomial")
 
-B1250 <- glmmTMB(Blackbear~pOpen250 + LD1250 + (1|Site), data=Bears, zi =~1, family = "binomial")
+B1250 <- glmmTMB(Blackbear~pOpen250 + LD1250 + (1|Site), data=Bears, family = "binomial")
 
-B1500 <- glmmTMB(Blackbear~pOpen250 + LD1500 + (1|Site), data=Bears, zi =~1, family = "binomial")
+B1500 <- glmmTMB(Blackbear~pOpen250 + LD1500 + (1|Site), data=Bears, family = "binomial")
 
-B1750 <- glmmTMB(Blackbear~ pOpen250 + LD1750 + (1|Site), data=Bears, zi =~1, family = "binomial")
+B1750 <- glmmTMB(Blackbear~ pOpen250 + LD1750 + (1|Site), data=Bears, family = "binomial")
 
-B2000 <- glmmTMB(Blackbear~ pOpen250 + LD2000 + (1|Site), data=Bears, zi =~1, family = "binomial")
+B2000 <- glmmTMB(Blackbear~ pOpen250 + LD2000 + (1|Site), data=Bears, family = "binomial")
 Sys.time()
 ```
   Results for Blackbear

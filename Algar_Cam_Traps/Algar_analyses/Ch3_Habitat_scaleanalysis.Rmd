@@ -229,14 +229,14 @@ names(Bears.df) <- Bears.names
 ##a. Lynx
 
 ## NULL model
-L0 <- glmmTMB(Lynx~1 +(1|Site), data=Occ250, zi =~1, family = "binomial") ## Run with Occ250, though in practice shouldn't matter which dataset is used as none of the scaled variables are called in the NULL
+L0 <- glmmTMB(Lynx~1 +(1|Site), data=Occ250,  family = "binomial") ## Run with Occ250, though in practice shouldn't matter which dataset is used as none of the scaled variables are called in the NULL
 ## 250 m model
-L250 <- glmmTMB(Lynx~LowCon + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=Occ250, zi =~1, family = "binomial")
+L250 <- glmmTMB(Lynx~LowCon + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=Occ250, family = "binomial")
 summary(L250)
 
 ## Function to run 500 - 2000 m models
 Lynx.model <- function(x){
-  model.lynx <- glmmTMB(Lynx~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=x, zi =~1, family = "binomial")
+  model.lynx <- glmmTMB(Lynx~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=x, family = "binomial")
 }
 
 
@@ -245,7 +245,6 @@ Sys.time()
 L.500.2000 <- lapply(Lynx.Coyote.df, Lynx.model)
 Sys.time()
 
-## Run time: 27 minutes, 58 seconds
 
 ## Append Null and 250 m models to list
 class(L.500.2000)
@@ -308,17 +307,17 @@ Significant variables: LowCon,Tamarack, UpCon, pOpen
  Results for Coyote
 ```{r, message=FALSE, error=FALSE, warning=FALSE}
 ## NULL model
-C0 <- glmmTMB(Coyote~1 +(1|Site), data=Occ250, zi =~1, family = "binomial") ## Run with Occ250, though in practice shouldn't matter which dataset is used as none of the scaled variables are called in the NULL
+C0 <- glmmTMB(Coyote~1 +(1|Site), data=Occ250, family = "binomial") ## Run with Occ250, though in practice shouldn't matter which dataset is used as none of the scaled variables are called in the NULL
 summary(C0)
 ## 250 m model
 Sys.time()
-C250 <- glmmTMB(Coyote~LowCon + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=Occ250, zi =~1, family = "binomial")
+C250 <- glmmTMB(Coyote~LowCon + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=Occ250, family = "binomial")
 Sys.time()
 summary(C250)
 
 ## Function to run 500 - 2000 m models
 Coyote.model <- function(x){
-  model.coyote <- glmmTMB(Coyote~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=x, zi =~1, family = "binomial")
+  model.coyote <- glmmTMB(Coyote~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=x, family = "binomial")
 }
 
 
@@ -327,7 +326,6 @@ Sys.time()
 C.500.2000 <- lapply(Lynx.Coyote.df, Coyote.model)
 Sys.time()
 
-## Run time: 27 minutes, 58 seconds
 
 ## Append Null and 250 m models to list
 class(C.500.2000)
@@ -355,13 +353,7 @@ mod.names <- c("0", "250", "500", "750", "1000", "1250", "1500", "1750", "2000")
 Coyote.AIC <- ICtab(C0, C250, C500, C750 ,C1000, C1250,C1500,C1750,C2000, mnames = mod.names,type= "AIC", weights = TRUE, delta = TRUE, logLik = TRUE, sort=TRUE)
 Coyote.AIC
 ```
- 3 models failed to run properly: 250 m, 750 m, 1250 m. Examine individually (C250 did not have errors/warnings)
-```{r, }
-summary(C250)
-summary(C750)
-summary(C1250)
-```
-  No standard errors produced for the intercept (conditional or zi model) in any of the above models. No errors given. Continue plotting weights without them.
+
 ```{r, warning=FALSE, error=FALSE}
 ### Plotting model weights (ratio of AIC of one model to AIC of top model)
 # Plotting model weights for each scale to determine best scale
@@ -399,13 +391,13 @@ B0 <- glmmTMB(Blackbear~1 +(1|Site), data=Bears250, zi =~1, family = "binomial")
 summary(B0)
 ## 250 m model
 Sys.time()
-B250 <- glmmTMB(Blackbear~LowCon + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=Bears250, zi =~1, family = "binomial")
+B250 <- glmmTMB(Blackbear~LowCon + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=Bears250, family = "binomial")
 Sys.time()
 summary(B250)
 
 ## Function to run 500 - 2000 m models
 Bear.model <- function(x){
-  model.bear <- glmmTMB(Blackbear~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=x, zi =~1, family = "binomial")
+  model.bear <- glmmTMB(Blackbear~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen + (1|Site), data=x, family = "binomial")
 }
 
 
@@ -414,7 +406,6 @@ Sys.time()
 B.500.2000 <- lapply(Bears.df, Bear.model)
 Sys.time()
 
-## Run time: 27 minutes, 58 seconds
 
 ## Append Null and 250 m models to list
 class(B.500.2000)
