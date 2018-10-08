@@ -15,112 +15,154 @@ library(fmsb)
 
  Data Exploration
    A protocol for checking input variables for outliers, collinearities, interactions, etc, as outlined by Zuur et al. (2010)
-
-# Habitat covariates and linear density (checking collinearities of LD will be done after scale analysis to check if top LD scale is collinear with any variables in core models)
+  Register all data --> occurrence data, habitat variables, snow and line density (all should now be included in occurrence csvs)
 ```{r, echo = FALSE}
 
 Occ <- read.csv("Algar60_speciesOccurrence.csv")
 Bears <- read.csv("Algar60_speciesOccurrence_SUMMER.csv") ## Truncated for summer -- for Black bears
 
-## Significant variables for habitat and LD should already be added to Occ and Bears
-Hab <- read.csv("Algar_HabitatData_8scales.csv") 
-Lines <- read.csv("AlgarStationLineDensity_8scales.csv")
+
 str(Occ)
-str(Hab)
+
 str(Bears)
-str(Lines)
+
 Occ$X <- NULL
 Bears$X <- NULL
-Hab$X <- NULL
-Lines$X <- NULL
 
+## Scaled input variables
+## covscale function
+covscale <- function(covariate){
+  centre <- (covariate - mean(covariate, na.rm = TRUE)) # where covariate is a vector of numeric input values for one covariate
+  standardize <- centre/(2*sd(covariate, na.rm = TRUE)) # Divide centred value by 2 SD
+}
 
-### Snow Presence/Absence
-Snow <- read.csv("SnowPresence_daily.csv")
-str(Snow)
-## Remove OffLine Sites -- find first row number of Algar61
-head(which(Snow$Station=="Algar61")) ##3158
+Occ_sc <- cbind.data.frame(Occ[ ,1:17], lapply(Occ[ , 18:23], covscale))
 
-Snow <- Snow[1:32157,]
-table(Snow$Station) ## Only includes Algar 1-60
-## Now snow is shorter than Occ --> missing inactive days?
-
-## Match Snow to Occ (should include NAs)
 
 
 ```
 
-## 1. Check outliers
+## 1. Check outliers and homogeneity of variance - X and Y data
+### Species occurrences (note that all will be heavily zero-inflated)
 ```{r}
-## Gather all habitat variables of same scale together (just do for 250 m for now)
-d250 <- gather(data = Hab, key = HabitatType, value = propCover, c(7,9,10,11,54))
-d250 <- d250[,57:58] ## Isolate scale of interest
-bp250 <- ggplot(data=d250, aes(x = HabitatType, y = propCover, fill = HabitatType)) + geom_boxplot() +theme_classic() + theme(legend.position = "none")
-bp250
+## Gather all species columns together (Occ)
+O1 <- gather(data = Occ, key = Species, value = Occurrence, 5:14)
+## Histograms --> don't show data well
+spocc <- ggplot(data= O1, aes(Occurrence)) + geom_histogram(color = ("black"), fill = "transparent", binwidth = 1) + facet_wrap(~Species) +theme_classic()
+spocc
 ```
-  A few uncommonly high UpDecid, two low pOpen.
+  Species Occurrence Tables
+```{r}
+colSums(Occ[,5:14])
+```
+  Zeroes-Count Table
+```{r}
+colSums(Occ[,5:14]==0)
+```
+  Occurrences by Site --> spatial maps would be better, but generally shows Occurrence spread across sites
+  Of the predators, Coyote occurrences are most discretized to certain sites.
+  Prey: Squirrel is most limiting --> lump Hare + Squirrel in 'Prey' category?
+```{r}
+sitocc <- ggplot(data = O1, aes(x = Site, y = Occurrence)) + geom_point() + facet_wrap(~Species) + geom_jitter()
+sitocc
+```
+### Habitat variables and Linear Densities
+```{r}
+## Gather all Habitat variables 
+H1 <- gather(data = Occ, key = Habitat, value = propCover, 18:21)
+
+bp <- ggplot(data=H1, aes(x = Habitat, y = propCover, fill = Habitat)) + geom_boxplot() +theme_classic() + theme(legend.position = "none")
+bp
+```
+  pOpen has a few outliers --> does standardizing/scaling help?
+```{r}
+## Gather all Habitat variables 
+H2 <- gather(data = Occ_sc, key = Habitat, value = propCover, 18:21)
+
+bp2 <- ggplot(data=H2, aes(x = Habitat, y = propCover, fill = Habitat)) + geom_boxplot() +theme_classic() + theme(legend.position = "none")
+bp2
+```
+  Standardizes means and variance (?) but outliers remain the same. Okay to leave (not outrageously outlying)
   
+#### Bears
+```{r}
+bearOpen <- ggplot(data = Bears, aes(x = "", y = pOpen250)) + geom_boxplot() + theme_classic()
+bearOpen
+```
+### Linear Densities (1500 and 1750 m)
+```{r}
+H1 <- gather(data = Occ, key = Scale, value = LineDens, 22:23)
+
+bp <- ggplot(data=H1, aes(x = Scale, y = LineDens, fill = Scale)) + geom_boxplot() +theme_classic() + theme(legend.position = "none")
+bp
+
+```
+### Snow Presence --> Roughly equal presences and absences, 431 NAs (allowable within 32 000 observations)
+```{r}
+S <- ggplot(data= Occ, aes(Snow)) + geom_histogram(binwidth=1, color = "black", fill = "transparent") + theme_classic()
+S
+```
+```{r}
+summary(Occ$Snow)
+```
+## Homogeneity of variance -- standardized and scaled predictors
+```{r}
+H2 <- gather(data = Occ_sc, key = Predictor, value = Value, 18:23)
+
+bp2 <- ggplot(data=H2, aes(x = Predictor, y = Value, fill = Predictor)) + geom_boxplot() +theme_classic()
+bp2
+
+```
+  Species occurrence predictors and Snow are binomial presence/absence, where the reference value is 0 (absence)
 ## Collinearities
+### Lynx
+  Possible collinearities between LowCon and UpCon
 ```{r}
-## 250 m Pairwise plots (Black bear)
-pairs(Hab[, c(7,9,10,11,54)]) ## subset for columns of  1250 m habitat variables (do each scale separately so its not crazy big)
+## Lynx predictors --> Wolf, Coyote, Hare, Squirrel, LowCon1500, UpCon1500, pOpen1500, Snow, LD1750
+pairs(Occ[ , c(9,11,12,14,18,19,20,23,24)])
 ```
+#### Variance Inflation Factors
+  All ~1, no significant collinearity
 ```{r}
-## 1500 m Pairwise plot (Lynx)
-pairs(Hab[ , c(36,37,39,40,41,59)])
-
+## Test an additive model of all possible input predictors for one hypothesis
+L1 <-lm(Lynx~Wolf + Snow + LD1750 + LowCon1500 + UpCon1500 + pOpen1500, data = Occ) 
+VIF(L1)
+L2 <- lm(Lynx~Coyote + Snow + LD1750 + LowCon1500 + UpCon1500 + pOpen1500, data = Occ)
+VIF(L2)
+L3 <- lm(Lynx~Hare + Squirrel + Snow + LD1750 + LowCon1500 + UpCon1500 + pOpen1500, data = Occ)
+VIF(L3)
 ```
+### Coyote
 ```{r}
-## 1750 m Pairwise plot (Coyote)
-pairs(Hab[ , c(42,43,45,46,47,60)])
+## Coyote predictors --> Wolf, Lynx, Deer, Hare, Squirrel, pOpen1750, Snow, LD1500
+pairs(Occ[ , c(5, 9,10, 11,12,14,21,22,24)])
 
 ```
-### Variance Inflation Factors (VIF)
-  A VIF of 1 = safely discount correlation
-#### Black bears
-```{r, echo = FALSE}
-# req. response and predictors on same df
 
-Bears250 <- Bears
-
-
-Bears250$LowCon <- Hab$LowCon250[match(Bears250$Site, Hab$CamStation)]
-Bears250$Tamarack <- Hab$Tamarack250[match(Bears250$Site, Hab$CamStation)]
-Bears250$UpCon <- Hab$UpCon250[match(Bears250$Site, Hab$CamStation)]
-Bears250$UpDecid <- Hab$UpDecid250[match(Bears250$Site, Hab$CamStation)]
-Bears250$pOpen <- Hab$pOpen250[match(Bears250$Site, Hab$CamStation)]
-
-Occ1500 <- Occ
-
-
-Occ1500$LowCon <- Hab$LowCon1500[match(Occ1500$Site, Hab$CamStation)]
-Occ1500$LowDecid <- Hab$LowDecid1500[match(Occ1500$Site, Hab$CamStation)]
-Occ1500$Tamarack <- Hab$Tamarack1500[match(Occ1500$Site, Hab$CamStation)]
-Occ1500$UpCon <- Hab$UpCon1500[match(Occ1500$Site, Hab$CamStation)]
-Occ1500$UpDecid <- Hab$UpDecid1500[match(Occ1500$Site, Hab$CamStation)]
-Occ1500$pOpen <- Hab$pOpen1500[match(Occ1500$Site, Hab$CamStation)]
-
-Occ1750 <- Occ
-
-
-Occ1750$LowCon <- Hab$LowCon1750[match(Occ1750$Site, Hab$CamStation)]
-Occ1750$LowDecid <- Hab$LowDecid1750[match(Occ1750$Site, Hab$CamStation)]
-Occ1750$Tamarack <- Hab$Tamarack1750[match(Occ1750$Site, Hab$CamStation)]
-Occ1750$UpCon <- Hab$UpCon1750[match(Occ1750$Site, Hab$CamStation)]
-Occ1750$UpDecid <- Hab$UpDecid1750[match(Occ1750$Site, Hab$CamStation)]
-Occ1750$pOpen <- Hab$pOpen1750[match(Occ1750$Site, Hab$CamStation)]
-```
+#### Variance Inflation Factors
+  All ~1, no significant collinearities
 ```{r}
-lm.Bear <-lm(Blackbear~LowCon + Tamarack + UpCon + UpDecid + pOpen, data = Bears250) 
-VIF(lm.Bear)
+## Test an additive model of all possible input predictors for one hypothesis
+C1 <-lm(Coyote~Wolf + Snow + LD1500 + pOpen1750, data = Occ) 
+VIF(C1)
+C2 <- lm(Coyote~Lynx + Snow + LD1500 + pOpen1750, data = Occ)
+VIF(C2)
+C3 <- lm(Coyote~ WTDeer + Hare + Squirrel + Snow + LD1500 + pOpen1750, data = Occ)
+VIF(C3)
 ```
-#### Lynx
+
+### Black bears
 ```{r}
-lm.Lynx <-lm(Lynx~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen, data = Occ1500) 
-VIF(lm.Lynx)
+## Black bear predictors --> Wolf, Deer, Moose, Caribou, pOpen250, Snow, LD1500
+pairs(Bears[, c(5,7,8,11,18,19)])
 ```
-#### Coyote
+#### Variance Inflation Factors
+  All ~1, no significant collinearities
 ```{r}
-lm.Coyote <-lm(Coyote~LowCon + LowDecid + Tamarack + UpCon + UpDecid + pOpen, data = Occ1750) 
-VIF(lm.Coyote)
+## Test an additive model of all possible input predictors for one hypothesis
+B1 <-lm(Blackbear~Wolf + LD1500 + pOpen250, data = Bears) 
+VIF(B1)
+B2 <-lm(Blackbear~WTDeer + Caribou + Moose + LD1500 + pOpen250, data = Bears)
+VIF(B2)
+
 ```
