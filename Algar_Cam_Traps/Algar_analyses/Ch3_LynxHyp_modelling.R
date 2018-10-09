@@ -113,11 +113,32 @@ library(DHARMa)
 ## Simulate residuals with DHARMa
 res <- simulateResiduals(L2.season)
 
+## residuals with glmmTMB
+res.glmmTMB <- residuals(L2.season)
+length(res.glmmTMB)
+
+plot(fitted(L2.season), resid(L2.season), xlab = "Fitted values", ylab = "Lynx*snow residuals")
+
 ## Qualtitative check with plots
 plot(res) ## qq plot shows deviation from expected, residuals vs. predicted with quantile lines --> ideally lines are straight, horizontal, and at 0.25, 0.5, 0.75. BUT deviations can be expected even in good models
 
+
+
 ## Plot against other predictors
-plotResiduals(Occ_sc$Coyote, res)
+plotResiduals(res$observedResponse, res$scaledResiduals, asFactor = T) ## differing length
+length(res$scaledResiduals)
+summary(res$observedResponse)
+length(Occ_sc$Coyote)
+
+## base R plot of residuals
+Occ_naomit <- na.omit(Occ_sc) ## now same number of observations as residuals
+plot(Occ_naomit$Coyote, res.glmmTMB, xlab = "Coyote occurrence", ylab = "Lynx*snow residuals") ## uneven spread of residuals -- should there be roughly equal points in all corners?
+plot(Occ_naomit$LowCon1500, res.glmmTMB,xlab = "Lowland coniferous forest", ylab = "Lynx*snow residuals") ## variance is not constant about mean of LowCon (0) --> fewer points < 0 (accurate for LowCon values)
+plot(Occ_naomit$UpCon1500, res.glmmTMB, xlab = "Upland coniferous forest", ylab = "Lynx*snow residuals")
+
+plot(Occ_naomit$pOpen1500, res.glmmTMB, xlab = "Open forest", ylab = "Lynx*snow residuals")
+
+plot(Occ_naomit$Snow, res.glmmTMB, xlab = "Snow presence", ylab = "Lynx*snow residuals")
 
 recalc.Occ <- recalculateResiduals(res, group = (Occ_sc$Site), aggregateBy = sum)
 
@@ -125,12 +146,8 @@ recalc.Occ <- recalculateResiduals(res, group = (Occ_sc$Site), aggregateBy = sum
 ## Formal goodness of fit tests
 #Kolmorgorov-Smirnov test for uniformity
 testUniformity(res) # D = 0.009 , max. absolute difference between sim. and observed, p-value = prob. of finding D if observed and sim. are same
-## p = 0.0109 --> observed and simulated are DIFFERENT
-testZeroInflation(res) #compares observed number of zeroes to zeros expected in simulations
-testTemporalAutocorrelation(res, time = Occ_sc$StudyDay) #Durbin-Watson test for uncorrelated residuals --> no patterns in residuals over time
-## requires unique time values --> need to be aggregated by group
+## p = 0.0109 --> observed and simulated are DIFFERENT --> Lynx model is no good
 
-testSpatialAutocorrelation(res) #Moran's I test for spatial autocorrelation, based on random coordinate values and tests for a null of no spatial autocorrelation
 
 
 ### testing temporal autocorrelation
@@ -147,9 +164,37 @@ testTemporalAutocorrelation(simulationOutput = simulationOutput, time = testData
 ### Plotting each site over time?
 library(ggplot2)
 
-time <- ggplot(data = Occ_sc, aes(x = StudyDay, y = Lynx, color = Site)) + geom_point()
-time
-## too much to show on one
+Occ_sc$Datep <- Occ$Datep[match(Occ_sc$StudyDay, Occ$StudyDay)]
+class(Occ_sc$Datep)
 
-Algar04 <- Occ_sc %>% filter(Site == "Algar04")
-ggplot(data = Algar04, aes(x = StudyDay, y = Lynx)) + geom_point()
+Occ_sc$Datep <- as.Date(Occ_sc$Datep)
+
+time <- ggplot(data = Occ_sc, aes(x = Datep, y = Lynx, color = Site)) + geom_point(size = 2) + scale_x_date()
+time
+## too much to show on one --> break into time chunks of 3 months to look for spatiotemporal correlation (determine temporal scales)
+time + scale_x_date(limits = as.Date(c("2015-11-01", "2016-02-01"))) ## Algar 16 - 3 days apart, Algar06 - 8 days apart
+time + scale_x_date(limits = as.Date(c("2016-02-01", "2016-05-01"))) ## Algar06 - 7 days apart
+time + scale_x_date(limits = as.Date(c("2016-12-01", "2017-03-01"))) ## Algar34 - 8 days apart
+time + scale_x_date(limits = as.Date(c("2017-09-01", "2017-12-01")))
+
+### 10 day occasion length will aggregate some of these occurrences, but difficult to tell if these are same individual or not...
+
+## Instead of increasing occasion length --> removing sites where both species are absent?
+## Need a species by station matrix
+spst <- read.csv("Station_data/detectionsByStation.csv")
+
+spst <- spst[which(spst$Canis.latrans > 0 & spst$Lynx.canadensis > 0 & spst$Ursus.americanus > 0 & spst$Canis.lupus > 0), ]
+
+Pres <- spst$X
+Pres
+
+Occ_pres <- Occ_sc %>% filter(Site == "Algar02" | Site == "Algar03"| Site == "Algar06" | Site == "Algar07" | Site == "Algar08" | Site == "Algar10" | Site == "Algar13" | Site == "Algar14" | Site == "Algar16" | Site == "Algar17" | Site == "Algar18" | Site == "Algar19" | Site == "Algar22" | Site == "Algar27" | Site == "Algar34" | Site == "Algar47")
+
+## 10 916 obs. vs 32 395 obs.
+
+## Test top Lynx model
+L <- glmmTMB(Lynx~ Coyote + LowCon1500 + UpCon1500 + pOpen1500 + (1|Site), data = Occ_pres, family = "binomial")
+
+summary(L.pres) ## Larger standard errors in interaction model, AND doesn't adequately sample whole Algar area (focused heavily on SE corner in upland area)
+
+
