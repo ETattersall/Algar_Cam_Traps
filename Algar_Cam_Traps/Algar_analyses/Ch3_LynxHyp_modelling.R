@@ -197,4 +197,10 @@ L <- glmmTMB(Lynx~ Coyote + LowCon1500 + UpCon1500 + pOpen1500 + (1|Site), data 
 
 summary(L.pres) ## Larger standard errors in interaction model, AND doesn't adequately sample whole Algar area (focused heavily on SE corner in upland area)
 
+time.Wolf <- ggplot(data = Occ_sc, aes(x = Datep, y = Wolf, color = Site)) + geom_point(size = 2) + scale_x_date()
+time.Wolf
+time.Wolf + scale_x_date(limits = as.Date(c("2015-11-05", "2016-01-01"))) ## Algar 06- 1 day apart
+time.Wolf + scale_x_date(limits = as.Date(c("2016-01-01", "2016-04-01")))
+time + scale_x_date(limits = as.Date(c("2017-09-01", "2017-12-01")))
+
 
