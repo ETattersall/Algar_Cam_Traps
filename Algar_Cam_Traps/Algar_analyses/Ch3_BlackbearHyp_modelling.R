@@ -192,5 +192,63 @@ SitesPA ## 37 --> will still be toooo many zeroes
 ## Tranformation of Estimate = 1/(1+exp(-Est.)) where Est. = estimate from model summary
 ## Transformation of upper and lower CI: 1/ (1+exp(-(Est. +/- SE))) --> applies to intercept only I think
 
+## Create subsettable table of estimates and std. error
+Mod.coef <- coef(summary(B1))[["cond"]]
+Mod.coef
+## confint function
 confint(B1) ## Confidence intervals on the linear predictor estimates, already taking into account adjustments for the intercept (I think)
 confint(B1)[1,1] ## subsettable
+Mod.coef[1,1] + 1.96*Mod.coef[1,2] ## same as confint
+Mod.coef[2,1] + 1.96*Mod.coef[2,2] ## same as confint; but should account for covariance with the intercept
+
+## Empty matrix for logit coefficients, backtransformed coefficients with upper and lower CIs (3 x 4)
+bt <- matrix(NA, nrow = 3, ncol = 4)
+colnames(bt) <- c("logit.coef", "bt.coef", "UCI", "LCI")
+rownames(bt) <- c("Intercept", "Wolf", "pOpen250")
+
+## Function for backtransforming 
+logit.bt <- function(x){
+  1/(1+exp(-x))
+}
+
+###Intercept (and wolf absent)
+bt[1,1] <- Mod.coef[1,1] #extracting logit coef
+bt[1,2] <- logit.bt(bt[1,1]) #backtransforming
+bt[1,3] <- logit.bt(bt[1,1] + 1.96*Mod.coef[1,2]) ## upper CI
+bt[1,4] <- logit.bt(bt[1,1] - 1.96*Mod.coef[1,2]) ## lower CI
+
+bt
+
+## In calculating CIs for predictors, variance = variance(U+v) --> given variance (SE^2) + variance of intercept
+# Var(U + V) = Var(U) + Var(V) + 2*Cov(U,V)
+
+
+vcov(B1)[["cond"]][1,2] ## subsetting vcov for a glmmTMB object --> extracting values of the conditional model
+
+## Loop for calculating wolf and pOpen backtransformed estimates
+for(i in 2:3){
+  bt[i,1] <- bt[1,1] + Mod.coef[i,1] ## adding est. of intercept and wolf/pOpen to obtain estimate
+  bt[i,2] <- logit.bt(bt[i,1]) ## adding mean effect to matrix
+  Var.U <- Mod.coef[1,2]^2 ## variance of the intercept
+  Var.V <- Mod.coef[i,2]^2 ## variance of predictor
+  Cov.UV <- vcov(B1)[["cond"]][1,i] ## covariance between intercept and predictor
+  bt[i,3] = logit.bt(bt[i,1] + 1.96*(sqrt(Var.U + Var.V+ 2*Cov.UV))) ## Calculating CIs and adding to matrix
+  bt[i,4] = logit.bt(bt[i,1] - 1.96*(sqrt(Var.U + Var.V+ 2*Cov.UV)))
+}
+
+bt
+## Back transformed effects are soooo tiny per day -- plot them?
+bt <- as.data.frame(bt)
+bt$Est <- c("Intercept", "Wolf", "OpenForest")
+colnames(bt) <- c("logit.coef", "Coefficient", "UCI", "LCI", "Predictor")
+est <- ggplot(data = bt, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= LCI, ymax = UCI, width = 0.3)) + scale_x_discrete(limits=c("OpenForest", "Wolf")) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + scale_y_continuous(limits = c(-0.05, 0.1)) + geom_hline(yintercept = 0)
+est
+
+### Non-backtransformed estimates
+Mod.coef <- as.data.frame(Mod.coef)
+Mod.coef$Predictor <- c("Intercept", "Wolf", "OpenForest")
+colnames(Mod.coef) <- c("Coefficient", "StdError", "zvalue", "Prob", "Predictor")
+Mod.coef
+
+est2 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - 1.96*StdError, ymax = Coefficient + 1.96*StdError, width = 0.3)) + scale_x_discrete(limits=c("OpenForest", "Wolf")) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0) + scale_y_continuous(limits = c(-2, 2))
+est2
