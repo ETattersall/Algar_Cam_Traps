@@ -31,6 +31,9 @@ B0 <- glmmTMB(Blackbear~pOpen250 + (1|Site), data = Bears_sc, family = "binomial
 ## B1 Competition/ Facilitation hypotheses
 B1 <- glmmTMB(Blackbear~Wolf + pOpen250 + (1|Site), data = Bears_sc, family = "binomial")
 
+## B1 with LD, additive
+B1.addLD1500 <- glmmTMB(Blackbear~Wolf + LD1500 + pOpen250 + (1|Site), data = Bears_sc, family = "binomial")
+
 ## B1 with LD
 B1.LD1500 <- glmmTMB(Blackbear~Wolf*LD1500 + pOpen250 + (1|Site), data = Bears_sc, family = "binomial")
 
@@ -45,13 +48,15 @@ B3 <- glmmTMB(Blackbear~WTDeer + Moose + Caribou + pOpen250 + (1|Site), data = B
 
 ## B3 with LD??
 
-Bear.tab <- ICtab(B0, B1, B1.LD1500, B2, B2.LD1500, B3,
+Bear.tab <- ICtab(B0, B1, B1.LD1500, B1.addLD1500, B2, B2.LD1500, B3,
                   type = "AIC",
                   weights = TRUE,
                   delta = TRUE,
                   logLik = TRUE)
 
-Bear.tab ## B1 and B1.LD1500 are equivalent, B1 is more parsimonious
+Bear.tab ## B1 and B1.LD1500 are equivalent, B1 is more parsimonious. Including additive model improves fit
+
+summary(B1.addLD1500)
 
 #### Model validation with dHARMa
 devtools::install_github(repo = "florianhartig/DHARMa", subdir = "DHARMa", 
@@ -63,6 +68,7 @@ library(DHARMa)
 ## Simulate residuals with DHARMa
 res <- simulateResiduals(B1)
 res.LD <- simulateResiduals(B1.LD1500)
+res.add <- simulateResiduals(B1.addLD1500)
 
 ## Qualtitative check with plots
 plot(res) ## qq plot shows deviation from expected, residuals vs. predicted with quantile lines --> ideally lines are straight, horizontal, and at 0.25, 0.5, 0.75. BUT deviations can be expected even in good models
@@ -75,16 +81,20 @@ recalc.Occ <- recalculateResiduals(res, group = (Occ_sc$Site), aggregateBy = sum
 ## residuals with glmmTMB
 res.glmmTMB <- residuals(B1)
 length(res.glmmTMB)
+res.addbear.TMB <- residuals(B1.addLD1500)
 
 plot(fitted(B1), resid(B1), xlab = "Fitted values", ylab = "Bear residuals")
+plot(fitted(B1.addLD1500), res.addbear.TMB, xlab = "Fitted values", ylab = "Bear residuals")
+
 
 ## base R plot of residuals
 Bears_naomit <- na.omit(Bears_sc) ## now same number of observations as residuals
-plot(Bears_naomit$Coyote, res.glmmTMB, xlab = "Wolf Occurrence", ylab = "Bear residuals") ## uneven spread of residuals -- should there be roughly equal points in all corners?
+plot(Bears_naomit$Wolf, res.addbear.TMB, xlab = "Wolf Occurrence", ylab = "Bear residuals") ## uneven spread of residuals -- should there be roughly equal points in all corners?
 
 
-plot(Bears_naomit$pOpen250, res.glmmTMB, xlab = "Open forest", ylab = "Bear residuals")
+plot(Bears_naomit$pOpen250, res.addbear.TMB, xlab = "Open forest", ylab = "Bear residuals")
 
+plot(Bears_naomit$LD1500, res.addbear.TMB, xlab = "Linear Density", ylab = "Bear residuals")
 
 recalc.Bears <- recalculateResiduals(res, group = (Bears_sc$Site), aggregateBy = sum)
 
@@ -95,6 +105,8 @@ testUniformity(res) # D = 0.0088 , max. absolute difference between sim. and obs
 ## p = 0.229 --> simulated values are not significantly different from observed
 
 testUniformity(res.LD)
+
+testUniformity(res.add)
 
 plot(fitted(B1.LD1500), resid(B1.LD1500), xlab = "Fitted values", ylab = "Bear*LD residuals")
 
@@ -112,6 +124,7 @@ time
 
 ## No clear temporal autocorrelation when plotted together. Spatial?
 
+## Graphing results: effect of wolf co-occurrence, open forest, and linear density
 
 ggplot(data = Bears, aes(x=Wolf, y = Blackbear)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family="binomial"), se=TRUE) + theme_classic()
@@ -136,8 +149,8 @@ Bearplot <- ggplot(Bears) + geom_point(aes(x = Wolf, y = jitter(Blackbear), colo
 
 Bearplot <- Bearplot + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) # remove background
 
-Bearplot <- Bearplot + xlab("Probability of Wolf Occurrence") + ylab("Probability of Black bear occurrence") + theme(axis.title.x = element_text(size = 14), axis.title.y = element_text(size = 14), axis.text = element_text(size = 12))
-Bearplot <- Bearplot + binomial_smooth(aes(x = Wolf, y = predict(B1, type = "response"), colour = Site), size = 1, se = FALSE)
+Bearplot <- Bearplot + xlab("Probability of Wolf Occurrence") + ylab("Probability of Black bear occurrence") + theme(axis.title.x = element_text(size = 14), axis.title.y = element_text(size = 14), axis.text = element_text(size = 12)) + theme(legend.position="none")
+Bearplot <- Bearplot + binomial_smooth(aes(x = Wolf, y = predict(B1.addLD1500, type = "response"), colour = Site), size = 1, se = FALSE)
 
 print(Bearplot)
 
@@ -149,7 +162,7 @@ Openplot <- ggplot(Bears) + geom_point(aes(x = pOpen250, y = Blackbear), size = 
 Openplot <- Openplot + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) # remove background
 
 Openplot <- Openplot + xlab("Proportion of Open Forest") + ylab("Probability of Black bear occurrence") + theme(axis.title.x = element_text(size = 14), axis.title.y = element_text(size = 14), axis.text = element_text(size = 12))
-Openplot <- Openplot + binomial_smooth(aes(x = pOpen250, y = predict(B1, type = "response")), size = 1.25, se = TRUE)
+Openplot <- Openplot + binomial_smooth(aes(x = pOpen250, y = predict(B1.addLD1500, type = "response")), size = 1.25, se = TRUE)
 
 print(Openplot)
 
@@ -161,7 +174,7 @@ LDplot <- ggplot(Bears) + geom_point(aes(x = LD1500, y = Blackbear), size = 2)
 LDplot <- LDplot + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) # remove background
 
 LDplot <- LDplot + xlab("Linear Density (km)") + ylab("Probability of Black bear occurrence") + theme(axis.title.x = element_text(size = 14), axis.title.y = element_text(size = 14), axis.text = element_text(size = 12))
-LDplot <- LDplot + binomial_smooth(aes(x = LD1500, y = predict(B1.LD1500, type = "response")), size = 1, se = TRUE)
+LDplot <- LDplot + binomial_smooth(aes(x = LD1500, y = predict(B1.addLD1500, type = "response")), size = 1, se = TRUE)
 
 print(LDplot)
 
@@ -237,18 +250,20 @@ for(i in 2:3){
 }
 
 bt
-## Back transformed effects are soooo tiny per day -- plot them?
+## Back transformed effects are soooo tiny per day -- plot them? (Plotted with Confidence intervals)
 bt <- as.data.frame(bt)
 bt$Est <- c("Intercept", "Wolf", "OpenForest")
 colnames(bt) <- c("logit.coef", "Coefficient", "UCI", "LCI", "Predictor")
 est <- ggplot(data = bt, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= LCI, ymax = UCI, width = 0.3)) + scale_x_discrete(limits=c("OpenForest", "Wolf")) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + scale_y_continuous(limits = c(-0.05, 0.1)) + geom_hline(yintercept = 0)
 est
 
-### Non-backtransformed estimates
+### Non-backtransformed estimates (plotting with SE)
+Mod.coef <- coef(summary(B1.addLD1500))[["cond"]]
 Mod.coef <- as.data.frame(Mod.coef)
-Mod.coef$Predictor <- c("Intercept", "Wolf", "OpenForest")
+Mod.coef$Predictor <- c("Intercept", "Wolf", "LinearDensity", "OpenForest")
 colnames(Mod.coef) <- c("Coefficient", "StdError", "zvalue", "Prob", "Predictor")
 Mod.coef
 
-est2 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - 1.96*StdError, ymax = Coefficient + 1.96*StdError, width = 0.3)) + scale_x_discrete(limits=c("OpenForest", "Wolf")) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0) + scale_y_continuous(limits = c(-2, 2))
+est2 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - StdError, ymax = Coefficient + StdError, width = 0.3)) + scale_x_discrete(limits=c("Wolf", "LinearDensity", "OpenForest")) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0) + scale_y_continuous(limits = c(-2, 2))
+est2 <- est2 + ggtitle("Black bear") + theme(plot.title = element_text(colour = "black", hjust = 0.5, vjust= -3, size = 24))
 est2

@@ -40,6 +40,9 @@ C2 <- glmmTMB(Coyote~Lynx + pOpen1750 + (1|Site), data = Occ_sc, family = "binom
 ## C2 with seasonal effects
 C2.season <- glmmTMB(Coyote~ Lynx*Snow + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
 
+## C2 seasonal additive
+C2.s.Add <- glmmTMB(Coyote~ Lynx + Snow + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
+
 ## C2 with LD
 C2.LD1500 <- glmmTMB(Coyote~ Lynx*LD1500 + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
 
@@ -55,14 +58,14 @@ C3.LD1500 <- glmmTMB(Coyote~ Prey*LD1500 + pOpen1750 + (1|Site), data = Occ_sc, 
 Sys.time()
 
 ### AIC model selection
-Coyote.tab <- ICtab(C0, C1, C1.season, C1.LD1500, C2, C2.season, C2.LD1500, C3, C3.season, C3.LD1500, 
+Coyote.tab <- ICtab(C0, C1, C1.season, C1.LD1500, C2, C2.season,C2.s.Add, C2.LD1500, C3, C3.season, C3.LD1500, 
                   type = "AIC",
                   weights = TRUE,
                   delta = TRUE,
                   logLik = TRUE)
 Coyote.tab
 
-summary(C2.season)
+summary(C2.s.Add)
 
 ### model validation
 
@@ -91,6 +94,19 @@ plot(Occ_naomit$Snow, res.glmmTMB, xlab = "Snow presence", ylab = "Coyote*snow r
 ## Formal goodness of fit tests
 #Kolmorgorov-Smirnov test for uniformity
 testUniformity(res) # D = 0.00897 , max. absolute difference between sim. and observed, p-value = prob. of finding D if observed and sim. are same. p = 0.0116
+
+## simulate residuals for additive model (take most parsimonious)
+res.add.Coyote <- simulateResiduals(C2.s.Add)
+testUniformity(res.add.Coyote)
+
+res.Coyote.TMB <- residuals(C2.s.Add)
+plot(fitted(C2.s.Add), res.Coyote.TMB, xlab = "Fitted values", ylab = "Coyote+snow residuals")
+
+plot(Occ_naomit$Coyote, res.Coyote.TMB, xlab = "Lynx occurrence", ylab = "Coyote+snow residuals")
+plot(Occ_naomit$pOpen1750, res.Coyote.TMB, xlab = "Open forest", ylab = "Coyote+snow residuals")
+
+plot(Occ_naomit$Snow, res.Coyote.TMB, xlab = "Snow presence", ylab = "Coyote+snow residuals")
+
 
 ### Plotting each site over time?
 library(ggplot2)
@@ -121,3 +137,55 @@ sum(Occ.no17$Coyote) #74 --> removes 57 detections
 ## How does top model compare?
 Cno17 <- glmmTMB(Coyote~ Lynx*Snow + pOpen1750 + (1|Site), data = Occ.no17, family = "binomial")
 summary(Cno17) ## Estimates are just as poor
+
+
+
+
+#### Graphing results: Coyote occurrence as a function of lynx and season
+## Gillian's code for plotting glmms on binomial data
+## Register function for binomial smoother
+binomial_smooth <- function(...) {
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), ...)
+  
+} # Use loess smoother for binomial distributions
+
+## Need dataframe with NAs omitted to compare Occ data to predicted data from model
+length(predict(L2.season)) ## 31964, vs 32395 in Occ
+## Occ_naomit, if not run before:
+Occ_naomit <- na.omit(Occ_sc) ## now same number of observations as residuals
+
+
+## 1. Coyotes
+pl1 <- ggplot(Occ_naomit) + geom_point(aes(x = Coyote , y = jitter(Lynx), colour = Site), size = 1)
+
+pl1 <- pl1 + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) # remove background
+
+pl1 <- pl1 + xlab("Probability of Coyote Occurrence") + ylab("Probability of Lynx Occurrence") + theme(axis.title.x = element_text(size = 14), axis.title.y = element_text(size = 14), axis.text = element_text(size = 12))
+pl1 <- pl1 + binomial_smooth(aes(x = Coyote, y = predict(C2.s.Add, type = "response"), colour = Site), size = 1, se = FALSE)
+
+print(pl1)
+
+
+### Plotting coefficients
+
+## Interaction model
+Mod.coef <- as.data.frame(coef(summary(C2.season))[["cond"]])
+Mod.coef
+Mod.coef$Predictor <- c("Intercept", "Lynx", "Snow", "OpenForest", "Lynx:Snow")
+colnames(Mod.coef) <- c("Coefficient", "StdError", "zvalue", "Prob", "Predictor")
+Mod.coef
+
+est2 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - StdError, ymax = Coefficient + StdError, width = 0.3)) + scale_x_discrete(limits=c("Lynx", "Snow", "OpenForest", "Lynx:Snow")) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0) + scale_y_continuous(limits = c(-20, 20))
+est2 <- est2 + ggtitle("Coyote") + theme(plot.title = element_text(colour = "black", hjust = 0.5, vjust= -3, size = 24))
+est2
+
+## Additive model
+Mod.coef <- as.data.frame(coef(summary(C2.s.Add))[["cond"]])
+Mod.coef
+Mod.coef$Predictor <- c("Intercept", "Lynx", "Snow", "OpenForest")
+colnames(Mod.coef) <- c("Coefficient", "StdError", "zvalue", "Prob", "Predictor")
+Mod.coef
+
+est3 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - StdError, ymax = Coefficient + StdError, width = 0.3)) + scale_x_discrete(limits=c("Lynx", "Snow", "OpenForest")) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0) + scale_y_continuous(limits = c(-3, 3))
+est3 <- est3 + ggtitle("Coyote") + theme(plot.title = element_text(colour = "black", hjust = 0.5, vjust= -3, size = 24))
+est3
