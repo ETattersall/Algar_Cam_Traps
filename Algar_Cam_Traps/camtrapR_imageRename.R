@@ -9,7 +9,7 @@ getwd()
 
 
 #Algar images from Nov 2017 are on external hard drive (path is E:/ or D:/... etc)
-setwd("E:/Algar_Apr-Nov2017")
+setwd("D:/CameraTrap_Images/Algar_Apr-Nov2018")
 #Check file paths, may need to include a subdirectory
 
 #Using ExifTool in R
@@ -48,7 +48,7 @@ rename.tab <- imageRename(inDir            = "Raw_images",
 #### Step 3: Copy images into new folder ####
 #outDir can't be same as inDir and can't be a subdirectory
 Algar.rename <- imageRename(inDir            =   "Raw_images",
-                            outDir           =   "Renamed_Images",
+                            outDir           =   "Renamed_Images1",
                             hasCameraFolders =  FALSE,
                             copyImages       =  TRUE,
                             writecsv         =  TRUE)

@@ -7,7 +7,7 @@
 library(camtrapR)
 
 ## Set WD
-setwd("D:/Algar_Nov2017-Apr2018")
+setwd("D:/CameraTrap_Images/Algar_Apr-Nov2018")
 
 ## List of station names
 Stations <- paste("Algar", formatC(1:73, width=2, flag="0"), sep="") #Formats numbers as fixed width of 2
@@ -20,7 +20,7 @@ createStationFolders(inDir = "Raw_Images",
 
 
 
-###### Oct 2016 practice code ####
+###### Oct 2016 practice code: does not need to be run ####
 ##Default working directory ##
 
 OriginalWD<-"C:/Users/ETattersall/Documents"
