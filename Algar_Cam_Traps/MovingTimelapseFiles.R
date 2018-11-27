@@ -6,10 +6,10 @@
 
 library(camtrapR)
 
-setwd("D:/CameraTrap_Images/Algar_Apr-Nov2018")
+setwd("D:/CameraTrap_Images/Richardson_Apr-Nov2018")
 
 # List all Images in directory
-Images <- list.files('Renamed_Images', recursive = TRUE)
+Images <- list.files('Renamed_Images', recursive = TRUE) #make sure the renaming table (if one was created) has been deleted or moved
 class(Images)
 head(Images)
 
@@ -52,7 +52,7 @@ summary(list.files(getwd(), recursive = TRUE)) #1295, same as test. All files ke
 
 ### Move Timelapse files for entire deployment
 # Set working directory to Renamed_Images
-setwd("D:/CameraTrap_Images/Algar_Apr-Nov2018/Renamed_Images")
+setwd("D:/CameraTrap_Images/Richardson_Apr-Nov2018/Renamed_Images")
 
 #create a Timelapse folder
 createStationFolders(inDir = getwd(),
@@ -62,23 +62,14 @@ createStationFolders(inDir = getwd(),
 
 ## Move files with above function
 
-file.move(from = Timelapse, to = 'Timelapse') #does not retain subdirectories
+file.move(from = Timelapse, to = 'Timelapse') #does not retain subdirectories --> Timelapse files from all stations in same folder
 
 summary(list.files('Timelapse'))
 summary(list.files(getwd(), recursive = TRUE)) ## All files moved
 
 
-
-
-
-
-
-
-
-
-
 #### But Timelapse folder does not have station subfolders
-setwd("D:/CameraTrap_Images/Algar_Apr-Nov2018/Renamed_Images/Timelapse")
+setwd("D:/CameraTrap_Images/Richardson_Apr-Nov2018/Renamed_Images/Timelapse")
 
 F1 <- list.files() ## List of Timelapse images without the Station subdirectories attached
 
@@ -87,7 +78,7 @@ head(F1)
 
 ### Create station folders within Timelapse to move images into
 ## List of station names
-Stations <- paste("Algar", formatC(1:73, width=2, flag="0"), sep="") #Formats numbers as fixed width of 2
+Stations <- paste("RICH", formatC(1:30, width=2, flag="0"), sep="") #Formats numbers as fixed width of 2
 
 ## Create station folders
 createStationFolders(inDir = getwd(), 
