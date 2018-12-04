@@ -267,3 +267,25 @@ Mod.coef
 est2 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - StdError, ymax = Coefficient + StdError, width = 0.3)) + scale_x_discrete(limits=c("Wolf", "LinearDensity", "OpenForest")) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0) + scale_y_continuous(limits = c(-2, 2))
 est2 <- est2 + ggtitle("Black bear") + theme(plot.title = element_text(colour = "black", hjust = 0.5, vjust= -3, size = 24))
 est2
+
+###### Plotting coefficients from habitat modelling ###
+## Black bear
+
+    
+## (Intercept)  -4.4153     0.1583
+## LowCon        1.5835     1.0741 
+## Tamarack      1.3446     0.9467     
+## UpCon         1.0004     0.5508   
+## UpDecid       0.7894     0.4465  
+## pOpen        -1.0884     0.3320 
+
+
+
+Predictor <- c( "LowCon","Tamarack","UpCon", "UpDecid",  "OpenForest")
+Coefficient <- c(1.5835, 1.3446, 1.0004, 0.7894,-1.0884)
+StdError <- c(1.0741,0.9467, 0.5508,0.4465, 0.3320)
+Mod.coef <- cbind.data.frame(Predictor, Coefficient, StdError)
+
+est3 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - StdError, ymax = Coefficient + StdError, width = 0.3)) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0)
+est3 <- est3 + ggtitle("Black bear") + theme(plot.title = element_text(colour = "black", hjust = 0.5, vjust= -3, size = 24))
+est3
