@@ -17,8 +17,15 @@ covscale <- function(covariate){
   standardize <- centre/(2*sd(covariate, na.rm = TRUE)) # Divide centred value by 2 SD
 }
 
+
 Occ_sc <- cbind.data.frame(Occ[ ,1:17], lapply(Occ[ , 18:23], covscale)) ## Exclude Snow from standardizing --> Essentially comparing summer (Snow == 0) to Winter (Snow == 1), so no need for scaling
 Occ_sc$Snow <- Occ$Snow[match(Occ$Site_SD, Occ_sc$Site_SD)]
+
+## Lumping Hare + Squirrel into 'Prey' category
+Occ_sc$Prey.Coyotes <- rowSums(Occ_sc[ , c("Hare", "Squirrel", "WTDeer")], na.rm=T)
+table(Occ_sc$Prey.Coyotes) ## 241 single occurrences now, 2  occurrences of both in one day --> convert to ones
+Occ_sc$Prey.Coyotes <- ifelse(Occ_sc$Prey.Coyotes > 0 , 1, 0)
+table(Occ_sc$Prey.Coyotes) ## 739 occurrences
 
 #Core model
 Sys.time()
@@ -29,6 +36,8 @@ C1 <- glmmTMB(Coyote~ Wolf + pOpen1750 + (1|Site), data = Occ_sc, family = "bino
 
 ## C1 with seasonal effects
 C1.season <- glmmTMB(Coyote~ Wolf*Snow + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
+
+C1.s.Add <- glmmTMB(Coyote~ Wolf + Snow + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
 
 
 ## C1 with LD
@@ -43,22 +52,25 @@ C2.season <- glmmTMB(Coyote~ Lynx*Snow + pOpen1750 + (1|Site), data = Occ_sc, fa
 ## C2 seasonal additive
 C2.s.Add <- glmmTMB(Coyote~ Lynx + Snow + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
 
+
 ## C2 with LD
 C2.LD1500 <- glmmTMB(Coyote~ Lynx*LD1500 + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
 
 ## C3 = Prey resources
-C3 <- glmmTMB(Coyote~ Prey + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
+C3 <- glmmTMB(Coyote~ Prey.Coyotes + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
 
 ## C3 with seasonal effects
-C3.season <- glmmTMB(Coyote~ Prey*Snow + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
+C3.season <- glmmTMB(Coyote~ Prey.Coyotes*Snow + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
+
+C3.s.Add <- glmmTMB(Coyote~ Prey.Coyotes + Snow + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
 
 ## C3 with LD
-C3.LD1500 <- glmmTMB(Coyote~ Prey*LD1500 + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
+C3.LD1500 <- glmmTMB(Coyote~ Prey.Coyotes*LD1500 + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
 
 Sys.time()
 
 ### AIC model selection
-Coyote.tab <- ICtab(C0, C1, C1.season, C1.LD1500, C2, C2.season,C2.s.Add, C2.LD1500, C3, C3.season, C3.LD1500, 
+Coyote.tab <- ICtab(C0, C1, C1.season, C1.s.Add, C1.LD1500, C2, C2.season,C2.s.Add, C2.LD1500, C3, C3.season, C3.s.Add, C3.LD1500, 
                   type = "AIC",
                   weights = TRUE,
                   delta = TRUE,
@@ -66,6 +78,12 @@ Coyote.tab <- ICtab(C0, C1, C1.season, C1.LD1500, C2, C2.season,C2.s.Add, C2.LD1
 Coyote.tab
 
 summary(C2.s.Add)
+summary(C1.s.Add)
+summary(C3.s.Add)
+summary(C2.LD1500)
+summary(C2.Snow.LD)
+
+
 
 ### model validation
 
@@ -187,5 +205,68 @@ colnames(Mod.coef) <- c("Coefficient", "StdError", "zvalue", "Prob", "Predictor"
 Mod.coef
 
 est3 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - StdError, ymax = Coefficient + StdError, width = 0.3)) + scale_x_discrete(limits=c("Lynx", "Snow", "OpenForest")) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0) + scale_y_continuous(limits = c(-3, 3))
+est3 <- est3 + ggtitle("Coyote") + theme(plot.title = element_text(colour = "black", hjust = 0.5, vjust= -3, size = 24))
+est3
+
+
+### Exploring a fully additive model including both Snow and LD 
+## With both additional covariates
+C2.Snow.LD <- glmmTMB(Coyote~ Lynx + Snow + LD1500 + pOpen1750 + (1|Site), data = Occ_sc, family = "binomial")
+
+Coyote.tab <- ICtab(C0, C1, C1.season, C1.LD1500, C2, C2.season,C2.s.Add, C2.Snow.LD, C2.LD1500, C3, C3.season, C3.LD1500, 
+                    type = "AIC",
+                    weights = TRUE,
+                    delta = TRUE,
+                    logLik = TRUE)
+Coyote.tab
+
+## Increases model fit relative to other two dramatically
+summary(C2.Snow.LD)
+
+
+
+## residuals with glmmTMB
+res.glmmTMB <- residuals(C2.Snow.LD)
+length(res.glmmTMB)
+
+plot(fitted(C2.Snow.LD), resid(C2.Snow.LD), xlab = "Fitted values", ylab = "Coyote + snow + LD residuals")
+
+
+
+## base R plot of residuals
+Occ_naomit <- na.omit(Occ_sc) ## now same number of observations as residuals
+plot(Occ_naomit$Coyote, res.glmmTMB, xlab = "Lynx occurrence", ylab = "Coyote + snow + LD residuals")
+plot(Occ_naomit$pOpen1750, res.glmmTMB, xlab = "Open forest", ylab = "Coyote + snow + LD residuals")
+
+plot(Occ_naomit$Snow, res.glmmTMB, xlab = "Snow presence", ylab = "Coyote + snow + LD residuals")
+
+
+
+
+## Simulate residuals with DHARMa
+library(DHARMa)
+res <- simulateResiduals(C2.Snow.LD)
+
+## Formal goodness of fit tests
+#Kolmorgorov-Smirnov test for uniformity
+testUniformity(res) ## deviation still significant
+
+###### Plotting coefficients from habitat modelling ###
+## Coyote
+   
+## (Intercept)  -7.6494     0.3716
+## LowCon        2.5966     2.8286    
+## LowDecid     -0.8923     0.8569    
+## Tamarack      0.7349     2.3687    
+## UpCon        -0.8228     1.2509   
+## UpDecid      -1.4327     1.1690    
+## pOpen        -4.5798     1.0188
+
+Predictor <- c( "LowCon", "LowDecid","Tamarack","UpCon", "UpDecid",  "OpenForest")
+Coefficient <- c(2.5966, -0.8923, 0.7349, -0.8228, -1.4327, -4.5798)
+StdError <- c(2.8286, 0.8569, 2.3687, 1.2509, 1.1690, 1.0188)
+Mod.coef <- cbind.data.frame(Predictor, Coefficient, StdError)
+
+est3 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - StdError, ymax = Coefficient + StdError, width = 0.3)) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0)
 est3 <- est3 + ggtitle("Coyote") + theme(plot.title = element_text(colour = "black", hjust = 0.5, vjust= -3, size = 24))
 est3

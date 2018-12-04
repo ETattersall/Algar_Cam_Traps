@@ -89,7 +89,7 @@ L2.s.Add <- glmmTMB(Lynx~ Coyote + Snow + LowCon1500 + UpCon1500 + pOpen1500 + (
 
 
 ### AIC model selection
-Lynx.tab <- ICtab(L0, L1, L1.season, L1.LD1750, L2, L2.season, L2.LD1750, L3, L3.season, L3.LD1750, L4, L4.season, L4.LD1750,
+Lynx.tab <- ICtab(L0, L1, L1.season, L1.LD1750, L2, L2.season, L1.s.Add, L2.s.Add, L2.LD1750, L3, L3.season, L3.LD1750, L4, L4.season, L4.LD1750,
                   type = "AIC",
                   weights = TRUE,
                   delta = TRUE,
@@ -99,6 +99,7 @@ Lynx.tab
 
 summary(L2.season)
 summary(L2.s.Add)
+summary(L1.s.Add)
 
 ### Hare + Squirrel models did not converge --> 1) Try with JUST hare 2) Lump into Prey species
 L3.Hare <- glmmTMB(Lynx~ Hare + Snow + LowCon1500 + UpCon1500 + pOpen1500 + (1|Site), data = Occ_sc, zi = ~1, family = "binomial")
@@ -287,4 +288,28 @@ est3 <- est3 + ggtitle("Lynx") + theme(plot.title = element_text(colour = "black
 est3
 
 
+## Plotting wolves over time (for comparison)
+time <- ggplot(data = Occ_sc, aes(x = Datep, y = Wolf, color = Site)) + geom_point(size = 2) + scale_x_date()
+time
+class(Occ_sc$Datep)
 
+###### Plotting coefficients from habitat modelling ###
+## Lynx
+## Taken from top model output
+#             Estimate Std. Error z value Pr(>|z|)    
+# (Intercept)  -6.9600     0.2560 -27.186  < 2e-16 ***
+# LowCon        6.3169     1.9933   3.169  0.00153 ** 
+# LowDecid     -0.8590     0.7579  -1.133  0.25702    
+# Tamarack      3.0419     1.6934   1.796  0.07244 .  
+# UpCon         1.9109     0.8424   2.269  0.02329 *  
+# UpDecid       0.8449     0.7730   1.093  0.27442    
+# pOpen        -2.8134     0.5986  -4.700  2.6e-06 ***
+
+Predictor <- c( "LowCon", "LowDecid","Tamarack","UpCon", "UpDecid",  "OpenForest")
+Coefficient <- c(6.3169, -0.8590, 3.0419, 1.9109, 0.8449, -2.8134)
+StdError <- c(1.9933, 0.7579, 1.6934, 0.8424, 0.7730, 0.5986)
+Mod.coef <- cbind.data.frame(Predictor, Coefficient, StdError)
+
+est3 <- ggplot(data = Mod.coef, aes(x = Predictor, y = Coefficient)) + geom_point(size = 5, stroke = 0, shape = 16) + geom_errorbar(aes(ymin= Coefficient - StdError, ymax = Coefficient + StdError, width = 0.3)) + theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1, colour = "black", size = 20)) + theme(axis.title.x = element_text(angle = 0, colour = "black", size = 22)) + theme(axis.title.y = element_text(angle = 90, colour = "black", size = 22)) + theme(strip.text = element_text(colour = "black", size = 22)) + geom_hline(yintercept = 0)
+est3 <- est3 + ggtitle("Lynx") + theme(plot.title = element_text(colour = "black", hjust = 0.5, vjust= -3, size = 24))
+est3
