@@ -30,7 +30,7 @@ library(MuMIn) #streamlining model selection
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #Load detection data
-det <- read.csv("Seismic_nov2015-apr2018.csv")
+det <- read.csv("Seismic_nov2015-2018.csv")
 
 #Load lowland data
 low <- read.csv("newAVIE_lowland8buffersizes.csv")
@@ -110,7 +110,7 @@ det$VegHt_sc <- covscale(det$VegHt)
 
 summary(det[ , 36:56]) #Centred means of 0
 
-write.csv(det, "Seismic_nov2015-apr2018.csv")
+write.csv(det, "Seismic_nov2015-2018.csv")
 
 # Omit NA rows
 det <- na.omit(det)
@@ -190,13 +190,13 @@ WTDeerAIC <- ICtab(Models, mnames = names(Models), type= "AIC", weights = TRUE, 
 WTDeerAIC
 ``` 
 ```{r, echo=FALSE, results='hide'}
-summary(Models$`6`)
+summary(Models$`30`)
 
 ## Compare estimates to those in model with unstandardized covariates
 unstd.mod <- glmmTMB(WTDeer~ LD750 + low2000 + pSnow + VegHt + Treatment + (1|Site) + (1|Month), data = det, zi=~ActiveDays_sc, family = nbinom1)
 summary(unstd.mod) ### Treatment coefficients are the same but continuous covariate coefficients are not. Significance is same
 ```
-  Five models within 2 dAIC points of each other, with model weights between 7 - 19%.
+  Four models within 2 dAIC points of each other, with model weights between 12 - 32%.
     
   
 ## Evidence Ratios and Cumulative model weight (calculating confidence intervals)
@@ -233,15 +233,15 @@ ER
 ```
  Examining summaries for top 4 models (2dAIC)  
 ```{r, echo=FALSE, results='hide'}
-fixef(Models$`6`)
-fixef(Models$`22`)
-fixef(Models$`14`)
 fixef(Models$`30`)
-fixef(Models$`8`)
-```  
-In addtion to Treatment and ActiveDays, all 5 models contain LD and lowland. 2 contain pSnow and/or VegHt, and 1 contains LineWidth
+fixef(Models$`22`)
+fixef(Models$`32`)
+fixef(Models$`24`)
 
-### Pretending variables
+```  
+In addtion to Treatment and ActiveDays, all 4 models contain LD, lowland, and VegHt. 2 contain pSnow, 2 contain LineWidth
+
+### Pretending variables (NOT DONE FOR 36 MONTH DATA)
   Comparing deviance of top models - if covariate does not add much, resdiual deviance will be similar across models
   
  Model                                       | Est. + SE of addtional variables             | Residual Deviance
@@ -254,15 +254,17 @@ Treat + low + LD + LineWidth + ActiveDays    | LineWidth -0.06 +/- 0.37         
 
   Parameter estimates and deviance are similar, indicating all models are roughly equivalent to one another.
 
-```{r, echo=FALSE, results='hide'}
-summary(Models$`6`)
-summary(Models$`22`)
-summary(Models$`14`)
-summary(Models$`30`)
-summary(Models$`8`)
+### Summary for full model
+```{r, echo=FALSE}
+
+
+## Summary for full model
+full.WTD <- glmmTMB(WTDeer ~  Treatment + low2000_sc + pSnow_sc + LineWidth_sc + LD750_sc + VegHt_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom1)
+summary(full.WTD)
+
 ```
 
-### Model averaging
+### Model averaging (NOT DONE FOR 36 MONTH DATA)
   Multiple models are within 2dAIC scores of  each other, suggesting that they all explain the data equally well. As my goal is to compare Treatment effects to the effects of other covariates, I do not just want the estimates given in the top model, but rather the best possible estimates for many covariates. I will therefore model average to obtain a weighted average estimate (effect size) of covariates included in models that are within 2 dAIC of one another or within 95% confidence intervals, whichever is more conservative.
 ```{r, echo=FALSE}
 #List of top models
@@ -287,10 +289,7 @@ ggplot(data = WTDEffects.CI, aes( x = Predictor, y = Estimate)) + geom_point() +
   Interaction coefficients describe how much the slope of the continuous variable changes at one level of the categorical relative to the reference level
   Use top model, with Treatment and lowland interacting
 ```{r, echo=FALSE}
-VTint <- glmmTMB(WTDeer~low2000_sc + ActiveDays_sc + Treatment*LD750_sc + (1 | Site) + (1 | Month), zi=~1, data=det, family=nbinom1)
-summary(VTint)
-
-VTint <- glmmTMB(WTDeer~LD750_sc + ActiveDays_sc + Treatment*low2000_sc + (1 | Site) + (1 | Month), zi=~1, data=det, family=nbinom1)
+VTint <- glmmTMB(WTDeer~  Treatment * low2000_sc + pSnow_sc + LineWidth_sc + LD750_sc + VegHt_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom1)
 summary(VTint)
 
 

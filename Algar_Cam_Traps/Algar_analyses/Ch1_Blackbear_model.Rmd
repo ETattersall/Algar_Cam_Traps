@@ -112,7 +112,7 @@ summary(det[ , 36:56]) #Centred means of 0
 write.csv(det, "Seismic_nov2015-apr2018.csv")
 
 #Filter for desired months and covariates - low500 and LD750
-det <- det %>% filter(Yr_Month == "2016-04" | Yr_Month == "2016-05" | Yr_Month == "2016-06"| Yr_Month == "2016-07"| Yr_Month == "2016-08"| Yr_Month == "2016-09"| Yr_Month == "2016-10"| Yr_Month == "2017-04" | Yr_Month == "2017-04" | Yr_Month == "2017-05" | Yr_Month == "2017-06"| Yr_Month == "2017-07"| Yr_Month == "2017-08"| Yr_Month == "2017-09"| Yr_Month == "2017-10") %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, Month, ActiveDays_sc, pSnow_sc,low500_sc, LD750_sc, VegHt_sc, LineWidth_sc)
+det <- det %>% filter(Yr_Month == "2016-04" | Yr_Month == "2016-05" | Yr_Month == "2016-06"| Yr_Month == "2016-07"| Yr_Month == "2016-08"| Yr_Month == "2016-09"| Yr_Month == "2016-10"| Yr_Month == "2017-04" | Yr_Month == "2017-04" | Yr_Month == "2017-05" | Yr_Month == "2017-06"| Yr_Month == "2017-07"| Yr_Month == "2017-08"| Yr_Month == "2017-09"| Yr_Month == "2017-10"| Yr_Month == "2018-04" | Yr_Month == "2018-05" | Yr_Month == "2018-06"| Yr_Month == "2018-07"| Yr_Month == "2018-08"| Yr_Month == "2018-09"| Yr_Month == "2018-10") %>% select(Site, Treatment,Yr_Month, Site_ym, Blackbear, Month, ActiveDays_sc, pSnow_sc,low500_sc, LD750_sc, VegHt_sc, LineWidth_sc)
 #Omit NA rows
 det <- na.omit(det)
 ```
@@ -202,10 +202,14 @@ In addition to ActiveDays and Treatment, both include VegHt and second includes 
 
 
 ```{r, echo=FALSE}
-summary(Models$`9`)
-summary(Models$`13`)
+
+
+## Summary for full model
+full.Blackbear <- glmmTMB(Blackbear ~  Treatment + low500_sc + LineWidth_sc + LD750_sc + VegHt_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom1)
+summary(full.Blackbear)
+
 ```
-### Model averaging
+### Model averaging (NOT DONE FOR 36MONTH DATA)
   Two models are within 2dAIC scores of  each other, suggesting that they all explain the data equally well. As my goal is to compare Treatment effects to the effects of other covariates, I do not just want the estimates given in the top model, but rather the best possible estimates for many covariates. I will therefore model average to obtain a weighted average estimate (effect size) of covariates included in models that are within 2 dAIC of one another or within 95% confidence intervals, whichever is more conservative.
 ```{r, echo=FALSE}
 #List of top models

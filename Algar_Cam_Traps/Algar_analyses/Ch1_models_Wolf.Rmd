@@ -30,7 +30,7 @@ library(MuMIn) #streamlining model selection
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #Load detection data
-det <- read.csv("Seismic_nov2015-apr2018.csv")
+det <- read.csv("Seismic_nov2015-2018.csv")
 
 #Load lowland data
 low <- read.csv("newAVIE_lowland8buffersizes.csv")
@@ -112,7 +112,7 @@ det$VegHt_sc <- covscale(det$VegHt)
 
 summary(det[ , 36:56]) #Centred means of 0
 
-write.csv(det, "Seismic_nov2015-apr2018.csv")
+write.csv(det, "Seismic_nov2015-2018.csv")
 
 #Omit NA rows
 det <- na.omit(det)
@@ -194,10 +194,13 @@ WolfAIC
 ``` 
 ```{r, echo=FALSE, results='hide'}
 summary(Models$`13`)
+summary(Models$`9`)
 summary(Models$`14`)
+summary(Models$`29`)
+summary(Models$`15`)
 
 ```
-  Five models within 2 dAIC points of each other, with model weights between 7 - 18%.
+  Five models within 2 dAIC points of each other, with model weights between 7 - 21%.
     
   
 ## Evidence Ratios and Cumulative model weight (calculating confidence intervals)
@@ -235,15 +238,15 @@ ER
  Examining summaries for top 8 models (2dAIC)  
 ```{r, echo=FALSE, results='hide'}
 fixef(Models$`13`)
-fixef(Models$`14`)
 fixef(Models$`9`)
+fixef(Models$`14`)
 fixef(Models$`29`)
 fixef(Models$`15`)
 
 ```  
 Aside from Treatment and ActiveDays, all 5 models contain pSnow. 4 contain low, 1 each contains LineWidth, VegHt, or LD
 
-### Pretending variables
+### Pretending variables (NOT DONE FOR 36 MONTH DATA)
   Comparing deviance of top models - if covariate does not add much, resdiual deviance will be similar across models
   
  Model                                       | Est. + SE of possible pretending variables   | Residual Deviance
@@ -255,15 +258,13 @@ Treat + low + pSnow + LineWidth + ActiveDays |     LineWidth 0.164 +/- 0.380    
 Treat + pSnow + low + VegHt + ActiveDays     |     VegHt 0.244 +/- 0.399                    | 1190.5
 
 
-
-```{r, echo=FALSE, results='hide'}
-summary(Models$`13`)
-summary(Models$`14`)
-summary(Models$`9`)
-summary(Models$`29`)
-summary(Models$`15`)
+### Summary for full model
+```{r, echo=FALSE}
+## Summary for full model
+full.Wolf <- glmmTMB(Wolf~  Treatment + low500_sc + pSnow_sc + LineWidth_sc + LD1250_sc + VegHt_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom1)
+summary(full.Wolf)
 ```
-### Model averaging
+### Model averaging (NOT DONE FOR 36 MONTH DATA)
   Multiple models are within 2dAIC scores of  each other, suggesting that they all explain the data equally well. As my goal is to compare Treatment effects to the effects of other covariates, I do not just want the estimates given in the top model, but rather the best possible estimates for many covariates. I will therefore model average to obtain a weighted average estimate (effect size) of covariates included in models that are within 2 dAIC of one another or within 95% confidence intervals, whichever is more conservative.
 ```{r, echo=FALSE}
 #List of top models
@@ -288,7 +289,7 @@ ggplot(data = WolfEffects.CI, aes( x = Predictor, y = Estimate)) + geom_point() 
   Interaction coefficients describe how much the slope of the continuous variable changes at one level of the categorical relative to the reference level
   Use top model, with pSnow and treatment interacting
 ```{r, echo=FALSE}
-LTint <- glmmTMB(Wolf ~Treatment*pSnow_sc + low500_sc + VegHt_sc + ActiveDays_sc + (1 | Site) + (1 | Month), data = det, zi=~1, family = nbinom1)
+LTint <- glmmTMB(Wolf~  Treatment*pSnow_sc + low500_sc + LineWidth_sc + LD1250_sc + VegHt_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom1)
 summary(LTint)
 ```
   This indicates that the main effect of snow on wolf detections decreases on HumanUse, NatRegen, and SPP lines relative to effect of snow on control. This would mean that the slightly negative main effect of snow on control lines has a stronger negative effect on all the other lines 

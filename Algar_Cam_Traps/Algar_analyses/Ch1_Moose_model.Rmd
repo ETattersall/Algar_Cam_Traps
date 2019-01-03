@@ -189,13 +189,13 @@ MooseAIC <- ICtab(Models, mnames = names(Models), type= "AIC", weights = TRUE, d
 MooseAIC
 ``` 
 ```{r, echo=FALSE, results='hide'}
-summary(Models$`19`)
+summary(Models$`17`)
 
 ## Compare estimates to those in model with unstandardized covariates
 unstd.mod <- glmmTMB(Moose~ LD1250 + low250 + pSnow + VegHt + Treatment + (1|Site) + (1|Month), data = det, zi=~ActiveDays_sc, family = nbinom2)
 summary(unstd.mod) ### Treatment coefficients are the same but continuous covariate coefficients are not. Significance is same
 ```
-  Five models within 2 dAIC points of each other, with model weights between 6 - 17%.
+  Eight models within 2 dAIC points of each other, with model weights between 5 - 15%.
     
   
 ## Evidence Ratios and Cumulative model weight (calculating confidence intervals)
@@ -230,17 +230,20 @@ ER$EvidenceRatio <- MooseER
 
 ER
 ```
- Examining summaries for top 5 models (2dAIC)  
+ Examining summaries for top 8 models (2dAIC)  
 ```{r, echo=FALSE, results='hide'}
+fixef(Models$`17`)
+fixef(Models$`21`)
 fixef(Models$`19`)
 fixef(Models$`23`)
-fixef(Models$`17`)
-fixef(Models$`20`)
+fixef(Models$`25`)
+fixef(Models$`29`)
 fixef(Models$`27`)
+fixef(Models$`18`)
 ```  
- In addition to ActiveDays and Treatment, all 5 models contain VegHt. 4 models contain LineWidth, 3 contain either pSnow, LD, or low
 
-### Pretending variables
+
+### Pretending variables (NOT DONE FOR 36 MONTH DATA)
   Comparing deviance of top models - if covariate does not add much, resdiual deviance will be similar across models
   
  Model                                       | Est. + SE of addtional variables             | Residual Deviance
@@ -253,15 +256,17 @@ Treat + VegHt + pSnow + ActiveDays           | pSnow -0.04 +/- 0.48             
 
   Parameter estimates and deviance are similar, indicating all models are roughly equivalent to one another.
 
-```{r, echo=FALSE, results='hide'}
-summary(Models$`19`)
-summary(Models$`23`)
-summary(Models$`17`)
-summary(Models$`20`)
-summary(Models$`27`)
+### Summary for full model
+```{r, echo=FALSE}
+
+
+## Summary for full model
+full.Moose <- glmmTMB(Moose ~  Treatment + low250_sc + pSnow_sc + LineWidth_sc + LD1250_sc + VegHt_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom1)
+summary(full.Moose)
+
 ```
 
-### Model averaging
+### Model averaging (NOT DONE FOR 36 MONTH DATA)
   Multiple models are within 2dAIC scores of  each other, suggesting that they all explain the data equally well. As my goal is to compare Treatment effects to the effects of other covariates, I do not just want the estimates given in the top model, but rather the best possible estimates for many covariates. I will therefore model average to obtain a weighted average estimate (effect size) of covariates included in models that are within 2 dAIC of one another or within 95% confidence intervals, whichever is more conservative.
 ```{r, echo=FALSE}
 #List of top models

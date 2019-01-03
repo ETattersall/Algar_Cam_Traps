@@ -29,8 +29,13 @@ library(MuMIn) #streamlining model selection
 
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
-#Load detection data
-det <- read.csv("Seismic_nov2015-apr2018.csv")
+## Set working directory in console and read.csv from there (issues with setting WD in Rmarkdown)
+## Load detection data
+det <- read.csv("Seismic_nov2015-2018.csv")
+summary(det) ## Need to add column for month by splitting Yr_Month
+det$Yr_Month2 <- det$Yr_Month
+det <- separate(det, Yr_Month2, c("Year", "Month"), sep = "-", remove=TRUE)
+str(det)
 
 #Load lowland data
 low <- read.csv("newAVIE_lowland8buffersizes.csv")
@@ -80,11 +85,7 @@ sd(det$ActiveDays)
 det$ActiveDays_sc <- covscale(det$ActiveDays)
 summary(det$ActiveDays_sc)
 sd(det$ActiveDays_sc)
-det$D2W_sc <- covscale(det$Dist2Water_km) #mean 2.07
-summary(det$Dist2Water_km) #mean 2.07
-sd(det$Dist2Water_km) #1.76
-summary(det$D2W_sc) #mean 0
-sd(det$D2W_sc) #SD
+
 
 det$pSnow_sc <- covscale(det$pSnow)
 summary(det$pSnow_sc) #NAs, probably because of NAs in pSnow --> added na.rm = TRUE to function
@@ -112,7 +113,8 @@ det$VegHt_sc <- covscale(det$VegHt)
 
 summary(det[ , 36:56]) #Centred means of 0
 
-write.csv(det, "Seismic_nov2015-apr2018.csv")
+
+write.csv(det, "Seismic_nov2015-2018.csv")
 
 # Omit NA rows
 det <- na.omit(det)
@@ -232,17 +234,16 @@ ER$EvidenceRatio <- CaribouER
 
 ER
 ```
- Examining summaries for top 5 models (2dAIC)  
+ Examining summaries for top 2 models (2dAIC)  
 ```{r, echo=FALSE, results='hide'}
 fixef(Models$`14`)
-fixef(Models$`13`)
-fixef(Models$`30`)
-fixef(Models$`29`)
 fixef(Models$`16`)
-```  
-In addtion to Treatment and ActiveDays, all 5 models contain pSnow and lowland. 3 contain LD, 2 contain VegHt, and 1 contains LineWidth
+fixef(Models$`30`)
 
-### Pretending variables
+```  
+In addtion to Treatment and ActiveDays, all 3 models contain pSnow, LD and lowland. 2nd and 3rd top models contain lide width and veg height, respectively
+
+### Pretending variables (NOT DONE for 36 month data)
   Comparing deviance of top models - if covariate does not add much, resdiual deviance will be similar across models
   
  Model                                            | Est. + SE of addtional variables             | Residual Deviance
@@ -255,15 +256,17 @@ Treat + low + LD  LineWidth + ActiveDays          | LineWidth 0.21 +/- 0.44     
 
   Parameter estimates and deviance are similar, indicating all models are roughly equivalent to one another.
 
-```{r, echo=FALSE, results='hide'}
-summary(Models$`14`)
-summary(Models$`13`)
-summary(Models$`30`)
-summary(Models$`29`)
-summary(Models$`16`)
+### Summary for full model
+```{r, echo=FALSE}
+
+
+## Summary for full model
+full.caribou <- glmmTMB(Caribou~  Treatment + low1750_sc + pSnow_sc + LineWidth_sc + LD1750_sc + VegHt_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom1)
+summary(full.caribou)
+
 ```
 
-### Model averaging
+### Model averaging (NOT DONE FOR 36MONTH DATA)
   Multiple models are within 2dAIC scores of  each other, suggesting that they all explain the data equally well. As my goal is to compare Treatment effects to the effects of other covariates, I do not just want the estimates given in the top model, but rather the best possible estimates for many covariates. I will therefore model average to obtain a weighted average estimate (effect size) of covariates included in models that are within 2 dAIC of one another or within 95% confidence intervals, whichever is more conservative.
 ```{r, echo=FALSE}
 #List of top models
@@ -291,4 +294,4 @@ ggplot(data = CaribouEffects.CI, aes( x = Predictor, y = Estimate)) + geom_point
 LTint <- glmmTMB(Caribou~Treatment*low1750_sc + pSnow_sc + LD1750_sc + ActiveDays_sc + (1|Site) + (1|Month), data = det, zi=~1, family = nbinom1)
 summary(LTint)
 ```
-  Although not significant, this indicates that the main effect of lowland habitat on caribou detections decreases on HumanUse, NatRegen, and SPP lines relative to effect of lowland on control.
+  Although not significant, this indicates that the main effect of lowland habitat on caribou detections decreases on HumanUse, NatRegen, and SPP lines relative to effect of lowland on control (HumanUse almost significant)
