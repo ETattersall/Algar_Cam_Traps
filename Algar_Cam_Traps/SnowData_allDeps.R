@@ -129,6 +129,13 @@ S$StudyDay <- floor(as.numeric(difftime(S$Date,min(S$DateStart),units="days"))) 
 S$StudyDay <- S$StudyDay+1 #Turns start date into day 1, not day 0
 summary(S$StudyDay) # 886 study days
 
+table(S$Snow) ## Only 0's and 1's. Does NOT contain inactive days
+
+
+##### Save Snow presence-absence table for use in occurrence models. 
+setwd("C:/Users/ETattersall/Desktop/Algar_Cam_Traps/Algar_Camera_Traps/Data")
+write.csv(S, "SnowPresence_daily.csv")
+
 
 #### Aggregating snow data into average per month (again, adapting Jo's code) ####
 S$Station_SD <- paste(S$Station, S$StudyDay)

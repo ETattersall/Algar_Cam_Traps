@@ -17,8 +17,8 @@ library(dplyr)
 library(tidyr)
 
 # working directory for Nisha's csvs
-setwd('C:/Users/ETattersall/OneDrive/ALGAR/Snow_csvs(Nisha)/2017-2018 CSV Snow data')
-list.files() #70 csvs --> Missing  Algar17 (failed on check day), Algar27, (stolen), Algar30 (skipped; Nisha will add, but I can add values manually for Snow (T/F))
+setwd('C:/Users/ETattersall/OneDrive/ALGAR/Snow_csvs(Nisha)/2018-2018 CSV Snow data')
+list.files() #67 csvs --> Missing  53-56, 59 and 60 because Timelapse was not set
 
 
 csv.names <- list.files() #vector of all file names
@@ -33,37 +33,35 @@ tail(csv.list)
 
 ## All dates appear to be standard
 
-# Try using bind_rows. Missing columns should be filled by NA
-all <- bind_rows(csv.list) # Generates error: column (x) can't be converted from logical to factor
 
-# Try converting factors to characters then back again
+# Converting factors to characters then back again
 all <- csv.list %>%
   lapply(function(x) mutate_each(x, funs('as.character'))) %>%
   bind_rows() %>% 
   mutate_all(funs('as.factor')) # Worked with error `mutate_each()` is deprecated. Use `mutate_all()`, `mutate_at()` or `mutate_if()` instead.
 
-str(all) #70 levels for folders: addressed above
+str(all) #67 levels for folders: addressed above
 head(all)
 
 Snow <- all$Snow
 table(Snow)
 Snow <- toupper(Snow) #All characters to upper case
 unique(Snow)
-table(Snow) #6958 FALSE, 665 TRUE
+table(Snow) #10460 FALSE, 1814 TRUE
 
 
 #Convert to numeric
 Snow[which(Snow==TRUE)] <- 1
 Snow[which(Snow==FALSE)] <- 0
-table(Snow) #6958 = 0, 665 = 1
+table(Snow) #10460 = 0, 1814 = 1
 
 # Create data.frame of station, date, Snow data
 # Station == all$Folder
 # date == all$Date
 class(all$Date) #factor
-head(all$Date) #190 levels; will have some dates from summer (Algar43)
+head(all$Date) #225 levels, starting at Apr 7, 2018
 #Confirm that dataframe is only Timelapse photos (2017-2018 data is ONLY timelapse photos -ignore this step)
-unique(all$TriggerMode) #1 level TRUE (character is T for Timelapse, which is read as logical TRUE)
+unique(all$TriggerMode) #1 level TRUE (character is T for Timelapse, which is read as logical TRUE) --> Not extracted, ignore
 class(all$TriggerMode)
 # all$TriggerMode[is.na(all$TriggerMode)] <- "T"
 # unique(all$TriggerMode) Results in NAs. Leave as is (i.e. return to TRUE)
@@ -124,6 +122,7 @@ S$Date <- all$Date
 S$Snow <- Snow
 glimpse(S)
 str(S) #Factor, Date, character
+table(S$Snow)
 
 #### Ordering data by date and station, creating study days ####
 # Adapted from Jo (and Algar_prelim_analysis_ch1.R)
@@ -147,15 +146,17 @@ maxdate[,2] - mindate[,2] # (Needs to be ordered by Station here)
 
 S$DateStart <- min(mindate[,2]) #Adding the date of first detection to S dataframe
 S$DateStart <- (strptime(S$DateStart, "%Y-%m-%d", tz="MST")) ##Adding a column for the first day of the study
-DateStart <- min(S$DateStart) # The first detection from all stations - 2017-04-19 - first detection of the deployment
+DateStart <- min(S$DateStart) # The first detection from all stations - 2018-04-07 - first detection of the deployment
 str(S)
 
 # calculate a unique day for each day of study
 # since there is no start time entered, this should work from hour 0, so should be same as calendar day
 # using "floor" so it doesn't round up to next day
-S$StudyDay <- floor(as.numeric(difftime(S$Date,min(S$DateStart),units="days"))) ##Takes difference between the detection date and start date, without rounding up
+S$StudyDay <- floor(as.numeric(difftime(S$Date,min(S$DateStart),units="days")))
+##Takes difference between the detection date and start date, without rounding up
+head(S$StudyDay)
 S$StudyDay <- S$StudyDay+2 #Turns start date into day 1, not day -1
-summary(S$StudyDay) # 354 study days --> because of Algar43, study days starts in April 2017. Shouldn't cause issues...
+summary(S$StudyDay) # 225 study days
 
 
 #### Aggregating snow data into average per month (again, adapting Jo's code) ####
@@ -172,7 +173,7 @@ summary(S) #snow is character, convert to numeric
 S$Snow <- as.numeric(S$Snow)
 summary(S)
 levels(S$Yr_month)
-sum(S$Snow) #8144 snow days total
+sum(S$Snow) #1814 snow days total
 
 #Subsetting for Station, StudyDay, Snow, Yr_Month columns (group_by has issue with POSIXct format from S)
 S1 <- as.data.frame(S$Station)
@@ -186,16 +187,20 @@ m.snow <- S1 %>%
   group_by(Station, Yr_month) %>% 
   summarise(sum(Snow, na.rm = TRUE))
 colnames(m.snow) <- c("Station","Yr_Month","Snow")
-summary(m.snow) #max 37, nonsensical
+summary(m.snow) #max 19
+## If there are duplicates, find out where
 m.snow[which(m.snow$Snow==37),] #Returned to S to remove duplicates --> fixed
 
-sum(m.snow$Snow) #8144 snow days in deployment
+sum(m.snow$Snow) #1814 snow days in deployment
 
 plot(x = m.snow$Yr_Month, y = m.snow$Snow, xlab = "Year-Month",ylab = "Snow Days")
 
 ## Low number of Snow Days in April because there are low number of ActiveDays in April...
 
-## m.snow also needs to include NA months for failed cameras
+### NA rows omitted from analysis regardless --> DO NOT ADD THEM
+## Skip to line 422
+
+## m.snow also needs to include NA months for failed cameras 
 
 ## Some data lost previously because NAs replaced partial months
 
@@ -417,19 +422,87 @@ tail(dep1)
 #### Combining SnowDays data to detection data ####
 ## Add unique identifier Site_ym to snow dataframe ####
 m.snow$Site_ym <- paste(m.snow$Station, m.snow$Yr_Month)
+m.snow <- as.data.frame(m.snow)
 
-dep1$SnowDays <- m.snow$Snow[match(dep1$Site_ym, m.snow$Site_ym)]
+## Adding Nov2018 snow data to all previous snow data
+dep1 <- read.csv("MonthlyDetections_nov2015-apr2018.csv")
 
-write.csv(dep1, "2017.01_monthlydetections.csv")
+dep1$X.3 <- NULL
+dep1$X.1 <- NULL
+dep1$X.2 <- NULL
+dep1$X <- NULL
 
-plot(x = dep1$SnowDays, y = dep1$Blackbear) # Highest detections in months with less snow - unsurprising
-plot(x = dep1$SnowDays, y = dep1$Wolf) # No clear trends
-plot(x = dep1$SnowDays, y = dep1$Caribou) # More with less snow
-plot(x = dep1$Treatment, y = dep1$SnowDays) #same same - good
+str(dep1) #ActiveDays, SnowDays, pSnow
+summary(dep1) ## NAs present
+
+## Query what SnowDays is when pSnow is NA
+dep1[is.na(dep1$pSnow),] ## Always 0
+
+
+## Need to add new snow data to old snow data, adding together duplicated Apr months
+old.sno <- cbind.data.frame(dep1$Site_ym, dep1$SnowDays)
+colnames(old.sno) <- c("Site_ym", "SnowDays")
+str(old.sno)
+head(old.sno)
+str(m.snow)
+new.sno <- cbind.data.frame(m.snow$Site_ym,m.snow$Snow)
+colnames(new.sno) <- c("Site_ym", "SnowDays")
+
+Allsno <- rbind.data.frame(old.sno,new.sno) #2640 obs.
+## Sum duplicated year-months (i.e. Apr 2018)
+Allsno <- Allsno %>% group_by(Site_ym) %>% summarise(sum(SnowDays, na.rm=TRUE)) #2573 obs: not 2701 (73*37), but there are missing months when cam was inactive. Will become NA
+colnames(Allsno) <- c("Site_ym", "SnowDays")
+summary(Allsno)
+
+## Bind Allsno to full survey
+data.month <- read.csv("MonthlyDetections_nov2015-2018.csv")
+str(data.month)
+
+data.month$SnowDays <- Allsno$SnowDays[match(data.month$Site_ym, Allsno$Site_ym)]
+summary(data.month) ## Only 128 Nas, because I didn't add any?
+
+plot(x = data.month$SnowDays, y = data.month$Blackbear) # Highest detections in months with less snow - unsurprising
+plot(x = data.month$SnowDays, y = data.month$Wolf) # No clear trends
+plot(x = data.month$SnowDays, y = data.month$Caribou) # More with less snow
+plot(x = data.month$Treatment, y = data.month$SnowDays) #same same - good
 
 ## Feb.5 - plotting SnowDays per month for Nov. 2015 - Apr. 2017 (read in as dat)
 
-plot(x = dat$Yr_Month, y = dat$SnowDays) # Shows 2 winters, 1 summer, as expected. Nov. and April are more variable
+plot(x = data.month$Yr_Month, y = data.month$SnowDays) # Shows 3 winters, 2 summer, as expected. Nov. and April are more variable
+
+### Calculate pSnow
+data.month$pSnow <- data.month$SnowDays/data.month$ActiveDays
+summary(data.month$pSnow) ## 1074 NAs, and MAX is > 1...
+
+str(data.month)
+
+data.month[which(data.month$pSnow>1),] ## 4 cases in which SnowDays = ActiveDays + 1 --> all either April or November, so must have something to do with check date and time
+
+## Change so SnowDays = ActiveDays (subtract 1)
+
+data.month$SnowDays <- ifelse(data.month$SnowDays>1, data.month$SnowDays - 1, data.month$SnowDays)
+## recalculate pSnow
+data.month$pSnow <- data.month$SnowDays/data.month$ActiveDays
+summary(data.month$pSnow)
+## Check that problem rows are now fixed (should now be pSnow == 1)
+data.month[which(data.month$pSnow < 1),]
+head(data.month$pSnow, 100)
+
+## Checking NA months
+data.month[is.na(data.month$pSnow),] ## Some when SnowDays and ActiveDays are both 0, some when ActiveDays == 0 and SnowDays == NA
+data.month[is.na(data.month$SnowDays),]
+## Not sure why SnowDays = 0 if ActiveDays is 0 (should be NA), but effectively they are the same
+
+
+### Save monthly detection data
+write.csv(data.month, "MonthlyDetections_nov2015-2018.csv")
+
+### Remove offline sites for thesis analyses
+seismic <- data.month %>% filter(Treatment != "Offline")
+
+head(seismic)
+tail(seismic)
+write.csv(seismic, "Seismic_nov2015-2018.csv")
 
 #### Daily detection data ####
 day1 <- read.csv("2016.01_detections_day.csv")
